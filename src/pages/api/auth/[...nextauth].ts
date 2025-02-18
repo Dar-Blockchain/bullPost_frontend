@@ -22,6 +22,7 @@ const authOptions: NextAuthOptions = {
       clientSecret: process.env.TWITTER_CLIENT_SECRET!,
     }),
     // Uncomment and configure if you want to use Apple:
+    
     // AppleProvider({
     //   clientId: process.env.APPLE_CLIENT_ID!,
     //   clientSecret: {
