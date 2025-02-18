@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import {
     Dialog, DialogContent, IconButton, Box, Typography, Button, TextField, RadioGroup, FormControlLabel, Radio,
-    useMediaQuery
+    useMediaQuery,
+    InputAdornment,
+    Divider
 } from "@mui/material";
 
 import CloseIcon from "@mui/icons-material/Close";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import GoogleIcon from "@mui/icons-material/Google";
 import AppleIcon from "@mui/icons-material/Apple";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 
 // Define Props Type
 interface LoginModalProps {
@@ -104,21 +107,52 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                 {/* Step 1: Social & Email Login */}
                 {step === 1 && (
                     <>
-                        <Box sx={{ textAlign: "center", mb: 2 }}>
-                            <img src="/BP_Logo.png" alt="BullPost Logo" width={50} />
-                            <Typography variant="h6" sx={{ color: "#FFB300", fontWeight: 600, mt: 1 }}>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexWrap: "wrap",
+                                mb: 2,
+                                mt:"50px"
+                            }}
+                        >
+                            <Box
+                                component="img"
+                                src="/BP_Logo.png"
+                                alt="BullPost Logo"
+                                sx={{ width: 50, height: 50, mr: 1 }}
+                            />
+                            <Typography variant="h6" sx={{ color: "#FFB300", fontWeight: 600 }}>
                                 BullPost
-                            </Typography>
-                            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 1 }}>
-                                To continue, please login:
                             </Typography>
                         </Box>
 
+                        <Typography
+                            sx={{
+                                textAlign: "center",
+                                color: "#aaa",
+                                fontSize: "14px",
+                                mb: 2,
+                            }}
+                        >
+                            To continue, please login:
+                        </Typography>
                         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
                             {[
                                 { label: "Continue with X (Twitter)", icon: <TwitterIcon />, color: "#1DA1F2" },
                                 { label: "Continue with Google", icon: <GoogleIcon />, color: "#EA4335" },
                                 { label: "Continue with Apple", icon: <AppleIcon />, color: "#fff" },
+                                {
+                                    label: "Continue with Discord", icon: (
+                                        <img
+                                            src="/discord.svg" // Ensure this file exists in your public folder
+                                            alt="Discord"
+                                            style={{ width: 25, height: 25, marginTop: "5px" }}
+                                        />
+                                    ), color: "#5865F2"
+                                },
+                                { label: "Connect Wallet", icon: <AccountBalanceWalletIcon />, color: "white" },
                             ].map((item, index) => (
                                 <Button
                                     key={index}
@@ -146,24 +180,61 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                             ))}
                         </Box>
 
-                        <Typography sx={{ textAlign: "center", color: "#666", fontSize: "12px", my: 2 }}>Or</Typography>
-
-                        <TextField
+                        <Box sx={{ display: "flex", alignItems: "center", my: 2 }}>
+                            <Divider sx={{ flex: 1, borderColor: "#666" }} />
+                            <Typography sx={{ mx: 1, color: "#666", fontSize: "12px" }}>Or</Typography>
+                            <Divider sx={{ flex: 1, borderColor: "#666" }} />
+                        </Box>                        <TextField
                             fullWidth
                             variant="outlined"
                             placeholder="Email"
                             sx={{
-                                width: 321,
+                                width: 303,
                                 height: 45,
                                 borderWidth: 1,
                                 borderRadius: "10px",
-                                padding: "10px",
                                 input: { color: "#fff", padding: "10px" },
                                 "& fieldset": { borderColor: "#333" },
                                 "&:hover fieldset": { borderColor: "#444" },
                             }}
                         />
 
+                        {/* Code Input with Get Code Button */}
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Code"
+                            sx={{
+                                mt: 1,
+                                width: 303,
+                                height: 45,
+                                borderWidth: 1,
+                                borderRadius: "10px",
+                                input: { color: "#fff", padding: "10px" },
+                                "& fieldset": { borderColor: "#333" },
+                                "&:hover fieldset": { borderColor: "#444" },
+                            }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end" sx={{ mr: "-10px" }}>
+                                        <Button
+                                            variant="contained"
+                                            sx={{
+
+                                                fontWeight: "bold",
+                                                backgroundColor: "#FFB300",
+                                                color: "#111",
+                                                textTransform: "none",
+                                                height: "100%",
+                                                "&:hover": { backgroundColor: "#FFA500" },
+                                            }}
+                                        >
+                                            Get Code
+                                        </Button>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
                         <Button
                             fullWidth
                             variant="contained"
