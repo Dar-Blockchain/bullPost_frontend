@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Dialog, DialogContent, IconButton, Box, Typography, Button, TextField, RadioGroup, FormControlLabel, Radio,
     useMediaQuery,
@@ -31,6 +31,32 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
     const [step, setStep] = useState<number>(1);
     const [selectedOption, setSelectedOption] = useState<string>("");
     const isMobile = useMediaQuery("(max-width:600px)");
+    const [timer, setTimer] = useState(0);
+    const [isDisabled, setIsDisabled] = useState(false);
+
+    const handleGetCode = () => {
+        // Start the timer for 60 seconds
+        setIsDisabled(true);
+        setTimer(10);
+
+        // Call your "get code" API or logic here if needed.
+        // e.g., fetchCodeFromServer();
+    };
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+        if (timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        } else if (timer === 0 && isDisabled) {
+            setIsDisabled(false);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [timer, isDisabled]);
     const authProviders = [
         {
             label: "Continue with X (Twitter)",
@@ -260,7 +286,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                         <Button
                                             variant="contained"
                                             sx={{
-
                                                 fontWeight: "bold",
                                                 backgroundColor: "#FFB300",
                                                 color: "#111",
@@ -268,13 +293,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                                 height: "100%",
                                                 "&:hover": { backgroundColor: "#FFA500" },
                                             }}
+                                            onClick={handleGetCode}
+                                            disabled={isDisabled}
                                         >
-                                            Get Code
+                                            {isDisabled ? `Wait ${timer}s` : "Get Code"}
                                         </Button>
                                     </InputAdornment>
                                 ),
                             }}
-
                         />
                         <Button
                             fullWidth
