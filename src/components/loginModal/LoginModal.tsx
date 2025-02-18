@@ -5,12 +5,14 @@ import {
     InputAdornment,
     Divider
 } from "@mui/material";
+import { signOut } from "next-auth/react";
 
 import CloseIcon from "@mui/icons-material/Close";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import GoogleIcon from "@mui/icons-material/Google";
 import AppleIcon from "@mui/icons-material/Apple";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { signIn } from "next-auth/react";
 
 // Define Props Type
 interface LoginModalProps {
@@ -29,7 +31,44 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
     const [step, setStep] = useState<number>(1);
     const [selectedOption, setSelectedOption] = useState<string>("");
     const isMobile = useMediaQuery("(max-width:600px)");
-
+    const authProviders = [
+        {
+            label: "Continue with X (Twitter)",
+            icon: <TwitterIcon />,
+            color: "#1DA1F2",
+            provider: "twitter",
+        },
+        {
+            label: "Continue with Google",
+            icon: <GoogleIcon />,
+            color: "#EA4335",
+            provider: "google",
+        },
+        {
+            label: "Continue with Apple",
+            icon: <AppleIcon />,
+            color: "#fff",
+            provider: "apple",
+        },
+        {
+            label: "Continue with Discord",
+            icon: (
+                <img
+                    src="/discord.svg" // Ensure this file exists in your public folder
+                    alt="Discord"
+                    style={{ width: 25, height: 25, marginTop: "5px" }}
+                />
+            ),
+            color: "#5865F2",
+            provider: "discord",
+        },
+        {
+            label: "Connect Wallet",
+            icon: <AccountBalanceWalletIcon />,
+            color: "white",
+            provider: "wallet", // You may handle wallet connection differently
+        },
+    ];
     // Subscription Plans
     const plans: Plan[] = [
         {
@@ -114,7 +153,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                 justifyContent: "center",
                                 flexWrap: "wrap",
                                 mb: 2,
-                                mt:"50px"
+                                mt: "50px"
                             }}
                         >
                             <Box
@@ -133,30 +172,31 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                 textAlign: "center",
                                 color: "#aaa",
                                 fontSize: "14px",
-                                mb: 2,
+                                mb: 1,
                             }}
                         >
                             To continue, please login:
                         </Typography>
-                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
-                            {[
-                                { label: "Continue with X (Twitter)", icon: <TwitterIcon />, color: "#1DA1F2" },
-                                { label: "Continue with Google", icon: <GoogleIcon />, color: "#EA4335" },
-                                { label: "Continue with Apple", icon: <AppleIcon />, color: "#fff" },
-                                {
-                                    label: "Continue with Discord", icon: (
-                                        <img
-                                            src="/discord.svg" // Ensure this file exists in your public folder
-                                            alt="Discord"
-                                            style={{ width: 25, height: 25, marginTop: "5px" }}
-                                        />
-                                    ), color: "#5865F2"
-                                },
-                                { label: "Connect Wallet", icon: <AccountBalanceWalletIcon />, color: "white" },
-                            ].map((item, index) => (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                width: "100%",
+                            }}
+                        >
+                            {authProviders.map((item, index) => (
                                 <Button
                                     key={index}
                                     variant="outlined"
+                                    onClick={() => {
+                                        if (item.provider === "wallet") {
+                                            // Handle wallet connection separately.
+                                            console.log("Connect wallet clicked");
+                                        } else {
+                                            signIn(item.provider);
+                                        }
+                                    }}
                                     sx={{
                                         display: "flex",
                                         justifyContent: "flex-start",
@@ -234,6 +274,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                     </InputAdornment>
                                 ),
                             }}
+
                         />
                         <Button
                             fullWidth
@@ -579,8 +620,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                             width: "100%"
                                         }}
                                     />
+
                                 ))}
                             </RadioGroup>
+
                             <Box
                                 sx={{
                                     display: "flex",
