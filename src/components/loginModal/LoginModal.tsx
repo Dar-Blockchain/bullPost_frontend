@@ -13,6 +13,10 @@ import GoogleIcon from "@mui/icons-material/Google";
 import AppleIcon from "@mui/icons-material/Apple";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { signIn } from "next-auth/react";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { getCode, loginUser } from "@/store/slices/authSlice";
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Define Props Type
 interface LoginModalProps {
@@ -31,18 +35,60 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
     const [step, setStep] = useState<number>(1);
     const [selectedOption, setSelectedOption] = useState<string>("");
     const isMobile = useMediaQuery("(max-width:600px)");
+    const dispatch = useDispatch<AppDispatch>();
+    const [email, setEmail] = useState("");
+    const [code, setCode] = useState("");
     const [timer, setTimer] = useState(0);
     const [isDisabled, setIsDisabled] = useState(false);
+    const [emailError, setEmailError] = useState("");
+    const [isLoggingIn, setIsLoggingIn] = useState(false); // Track login state
+    const [loginError, setLoginError] = useState("");
+    const [isCodeVerified, setIsCodeVerified] = useState(false); // Track if the code request was successful
 
-    const handleGetCode = () => {
-        // Start the timer for 60 seconds
-        setIsDisabled(true);
-        setTimer(10);
+    const handleGetCode = async () => {
+        if (!email) {
+            setEmailError("Email is required");
+            return;
+        }
+        if (!emailRegex.test(email)) {
+            setEmailError("Invalid email format");
+            return;
+        }
+        setEmailError("");
 
-        // Call your "get code" API or logic here if needed.
-        // e.g., fetchCodeFromServer();
+        try {
+            const response = await dispatch(getCode(email)).unwrap(); // Unwrap to handle success
+            if (response.status === 200) {
+                setIsCodeVerified(true); // Allow continue if code is received
+            } else {
+                setIsCodeVerified(false);
+            }
+            setIsDisabled(true);
+            setTimer(60);
+        } catch (error) {
+            console.error("Error getting code:", error);
+            setIsCodeVerified(false);
+        }
     };
+    // Handle login
+    const handleLogin = async () => {
+        setIsLoggingIn(true);
+        setLoginError("");
 
+        try {
+            const response = await dispatch(loginUser({ email, code })).unwrap();
+            if (response.token) {
+                setStep(2); // Proceed to next step
+            } else {
+                setLoginError("Invalid login. Please try again.");
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            setLoginError(error as string || "Login failed.");
+        }
+
+        setIsLoggingIn(false);
+    };
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (timer > 0) {
@@ -158,7 +204,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                     backgroundImage: "url('/Ellipse 4.png')",
                     backgroundSize: "cover",
                     backgroundPosition: "top",
-                    mt: step === 5 ? "" : "-70px"
+                    mt: step === 5 ? "" : "-75px"
                 }}
             >
                 {/* Close Button */}
@@ -172,6 +218,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                 {/* Step 1: Social & Email Login */}
                 {step === 1 && (
                     <>
+                        {/* Header: Logo and Title */}
                         <Box
                             sx={{
                                 display: "flex",
@@ -179,7 +226,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                 justifyContent: "center",
                                 flexWrap: "wrap",
                                 mb: 2,
-                                mt: "50px"
+                                mt: "50px",
                             }}
                         >
                             <Box
@@ -193,16 +240,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                             </Typography>
                         </Box>
 
+                        {/* Instruction Text */}
                         <Typography
                             sx={{
                                 textAlign: "center",
                                 color: "#aaa",
                                 fontSize: "14px",
-                                mb: 1,
                             }}
                         >
                             To continue, please login:
                         </Typography>
+
+                        {/* Social Login Buttons */}
                         <Box
                             sx={{
                                 display: "flex",
@@ -217,7 +266,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                     variant="outlined"
                                     onClick={() => {
                                         if (item.provider === "wallet") {
-                                            // Handle wallet connection separately.
                                             console.log("Connect wallet clicked");
                                         } else {
                                             signIn(item.provider);
@@ -246,18 +294,27 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                             ))}
                         </Box>
 
+                        {/* Divider */}
                         <Box sx={{ display: "flex", alignItems: "center", my: 2 }}>
                             <Divider sx={{ flex: 1, borderColor: "#666" }} />
                             <Typography sx={{ mx: 1, color: "#666", fontSize: "12px" }}>Or</Typography>
                             <Divider sx={{ flex: 1, borderColor: "#666" }} />
-                        </Box>                        <TextField
+                        </Box>
+
+                        {/* Email Input */}
+                        <TextField
                             fullWidth
                             variant="outlined"
                             placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            error={!!emailError}
+                            helperText={emailError}
                             sx={{
                                 width: 303,
                                 height: 45,
                                 borderWidth: 1,
+
                                 borderRadius: "10px",
                                 input: { color: "#fff", padding: "10px" },
                                 "& fieldset": { borderColor: "#333" },
@@ -270,8 +327,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                             fullWidth
                             variant="outlined"
                             placeholder="Code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
                             sx={{
-                                mt: 1,
+                                mt: 3,
                                 width: 303,
                                 height: 45,
                                 borderWidth: 1,
@@ -302,6 +361,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                 ),
                             }}
                         />
+
+                        {/* Continue Button */}
                         <Button
                             fullWidth
                             variant="contained"
@@ -311,13 +372,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                 borderWidth: 1,
                                 borderRadius: "10px",
                                 padding: "10px",
-                                backgroundColor: "#FFB300",
+                                backgroundColor: isCodeVerified ? "#FFB300" : "#444", // Disable if code not received
                                 color: "#111",
                                 mt: 2,
                                 fontWeight: "bold",
-                                "&:hover": { backgroundColor: "#FFA500" },
+                                "&:hover": { backgroundColor: isCodeVerified ? "#FFA500" : "#444" }, // No hover effect if disabled
                             }}
                             onClick={() => setStep(2)}
+                            disabled={!isCodeVerified} // Disable until code is verified
                         >
                             Continue
                         </Button>
