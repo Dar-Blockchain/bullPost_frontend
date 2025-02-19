@@ -71,7 +71,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                 toast.error(response.message, { position: "top-right" });
             }
             setIsDisabled(true);
-            setTimer(1);
+            setTimer(60);
 
         } catch (error) {
             console.error("Error getting code:", error);
@@ -87,25 +87,33 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
 
         try {
             const response = await dispatch(loginUser({ email, otp: code })).unwrap();
-            if (response.token) {
-                toast.success("Login successful!");
-                console.log("User:", response.user); // Debugging user data
-                console.log("Token:", response.token); // Debugging token
-    
+            console.log(response, "Login Response");
+
+            if (response.status === 200) {
+                toast.success("✅ Login successful!");
+
+                console.log("User:", response.user);
+                console.log("Token:", response.token);
+
                 // Save token and user data to localStorage
                 localStorage.setItem("token", response.token);
                 localStorage.setItem("user", JSON.stringify(response.user));
+
                 setStep(2); // Proceed to next step
             } else {
-                setLoginError("Invalid login. Please try again.");
+                toast.error(response.message || "❌ Invalid login. Please try again.");
+                setLoginError(response.message || "Invalid login. Please try again.");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login error:", error);
-            setLoginError(error as string || "Login failed.");
+
+            toast.error(`❌ ${error.message || "Login failed. Please try again."}`);
+            setLoginError(error.message || "Login failed.");
         }
 
         setIsLoggingIn(false);
     };
+
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (timer > 0) {

@@ -33,37 +33,43 @@ export const getCode = createAsyncThunk(
 );
 
 
-// Async thunk for logging in with email and code
 export const loginUser = createAsyncThunk(
-  'auth/loginUser',
+  "auth/loginUser",
   async ({ email, otp }: { email: string; otp: string }, thunkAPI) => {
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + 'auth/verify-otp', // Change to the correct API route
+        process.env.NEXT_PUBLIC_API_BASE_URL + "auth/verify-otp",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email, otp }) // Use "otp" instead of "code" to match API
+          body: JSON.stringify({ email, otp }),
         }
       );
 
-      const statusCode = response.status; // Get status code from response
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue({ message: errorData.message, status: statusCode });
-      }
+      const statusCode = response.status;
+      console.log(statusCode, "statusCode");
 
       const data = await response.json();
-      return { ...data, status: statusCode }; // Return response + status
 
+      if (!response.ok) {
+        return thunkAPI.rejectWithValue({
+          message: data.message || "Login failed",
+          status: statusCode,
+        });
+      }
+
+      return { ...data, status: statusCode }; // Return response + status
     } catch (error: any) {
-      return thunkAPI.rejectWithValue({ message: error.message, status: 500 });
+      return thunkAPI.rejectWithValue({
+        message: error.message || "Server error",
+        status: 500,
+      });
     }
   }
 );
+
 
 
 interface AuthState {
