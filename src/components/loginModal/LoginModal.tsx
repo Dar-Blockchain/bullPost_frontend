@@ -369,19 +369,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                             sx={{
                                 width: 301,
                                 height: 45,
-                                borderWidth: 1,
-                                borderRadius: "10px",
-                                padding: "10px",
-                                backgroundColor: isCodeVerified ? "#FFB300" : "#444", // Disable if code not received
-                                color: "#111",
                                 mt: 2,
+                                borderRadius: "10px",
+                                backgroundColor: isCodeVerified && code ? "#FFB300" : "#444",
+                                color: "#111",
                                 fontWeight: "bold",
-                                "&:hover": { backgroundColor: isCodeVerified ? "#FFA500" : "#444" }, // No hover effect if disabled
+                                "&:hover": {
+                                    backgroundColor: isCodeVerified && code ? "#FFA500" : "#444",
+                                },
                             }}
-                            onClick={() => setStep(2)}
-                            disabled={!isCodeVerified} // Disable until code is verified
+                            onClick={handleLogin}
+                            disabled={!isCodeVerified || !code || isLoggingIn}
                         >
-                            Continue
+                            {isLoggingIn ? "Logging in..." : "Continue"}
                         </Button>
                     </>
                 )}
