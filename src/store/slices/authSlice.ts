@@ -6,7 +6,7 @@ export const getCode = createAsyncThunk(
   async (email: string, thunkAPI) => {
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + 'Users/getCode',
+        process.env.NEXT_PUBLIC_API_BASE_URL + 'auth/send-otp',
         {
           method: 'POST',
           headers: {
@@ -15,44 +15,56 @@ export const getCode = createAsyncThunk(
           body: JSON.stringify({ email })
         }
       );
+
+      const statusCode = response.status; // Get status from response headers
+
       if (!response.ok) {
         const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData.message);
+        return thunkAPI.rejectWithValue({ message: errorData.message, status: statusCode });
       }
+
       const data = await response.json();
-      return data; // Adjust according to your API response structure
+      return { ...data, status: statusCode }; // Return the status along with response data
+
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message);
+      return thunkAPI.rejectWithValue({ message: error.message, status: 500 });
     }
   }
 );
 
+
 // Async thunk for logging in with email and code
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ email, code }: { email: string; code: string }, thunkAPI) => {
+  async ({ email, otp }: { email: string; otp: string }, thunkAPI) => {
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + 'Users/login',
+        process.env.NEXT_PUBLIC_API_BASE_URL + 'auth/verify-otp', // Change to the correct API route
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ email, code })
+          body: JSON.stringify({ email, otp }) // Use "otp" instead of "code" to match API
         }
       );
+
+      const statusCode = response.status; // Get status code from response
+
       if (!response.ok) {
         const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData.message);
+        return thunkAPI.rejectWithValue({ message: errorData.message, status: statusCode });
       }
+
       const data = await response.json();
-      return data; // Expecting a token or user info in response
+      return { ...data, status: statusCode }; // Return response + status
+
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message);
+      return thunkAPI.rejectWithValue({ message: error.message, status: 500 });
     }
   }
 );
+
 
 interface AuthState {
   codeSent: boolean;

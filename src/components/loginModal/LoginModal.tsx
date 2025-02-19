@@ -61,17 +61,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
         setEmailError("");
 
         try {
-            const response = await dispatch(getCode(email)).unwrap(); // Unwrap to handle success
 
+            const response = await dispatch(getCode(email)).unwrap(); // Unwrap to handle success
             if (response.status === 200) {
                 setIsCodeVerified(true); // Allow continue if code is received
-                toast.success("Code sent successfully! Check your email.", { position: "top-right" });
+                toast.success(response.message, { position: "top-right" });
             } else {
                 setIsCodeVerified(false);
-                toast.error("Failed to send code. Try again.", { position: "top-right" });
+                toast.error(response.message, { position: "top-right" });
             }
             setIsDisabled(true);
-            setTimer(60);
+            setTimer(1);
+
         } catch (error) {
             console.error("Error getting code:", error);
             toast.error("Error sending code. Please try again later.", { position: "top-right" });
@@ -85,8 +86,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
         setLoginError("");
 
         try {
-            const response = await dispatch(loginUser({ email, code })).unwrap();
+            const response = await dispatch(loginUser({ email, otp: code })).unwrap();
             if (response.token) {
+                toast.success("Login successful!");
+                console.log("User:", response.user); // Debugging user data
+                console.log("Token:", response.token); // Debugging token
+    
+                // Save token and user data to localStorage
+                localStorage.setItem("token", response.token);
+                localStorage.setItem("user", JSON.stringify(response.user));
                 setStep(2); // Proceed to next step
             } else {
                 setLoginError("Invalid login. Please try again.");
@@ -388,7 +396,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                 },
                             }}
                             onClick={handleLogin}
-                            disabled={!isCodeVerified || !code || isLoggingIn}
+                            disabled={!code}
                         >
                             {isLoggingIn ? "Logging in..." : "Continue"}
                         </Button>
