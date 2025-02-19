@@ -6,6 +6,7 @@ import {
     Divider
 } from "@mui/material";
 import { signOut } from "next-auth/react";
+import { toast } from "react-toastify";
 
 import CloseIcon from "@mui/icons-material/Close";
 import TwitterIcon from "@mui/icons-material/Twitter";
@@ -45,31 +46,39 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
     const [loginError, setLoginError] = useState("");
     const [isCodeVerified, setIsCodeVerified] = useState(false); // Track if the code request was successful
 
+
     const handleGetCode = async () => {
         if (!email) {
             setEmailError("Email is required");
+            toast.error("Email is required", { position: "top-right" });
             return;
         }
         if (!emailRegex.test(email)) {
             setEmailError("Invalid email format");
+            toast.error("Invalid email format", { position: "top-right" });
             return;
         }
         setEmailError("");
 
         try {
             const response = await dispatch(getCode(email)).unwrap(); // Unwrap to handle success
+
             if (response.status === 200) {
                 setIsCodeVerified(true); // Allow continue if code is received
+                toast.success("Code sent successfully! Check your email.", { position: "top-right" });
             } else {
                 setIsCodeVerified(false);
+                toast.error("Failed to send code. Try again.", { position: "top-right" });
             }
             setIsDisabled(true);
             setTimer(60);
         } catch (error) {
             console.error("Error getting code:", error);
+            toast.error("Error sending code. Please try again later.", { position: "top-right" });
             setIsCodeVerified(false);
         }
     };
+
     // Handle login
     const handleLogin = async () => {
         setIsLoggingIn(true);
@@ -184,7 +193,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
             sx={{
                 "& .MuiPaper-root": {
                     width: step === 5 ? 1000 : 563,
-                    height: 655,
+                    height: 665,
                     borderRadius: "15px",
                     backgroundColor: "#121212",
                     color: "#fff",

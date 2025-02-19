@@ -6,7 +6,9 @@ import { useState } from "react";
 import LoginModal from "@/components/loginModal/LoginModal";
 import { Provider } from "react-redux";
 import store from "../store/store";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/globals.css"; // Ensure global styles are imported
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -35,6 +37,8 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     <Provider store={store}>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
+        <ToastContainer position="top-right" autoClose={3000} />
+
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
           {/* Sidebar */}
           <Sidebar handleOpen={handleOpenLogin} isLoggedIn={isLoggedIn} />
