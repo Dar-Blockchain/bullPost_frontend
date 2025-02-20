@@ -57,7 +57,9 @@ const authOptions: NextAuthOptions = {
               email
             }),
           });
-          console.log(response,"-------------------------response---------------------------")
+          const responseData = await response.json(); // ✅ Parse JSON response
+
+          console.log(responseData,"-------------------------response---------------------------")
           if (!response.ok) {
             console.error("Failed to sync Google login with backend");
             return false; // Prevent sign-in if API call fails
