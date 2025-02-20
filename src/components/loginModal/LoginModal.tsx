@@ -17,6 +17,7 @@ import { signIn } from "next-auth/react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { getCode, loginUser } from "@/store/slices/authSlice";
+import { useAuth } from "@/hooks/useAuth";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Define Props Type
@@ -45,7 +46,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
     const [isLoggingIn, setIsLoggingIn] = useState(false); // Track login state
     const [loginError, setLoginError] = useState("");
     const [isCodeVerified, setIsCodeVerified] = useState(false); // Track if the code request was successful
+    const { user } = useAuth(); // ✅ Get user data
 
+    useEffect(() => {
+        if (user?.visitsCount > 1) {
+            handleClose(); // ✅ Close the modal if visitorsCount > 1
+        }
+      }, [user?.visitsCount]); // ✅ Runs when visitorsCount changes
 
     const handleGetCode = async () => {
         if (!email) {
@@ -240,7 +247,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                     <CloseIcon />
                 </IconButton>
 
-                {/* Step 1: Social & Email Login */}
                 {step === 1 && (
                     <>
                         {/* Header: Logo and Title */}
@@ -783,7 +789,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                             </Box>
                         </Box></>
                 )}
-                {/* Step 5: Plan Selection */}
                 {step === 5 && (
                     <Box
                         sx={{

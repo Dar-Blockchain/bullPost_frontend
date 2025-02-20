@@ -16,7 +16,6 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const [tabIndex, setTabIndex] = useState(0); // ✅ Ensure state is initialized
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const { user } = useAuth(); // ✅ Get user data
-  console.log(user, '------------------user-------------')
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Check if mobile view
 
