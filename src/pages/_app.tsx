@@ -1,5 +1,5 @@
-// pages/_app.tsx
 import { AppProps } from "next/app";
+import { useRouter } from "next/router";
 import { CssBaseline, ThemeProvider, createTheme, Box } from "@mui/material";
 import Sidebar from "../components/sidebar/Sidebar";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css"; // Ensure global styles are imported
 import { useDispatch } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
+import { SessionProvider } from "next-auth/react"; // ✅ Import SessionProvider
 
 const darkTheme = createTheme({
   palette: {
@@ -25,10 +26,11 @@ const darkTheme = createTheme({
 });
 
 function MyAppComponent({ Component, pageProps }: AppProps) {
+  const router = useRouter(); // ✅ Fix: Get router from Next.js
   const { isLoggedIn } = useAuth(); // Get auth state from Redux
   const [isLoginOpen, setIsLoginOpen] = useState(false); // Control login modal
   const dispatch = useDispatch();
-
+  console.log(isLoggedIn,'-----------------isLoggedin------------------')
   const handleOpenLogin = () => {
     setIsLoginOpen(true);
   };
@@ -48,7 +50,7 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
 
         {/* Main Content */}
         <Box>
-          <Component {...pageProps} />
+          <Component {...pageProps} router={router} /> {/* ✅ Pass Router Here */}
         </Box>
       </Box>
 
@@ -58,11 +60,13 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
   );
 }
 
-// Wrap with Redux Provider
-export default function MyApp(props: AppProps) {
+// ✅ Fix by correctly typing the `_app.tsx` function
+export default function MyApp({ Component, pageProps, router }: AppProps) {  
   return (
-    <Provider store={store}>
-      <MyAppComponent {...props} />
-    </Provider>
+    <SessionProvider session={pageProps.session}> {/* ✅ Fix Here */}
+      <Provider store={store}>
+        <MyAppComponent Component={Component} pageProps={pageProps} router={router} /> {/* ✅ Pass Router Here */}
+      </Provider>
+    </SessionProvider>
   );
 }

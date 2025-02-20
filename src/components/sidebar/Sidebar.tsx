@@ -5,6 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   handleOpen: () => void;
@@ -14,7 +15,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
-
+  const { user } = useAuth(); // ✅ Get user data
+  console.log(user, '------------------user-------------')
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Check if mobile view
 
@@ -68,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             fontSize: "14px",
             textTransform: "none",
             mb: 3,
-            mt:"-30px",
+            mt: "-30px",
             "&:hover": { backgroundColor: "#FFA500" },
           }}
           onClick={handleOpen}
@@ -156,9 +158,9 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             width: "100%",
           }}
         >
-          <Avatar src="/profile.jpg" sx={{ width: 40, height: 40 }} />
+          <Avatar src={`http://localhost:5000/${user?.user_image}`} sx={{ width: 40, height: 40 }} />
           <Box>
-            <Typography sx={{ color: "#fff", fontWeight: 600 }}>Julio</Typography>
+            <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user.userName}</Typography>
             <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
           </Box>
         </Box>

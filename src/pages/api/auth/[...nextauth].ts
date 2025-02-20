@@ -46,24 +46,26 @@ const authOptions: NextAuthOptions = {
         const email = profile?.email ?? null;
         user.email = email;
 
-        // Send user data to your backend API
         try {
           const response = await fetch("http://localhost:5000/auth/auth_Api", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              email
-            }),
+            body: JSON.stringify({ email }),
           });
-          const responseData = await response.json(); // ✅ Parse JSON response
 
-          console.log(responseData,"-------------------------response---------------------------")
+          const data = await response.json();
+          console.log(data, "-------------------------response---------------------------");
+
           if (!response.ok) {
             console.error("Failed to sync Google login with backend");
             return false; // Prevent sign-in if API call fails
           }
+
+          // ✅ Store token and user info inside `account`
+          account.access_token = data.token;
+          account.user_data = data.user;
         } catch (error) {
           console.error("Error sending Google login to backend:", error);
           return false;
@@ -71,23 +73,24 @@ const authOptions: NextAuthOptions = {
       }
 
       return true; // Allow sign-in if no issues
-    },
-    async jwt({ token, user }) {
-      if (user && user.email) {
-        token.email = user.email;
+    }
+
+    ,
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token; // ✅ Store token safely
+        token.userData = account.user_data; // ✅ Store backend user info
       }
-      // Log token data for debugging purposes
-      console.log("JWT callback - token:", token);
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.email = token.email as string;
-      }
-      // Log session data for debugging purposes
-      console.log("Session callback - session:", session);
-      return session;
-    },
+      return {
+        ...session,
+        accessToken: token.accessToken as string, // ✅ Type assertion
+        user: token.userData as any, // ✅ Avoid type errors
+      };
+    }
+    ,
     async redirect({ baseUrl }) {
       return `/bullpost`;
     },

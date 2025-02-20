@@ -57,23 +57,35 @@ export const loginUser = createAsyncThunk(
       const statusCode = response.status;
       console.log(statusCode, "statusCode");
 
-      const data = await response.json();
+      const data = await response.json().catch(() => {
+        throw new Error("Invalid JSON response from server");
+      });
 
       if (!response.ok) {
         return thunkAPI.rejectWithValue({
-          message: data.message || "Login failed",
+          message: data?.message || "Login failed",
           status: statusCode,
         });
       }
 
-      // ✅ Save token & user data in `localStorage` on client-side
+      // ✅ Ensure data.token & data.user exist before storing them
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        try {
+          if (data.token && data.user) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+          } else {
+            console.warn("Login successful but missing token or user data");
+          }
+        } catch (e) {
+          console.error("Error storing login data in localStorage", e);
+        }
       }
 
       return { ...data, status: statusCode };
     } catch (error: any) {
+      console.error("Login error:", error);
+
       return thunkAPI.rejectWithValue({
         message: error.message || "Server error",
         status: 500,
@@ -81,6 +93,7 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+
 
 // ✅ Logout action (removes token & user from localStorage)
 export const logoutUser = (): ThunkAction<void, RootState, unknown, any> => (dispatch) => {
