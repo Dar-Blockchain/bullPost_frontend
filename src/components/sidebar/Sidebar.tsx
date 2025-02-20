@@ -13,7 +13,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
-  const [tabIndex, setTabIndex] = useState<number>(0);
+  const [tabIndex, setTabIndex] = useState(0); // ✅ Ensure state is initialized
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const { user } = useAuth(); // ✅ Get user data
   console.log(user, '------------------user-------------')
@@ -70,7 +70,6 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             fontSize: "14px",
             textTransform: "none",
             mb: 3,
-            mt: "-30px",
             "&:hover": { backgroundColor: "#FFA500" },
           }}
           onClick={handleOpen}
@@ -83,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       {isLoggedIn && (
         <Tabs
           value={tabIndex}
-          onChange={(e, newValue) => setTabIndex(newValue)}
+          onChange={(e, newValue) => setTabIndex(newValue)} // ✅ Updates state
           variant="fullWidth"
           sx={{
             width: "100%",
