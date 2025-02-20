@@ -158,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         >
           <Avatar src={`http://localhost:5000/${user?.user_image}`} sx={{ width: 40, height: 40 }} />
           <Box>
-            <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user.userName}</Typography>
+            <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user && user.userName}</Typography>
             <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
           </Box>
         </Box>

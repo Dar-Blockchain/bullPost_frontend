@@ -49,10 +49,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
     const { user } = useAuth(); // ✅ Get user data
 
     useEffect(() => {
-        if (user?.visitsCount > 1) {
+        if (user?.trafficCounter > 1) {
             handleClose(); // ✅ Close the modal if visitorsCount > 1
         }
-      }, [user?.visitsCount]); // ✅ Runs when visitorsCount changes
+      }, [user?.trafficCounter]); // ✅ Runs when visitorsCount changes
 
     const handleGetCode = async () => {
         if (!email) {
