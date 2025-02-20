@@ -22,7 +22,7 @@ const authOptions: NextAuthOptions = {
       clientSecret: process.env.TWITTER_CLIENT_SECRET!,
     }),
     // Uncomment and configure if you want to use Apple:
-    
+
     // AppleProvider({
     //   clientId: process.env.APPLE_CLIENT_ID!,
     //   clientSecret: {
@@ -38,18 +38,37 @@ const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Log the entire profile returned by the provider (for debugging)
       console.log("SignIn callback - profile:", profile);
       console.log("SignIn callback - account:", account);
       console.log("SignIn callback - user:", user);
-      
-      // For Google provider, ensure the email is attached
+
       if (account?.provider === "google") {
         const email = profile?.email ?? null;
         user.email = email;
-        // Optionally, add more processing here...
+
+        // Send user data to your backend API
+        try {
+          const response = await fetch("http://localhost:5000/auth/auth_Api", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email
+            }),
+          });
+          console.log(response,"-------------------------response---------------------------")
+          if (!response.ok) {
+            console.error("Failed to sync Google login with backend");
+            return false; // Prevent sign-in if API call fails
+          }
+        } catch (error) {
+          console.error("Error sending Google login to backend:", error);
+          return false;
+        }
       }
-      return true;
+
+      return true; // Allow sign-in if no issues
     },
     async jwt({ token, user }) {
       if (user && user.email) {
