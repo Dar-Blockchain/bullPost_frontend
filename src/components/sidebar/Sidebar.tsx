@@ -6,6 +6,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useAuth } from "@/hooks/useAuth";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 interface SidebarProps {
   handleOpen: () => void;
@@ -17,7 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const { user } = useAuth(); // ✅ Get user data
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Check if mobile view
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"), { defaultMatches: true });
 
   useEffect(() => {
     if (!isMobile) {
@@ -147,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       {isLoggedIn && (
         <Box
           sx={{
-            mt: "auto",
+            mt: "70px",
             display: "flex",
             alignItems: "center",
             gap: 2,
@@ -157,9 +158,18 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
           }}
         >
           <Avatar src={`http://localhost:5000/${user?.user_image}`} sx={{ width: 40, height: 40 }} />
-          <Box>
-            <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user && user.userName}</Typography>
-            <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box>
+              <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user && user.userName}</Typography>
+              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
+            </Box>
+
+            {/* Logout Icon */}
+            <IconButton
+              //  onClick={handleLogout} 
+              sx={{ color: "#fff" }}>
+              <LogoutIcon />
+            </IconButton>
           </Box>
         </Box>
       )}

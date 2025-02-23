@@ -1,36 +1,40 @@
-import React, { useState } from "react";
-import { Box, TextField } from "@mui/material";
+import React from "react";
+import { Box, TextField, useTheme, useMediaQuery } from "@mui/material";
 
-const Announcement: React.FC = () => {
-  const [announcement, setAnnouncement] = useState(
-    "We have now moved from our private Beta phase into public, onboarding new users and taking wider feedback.\n\nPlease continue to share bugs you find with the team!"
-  );
+interface AnnouncementProps {
+  text: string;
+  setText: (value: string) => void;
+}
+
+const Announcement: React.FC<AnnouncementProps> = ({ text, setText }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // ✅ Detect mobile screen
 
   return (
-    <Box
+    <TextField
+      fullWidth
+      multiline
+      rows={isMobile ? 6 : 4} // ✅ Increased rows for mobile
+      variant="outlined"
+      placeholder="Write your announcement..."
+      value={text}
+      onChange={(e) => setText(e.target.value)}
       sx={{
-        textAlign: "start",
-        width: { xs: "90%", sm: "80%", md: "50%" },
-        borderRadius: "10px",
+        mt: isMobile ? "10px" : "0",
+        width: isMobile ? "360px" : "50%", // ✅ Ensures it takes full width
+
+        textarea: {
+          color: "#fff",
+          textAlign: "center",
+          fontSize: "14px",
+        },
+        "& .MuiOutlinedInput-root": {
+          borderRadius: "10px",
+          "& fieldset": { borderColor: "#333" },
+          "&:hover fieldset": { borderColor: "#444" },
+        },
       }}
-    >
-      <TextField
-        fullWidth
-        multiline
-        rows={4} // ✅ Keep height similar to original text
-        variant="outlined"
-        value={announcement}
-        onChange={(e) => setAnnouncement(e.target.value)}
-        sx={{
-          textarea: { color: "#fff", textAlign: "center", fontSize: "14px" },
-          "& .MuiOutlinedInput-root": {
-            borderRadius: "10px",
-            "& fieldset": { borderColor: "#333" },
-            "&:hover fieldset": { borderColor: "#444" },
-          },
-        }}
-      />
-    </Box>
+    />
   );
 };
 

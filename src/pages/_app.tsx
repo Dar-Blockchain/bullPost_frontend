@@ -30,7 +30,7 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
   const { isLoggedIn } = useAuth(); // Get auth state from Redux
   const [isLoginOpen, setIsLoginOpen] = useState(false); // Control login modal
   const dispatch = useDispatch();
-  console.log(isLoggedIn,'-----------------isLoggedin------------------')
+  console.log(isLoggedIn, '-----------------isLoggedin------------------')
   const handleOpenLogin = () => {
     setIsLoginOpen(true);
   };
@@ -44,14 +44,12 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
       <CssBaseline />
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      <Box sx={{ display: "flex", minHeight: "100vh", width: '100%' }}> {/* ✅ Ensure full width */}
         {/* Sidebar */}
         <Sidebar handleOpen={handleOpenLogin} isLoggedIn={isLoggedIn} />
 
         {/* Main Content */}
-        <Box>
           <Component {...pageProps} router={router} /> {/* ✅ Pass Router Here */}
-        </Box>
       </Box>
 
       {/* Login Modal */}
@@ -61,7 +59,7 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
 }
 
 // ✅ Fix by correctly typing the `_app.tsx` function
-export default function MyApp({ Component, pageProps, router }: AppProps) {  
+export default function MyApp({ Component, pageProps, router }: AppProps) {
   return (
     <SessionProvider session={pageProps.session}> {/* ✅ Fix Here */}
       <Provider store={store}>
