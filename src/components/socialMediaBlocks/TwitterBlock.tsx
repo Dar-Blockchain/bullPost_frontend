@@ -70,40 +70,41 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit }) 
             >
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                     <TwitterIcon fontSize="large" sx={{ color: "#1DA1F2" }} />
+                    {user && (
 
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                            padding: "4px 10px",
-                            border: "1px solid #3C3C3C",
-                            borderRadius: "20px",
-                            backgroundColor: "#0F0F0F",
-                        }}
-                    >
-                        <Avatar
-                            src="/mnt/data/image.png"
-                            alt="Julio"
+                        <Box
                             sx={{
-                                width: 26,
-                                height: 26,
-                            }}
-                        />
-
-                        <Typography
-                            sx={{
-                                color: "#8F8F8F",
-                                fontSize: "14px",
-                                fontWeight: 500,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                                padding: "4px 10px",
+                                border: "1px solid #3C3C3C",
+                                borderRadius: "20px",
+                                backgroundColor: "#0F0F0F",
                             }}
                         >
-                            @Julio
-                        </Typography>
+                            <Avatar
+                                src="/mnt/data/image.png"
+                                alt="Julio"
+                                sx={{
+                                    width: 26,
+                                    height: 26,
+                                }}
+                            />
 
-                        <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
-                    </Box>
+                            <Typography
+                                sx={{
+                                    color: "#8F8F8F",
+                                    fontSize: "14px",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                @{user.userName}
+                            </Typography>
 
+                            <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
+                        </Box>
+                    )}
                     <Box sx={{ flexGrow: 1 }} />
                     <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
                 </Box>

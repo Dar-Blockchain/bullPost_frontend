@@ -119,46 +119,47 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit }
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                     {/* ✅ Box for Discord Icon + Profile */}
                     <TelegramIcon fontSize="large" sx={{ color: "#0088CC" }} />
+                    {user && (
 
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                            padding: "4px 10px",
-                            border: "1px solid #3C3C3C", // ✅ Border only around Discord + Profile
-                            borderRadius: "20px", // ✅ Rounded corners for smooth UI
-                            backgroundColor: "#0F0F0F", // ✅ Dark background to match screenshot
-
-                        }}
-                    >
-                        {/* ✅ Discord Icon Inside the Box */}
-
-                        {/* ✅ Profile Picture */}
-                        <Avatar
-                            src="/mnt/data/image.png" // Replace with actual user image
-                            alt="Julio"
+                        <Box
                             sx={{
-                                width: 26,
-                                height: 26,
-                            }}
-                        />
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                                padding: "4px 10px",
+                                border: "1px solid #3C3C3C", // ✅ Border only around Discord + Profile
+                                borderRadius: "20px", // ✅ Rounded corners for smooth UI
+                                backgroundColor: "#0F0F0F", // ✅ Dark background to match screenshot
 
-                        {/* ✅ Username */}
-                        <Typography
-                            sx={{
-                                color: "#8F8F8F",
-                                fontSize: "14px",
-                                fontWeight: 500,
                             }}
                         >
-                            @Julio
-                        </Typography>
+                            {/* ✅ Discord Icon Inside the Box */}
 
-                        {/* ✅ Dropdown Arrow */}
-                        <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
-                    </Box>
+                            {/* ✅ Profile Picture */}
+                            <Avatar
+                                src="/mnt/data/image.png" // Replace with actual user image
+                                alt="Julio"
+                                sx={{
+                                    width: 26,
+                                    height: 26,
+                                }}
+                            />
 
+                            {/* ✅ Username */}
+                            <Typography
+                                sx={{
+                                    color: "#8F8F8F",
+                                    fontSize: "14px",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                @{user.userName} {/* ✅ Display username  */}
+                            </Typography>
+
+                            {/* ✅ Dropdown Arrow */}
+                            <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
+                        </Box>
+                    )}
                     {/* ✅ Space between Profile and Switch */}
                     <Box sx={{ flexGrow: 1 }} />
 

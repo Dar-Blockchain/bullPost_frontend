@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const sidebarContent = (
     <Box
       sx={{
-        width: { xs: "100vw", md: 272 }, // Full width on mobile, fixed width on desktop
+        width: { xs: "100vw", md: 272 },
         backgroundColor: "#101010",
         display: "flex",
         flexDirection: "column",
@@ -69,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             fontWeight: 600,
             fontSize: "14px",
             textTransform: "none",
+            mt: "-20px",
             mb: 3,
             "&:hover": { backgroundColor: "#FFA500" },
           }}
@@ -148,7 +149,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       {isLoggedIn && (
         <Box
           sx={{
-            mt: "70px",
+            marginTop: "auto", // Pushes this Box to the bottom
             display: "flex",
             alignItems: "center",
             gap: 2,
@@ -165,11 +166,11 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             </Box>
 
             {/* Logout Icon */}
-            <IconButton
+            {/* <IconButton
               //  onClick={handleLogout} 
               sx={{ color: "#fff" }}>
               <LogoutIcon />
-            </IconButton>
+            </IconButton> */}
           </Box>
         </Box>
       )}

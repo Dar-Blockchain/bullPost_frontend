@@ -61,7 +61,7 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
 // ✅ Fix by correctly typing the `_app.tsx` function
 export default function MyApp({ Component, pageProps, router }: AppProps) {
   return (
-    <SessionProvider session={pageProps.session}> {/* ✅ Fix Here */}
+    <SessionProvider session={pageProps.session}> 
       <Provider store={store}>
         <MyAppComponent Component={Component} pageProps={pageProps} router={router} /> {/* ✅ Pass Router Here */}
       </Provider>
