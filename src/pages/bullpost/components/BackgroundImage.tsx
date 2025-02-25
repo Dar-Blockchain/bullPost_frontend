@@ -6,7 +6,7 @@ const BackgroundImage: React.FC = () => {
         <Box
             sx={{
                 position: "absolute",
-                top: 0,
+                top: -30,
                 left: 0,
                 width: "100%",
                 height: "30vh",

@@ -28,7 +28,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ submittedText, onSubmit }) => {
     };
 
     return (
-        <Box sx={{ display: "flex", mt: 10, gap: 2, backgroundColor: "#181818", p: 1, borderRadius: "30px", border: "1px solid #555" }}>
+        <Box sx={{ display: "flex", mt: 2, gap: 2, backgroundColor: "#181818", p: 1, borderRadius: "30px", border: "1px solid #555" }}>
             {/* ✅ Mood (Emoji Picker) Button */}
             <IconButton sx={{ color: "#aaa" }} onClick={handleOpenEmojiPicker}>
                 <MoodOutlinedIcon fontSize="small" />
