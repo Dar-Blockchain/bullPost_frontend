@@ -1,33 +1,82 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Avatar, Tabs, Tab, Drawer, IconButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Avatar,
+  Tabs,
+  Tab,
+  Drawer,
+  IconButton,
+} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useAuth } from "@/hooks/useAuth";
-import LogoutIcon from "@mui/icons-material/Logout";
+import dayjs from "dayjs";
+import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
 
 interface SidebarProps {
   handleOpen: () => void;
   isLoggedIn: boolean;
+  // postPrompt: string;
+  // setPostPrompt: (prompt: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
-  const [tabIndex, setTabIndex] = useState(0); // ✅ Ensure state is initialized
+interface Post {
+  _id: string;
+  prompt: string;
+  createdAt: string;
+  title: string;
+  status: string;
+}
+
+
+const Sidebar: React.FC<SidebarProps> = ({
+  handleOpen,
+  isLoggedIn,
+  // postPrompt,
+  // setPostPrompt,
+}) => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
-  const { user } = useAuth(); // ✅ Get user data
+  const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
+  const dispatch = useDispatch<AppDispatch>();
+  // Get posts and loading state from Redux slice
+  const { posts, loading } = useSelector((state: any) => state.posts);
+
   useEffect(() => {
     if (!isMobile) {
-      setMobileOpen(false); // Close sidebar if returning to desktop view
+      setMobileOpen(false);
     }
   }, [isMobile]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  // activeTab state controls which posts to fetch
+  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "posted">("drafts");
+
+  // Dispatch fetchPostsByStatus thunk whenever activeTab or isLoggedIn changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      dispatch(fetchPostsByStatus(activeTab));
+    }
+  }, [activeTab, isLoggedIn, dispatch]);
+
+  // Handle tab change
+  const handleTabChange = (
+    event: React.SyntheticEvent,
+    newValue: "drafts" | "scheduled" | "posted"
+  ) => {
+    setActiveTab(newValue);
   };
 
   const sidebarContent = (
@@ -44,11 +93,36 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         px: 2,
       }}
     >
-      {/* ✅ Header: Logo & Close Button (for mobile only) */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, width: "100%", mb: 3 }}>
-          <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 56, height: 52 }} />
-          <Typography variant="h6" sx={{ color: "#ff9c00", fontWeight: 600, fontSize: "16px" }}>
+      {/* Header: Logo & Close Button (mobile only) */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            px: 2,
+            width: "100%",
+            mb: 3,
+          }}
+        >
+          <Box
+            component="img"
+            src="/BP_Logo.png"
+            alt="BullPost Logo"
+            sx={{ width: 56, height: 52 }}
+          />
+          <Typography
+            variant="h6"
+            sx={{ color: "#ff9c00", fontWeight: 600, fontSize: "16px" }}
+          >
             BullPost
           </Typography>
         </Box>
@@ -57,7 +131,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </IconButton>
       </Box>
 
-      {/* ✅ New Post Button */}
+      {/* New Post Button */}
       {isLoggedIn && (
         <Button
           variant="contained"
@@ -79,18 +153,15 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Button>
       )}
 
-      {/* ✅ Tabs Section */}
+      {/* Tabs Section */}
       {isLoggedIn && (
         <Tabs
-          value={tabIndex}
-          onChange={(e, newValue) => setTabIndex(newValue)} // ✅ Updates state
+          value={activeTab}
+          onChange={handleTabChange}
           variant="fullWidth"
           sx={{
-            width: "100%",
-            mb: 2,
             "& .MuiTabs-indicator": { backgroundColor: "#FFB300" },
             "& .MuiTab-root": {
-              minWidth: 80, // Adjust as needed
               color: "#aaa",
               fontWeight: 500,
               textTransform: "none",
@@ -99,29 +170,62 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             },
           }}
         >
-          <Tab label="Drafts" />
-          <Tab label="Scheduled" />
-          <Tab label="Posted" />
+          <Tab label="Drafts" value="drafts" />
+          <Tab label="Scheduled" value="scheduled" />
+          <Tab label="Posted" value="posted" />
         </Tabs>
       )}
 
-      {/* ✅ Draft Posts Section */}
+      {/* Posts Section */}
       {isLoggedIn && (
         <Box sx={{ width: "100%" }}>
-          {[
-            { title: "This is text from this draft over a few lines to show an example of how this would look", date: "Tuesday 8 October" },
-            { title: "Another example with shorter text", date: "Monday 7 October" },
-            { title: "Another example with some text over two lines", date: "Tuesday 8 October" },
-          ].map((item, index) => (
-            <Box key={index} sx={{ borderBottom: "1px solid #222", pb: 2, mb: 2 }}>
-              <Typography sx={{ fontSize: "14px", color: "#fff", mb: 0.5 }}>{item.title}</Typography>
-              <Typography sx={{ fontSize: "12px", color: "#aaa" }}>Last edited {item.date}</Typography>
-            </Box>
-          ))}
+          {loading ? (
+            <Typography
+              sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}
+            >
+              Loading...
+            </Typography>
+          ) : posts && posts.length > 0 ? (
+            posts.map((item: Post, index: number) => (
+              <Box
+                key={index}
+                sx={{ borderBottom: "1px solid #222", pb: 2, mt: 2 }}
+                onClick={() => {
+                  // Update local state and dispatch the selected announcement
+                  // setPostPrompt(item.prompt);
+                  dispatch(setSelectedAnnouncement([item]));
+                }}
+              >
+                <Typography
+                  sx={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    fontSize: "14px",
+                    color: "#C0C0C0",
+                    mb: 0.5,
+                  }}
+                >
+                  {item.prompt}
+                </Typography>
+                <Typography sx={{ fontSize: "12px", color: "#A6A6A6" }}>
+                  Last edited {dayjs(item.createdAt).format("MMM DD, YYYY")}
+                </Typography>
+              </Box>
+            ))
+          ) : (
+            <Typography
+              sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}
+            >
+              No posts available.
+            </Typography>
+          )}
         </Box>
       )}
 
-      {/* ✅ Login Button (if not logged in) */}
+      {/* Login Button (if not logged in) */}
       {!isLoggedIn && (
         <Button
           variant="contained"
@@ -141,15 +245,11 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Button>
       )}
 
-      {/* 
-        ✅ User Info Block at the bottom (shown only if logged in).
-        "mt: 'auto'" pushes it to the bottom since we're using 
-        "display: flex; flex-direction: column; height: 100vh;" 
-      */}
+      {/* User Info Block at the bottom */}
       {isLoggedIn && (
         <Box
           sx={{
-            marginTop: "auto", // Pushes this Box to the bottom
+            marginTop: "auto",
             display: "flex",
             alignItems: "center",
             gap: 2,
@@ -158,19 +258,19 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             width: "100%",
           }}
         >
-          <Avatar src={`http://localhost:5000/${user?.user_image}`} sx={{ width: 40, height: 40 }} />
+          <Avatar
+            src={`http://localhost:5000/${user?.user_image}`}
+            sx={{ width: 40, height: 40 }}
+          />
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box>
-              <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user && user.userName}</Typography>
-              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
+              <Typography sx={{ color: "#fff", fontWeight: 600 }}>
+                {user && user.userName}
+              </Typography>
+              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>
+                Pro subscription
+              </Typography>
             </Box>
-
-            {/* Logout Icon */}
-            {/* <IconButton
-              //  onClick={handleLogout} 
-              sx={{ color: "#fff" }}>
-              <LogoutIcon />
-            </IconButton> */}
           </Box>
         </Box>
       )}
@@ -179,7 +279,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
 
   return (
     <>
-      {/* ✅ Mobile Top Bar (Hidden When Sidebar is Open) */}
+      {/* Mobile Top Bar */}
       {isMobile && !mobileOpen && (
         <Box
           sx={{
@@ -196,14 +296,16 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             zIndex: 1500,
           }}
         >
-          {/* ✅ Left Block (Logo) */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 40, height: 40 }} />
+            <Box
+              component="img"
+              src="/BP_Logo.png"
+              alt="BullPost Logo"
+              sx={{ width: 40, height: 40 }}
+            />
           </Box>
 
-          {/* ✅ Right Block (Buttons) */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            {/* New Post Button */}
             <IconButton
               sx={{
                 backgroundColor: "#FFB300",
@@ -216,10 +318,8 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
               <AddIcon />
             </IconButton>
 
-            {/* User Avatar (if logged in) */}
             {isLoggedIn && <Avatar src="/profile.jpg" sx={{ width: 32, height: 32 }} />}
 
-            {/* Hamburger Menu */}
             <IconButton onClick={handleDrawerToggle}>
               <MenuIcon sx={{ color: "#fff" }} />
             </IconButton>
@@ -227,10 +327,10 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Box>
       )}
 
-      {/* ✅ Desktop Sidebar (Always Visible) */}
+      {/* Desktop Sidebar */}
       {!isMobile && <Box sx={{ width: 272 }}>{sidebarContent}</Box>}
 
-      {/* ✅ Mobile Sidebar (Drawer) */}
+      {/* Mobile Sidebar (Drawer) */}
       <Drawer
         anchor="left"
         open={mobileOpen}
