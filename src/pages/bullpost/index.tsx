@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
-import BackgroundImage from "./components/BackgroundImage";
 import Announcement from "./components/Announcement";
 import Toolbar from "./components/Toolbar";
 
@@ -9,7 +8,6 @@ import BottomActionBar from "./components/BottomActionBar";
 import DiscordBlock from "@/components/socialMediaBlocks/DiscordBlock";
 import TwitterBlock from "@/components/socialMediaBlocks/TwitterBlock";
 import TelegramBlock from "@/components/socialMediaBlocks/TelegramBlock";
-import SocialMediaBlocks from "./components/SocialMediaBlocks";
 
 export default function BullPostPage() {
     const [open, setOpen] = useState(false);
@@ -18,6 +16,7 @@ export default function BullPostPage() {
     const [discordText, setDiscordText] = useState("");
     const [twitterText, setTwitterText] = useState("");
     const [telegramText, setTelegramText] = useState("");
+    const [_id, setId] = useState("");
 
     const handleClose = () => setOpen(false);
     const [text, setText] = useState(
@@ -39,10 +38,11 @@ export default function BullPostPage() {
 
             const data = await response.json();
             console.log("API Response:", data);
-            setSubmittedText(data.generatedText);
-            setDiscordText(data.generatedText.discord);
-            setTwitterText(data.generatedText.twitter);
-            setTelegramText(data.generatedText.telegram);
+            setSubmittedText(data.newPost);
+            setDiscordText(data.newPost.discord);
+            setTwitterText(data.newPost.twitter);
+            setTelegramText(data.newPost.telegram);
+            setId(data.newPost._id);
         } catch (error) {
             console.error("API Error:", error);
             alert("Failed to submit text!");
@@ -71,9 +71,9 @@ export default function BullPostPage() {
 
                             <Box sx={{ display: "flex", flexDirection: isMobile ? "column" : "row", width: "100%", mt: 4 }}>
 
-                                <TwitterBlock submittedText={twitterText} onSubmit={handleSubmit} />
-                                <TelegramBlock submittedText={telegramText} onSubmit={handleSubmit} />
-                                <DiscordBlock submittedText={discordText} onSubmit={handleSubmit} />
+                                <TwitterBlock submittedText={twitterText} _id={_id}  onSubmit={handleSubmit} />
+                                <TelegramBlock submittedText={telegramText} _id={_id}  onSubmit={handleSubmit} />
+                                <DiscordBlock submittedText={discordText} _id={_id}  onSubmit={handleSubmit} />
 
                             </Box>
                         </>
@@ -85,9 +85,9 @@ export default function BullPostPage() {
                                     <Toolbar submittedText={submittedText} onSubmit={handleSubmit} />
                                 </>
                             )}
-                            {activeSection === "discord" && <DiscordBlock submittedText={discordText} onSubmit={handleSubmit} />}
-                            {activeSection === "twitter" && <TwitterBlock submittedText={twitterText} onSubmit={handleSubmit} />}
-                            {activeSection === "telegram" && <TelegramBlock submittedText={telegramText} onSubmit={handleSubmit} />}
+                            {activeSection === "discord" && <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />}
+                            {activeSection === "twitter" && <TwitterBlock submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />}
+                            {activeSection === "telegram" && <TelegramBlock submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />}
                         </>
                     )}
                 </Box>

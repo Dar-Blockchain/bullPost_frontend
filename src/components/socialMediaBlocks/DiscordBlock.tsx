@@ -7,16 +7,17 @@ import Toolbar from "@/pages/bullpost/components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import dayjs, { Dayjs } from "dayjs";
-import { DateCalendar, DateTimePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { Dayjs } from "dayjs";
+import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 interface DiscordBlockProps {
     submittedText: string;
     onSubmit: () => void;
+    _id: string;
 }
 
-const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) => {
+const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [displayText, setDisplayText] = useState("");
@@ -30,16 +31,15 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) 
         }
 
         try {
-            const response = await fetch("http://localhost:5000/postDiscord/postNow", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/postNow/` + _id, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: submittedText }), // ✅ Send message
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                toast.success("Message sent successfully!", { position: "top-right" });
+                toast.success("post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`❌ Error: ${data.error || "Failed to send message."}`, { position: "top-right" });
             }
@@ -120,7 +120,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) 
             return handlePostNow(); // Fallback to immediate posting
         }
 
-        // Ensure selectedDate and selectedTime are not null before calling .hour()
         const combinedDateTime = selectedDate
             .set("hour", selectedTime.hour())
             .set("minute", selectedTime.minute())
@@ -133,7 +132,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) 
         };
 
         try {
-            const response = await fetch("http://localhost:5000/postDiscord/schedulePost", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestBody),

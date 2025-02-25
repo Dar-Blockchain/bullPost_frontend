@@ -57,9 +57,11 @@ import { useAuth } from "@/hooks/useAuth";
 interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
     onSubmit: () => void; // ✅ Accept API submit function
+    _id: string;
+
 }
 
-const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit }) => {
+const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Detect mobile view
     const [displayText, setDisplayText] = useState(""); // ✅ Store dynamically revealed text

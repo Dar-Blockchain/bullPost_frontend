@@ -10,9 +10,11 @@ import { useAuth } from "@/hooks/useAuth";
 interface TwitterBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
     onSubmit: () => void; // ✅ Accept API submit function
+    _id: string;
+
 }
 
-const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit }) => {
+const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [displayText, setDisplayText] = useState("");
