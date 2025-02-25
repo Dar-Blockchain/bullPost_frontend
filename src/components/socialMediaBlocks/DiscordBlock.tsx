@@ -80,7 +80,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
-    const [message, setMessage] = useState<string>("");
     const [timeZone, setTimeZone] = useState<string>("");
     const [buttonText, setButtonText] = useState<string>("Post Now"); // Default button text
 
