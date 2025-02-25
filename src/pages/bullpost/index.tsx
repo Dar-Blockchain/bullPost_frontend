@@ -74,6 +74,7 @@ export default function BullPostPage() {
                                 <TwitterBlock submittedText={twitterText} onSubmit={handleSubmit} />
                                 <TelegramBlock submittedText={telegramText} onSubmit={handleSubmit} />
                                 <DiscordBlock submittedText={discordText} onSubmit={handleSubmit} />
+
                             </Box>
                         </>
                     ) : (

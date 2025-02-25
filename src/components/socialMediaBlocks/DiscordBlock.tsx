@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, Switch, Avatar, IconButton, Button } from "@mui/material";
+import { Box, Typography, Switch, Avatar, IconButton, Button, Popover } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { ArrowDropDownCircleOutlined, AutoAwesome, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
@@ -7,6 +7,10 @@ import Toolbar from "@/pages/bullpost/components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import dayjs, { Dayjs } from "dayjs";
+import { DateCalendar, DateTimePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
 interface DiscordBlockProps {
     submittedText: string;
     onSubmit: () => void;
@@ -26,7 +30,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) 
         }
 
         try {
-            const response = await fetch("http://localhost:5000/messageDiscord/send-message", {
+            const response = await fetch("http://localhost:5000/postDiscord/postNow", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: submittedText }), // ✅ Send message
@@ -72,7 +76,79 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) 
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
     }, [submittedText]);
+    //////////////// here 
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+    const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
+    const [message, setMessage] = useState<string>("");
+    const [timeZone, setTimeZone] = useState<string>("");
+    const [buttonText, setButtonText] = useState<string>("Post Now"); // Default button text
 
+    useEffect(() => {
+        // Automatically detect user's time zone
+        setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }, []);
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDateChange = (newDate: Dayjs | null) => {
+        setSelectedDate(newDate);
+        updateButtonText(newDate, selectedTime);
+    };
+
+    const handleTimeChange = (newTime: Dayjs | null) => {
+        setSelectedTime(newTime);
+        updateButtonText(selectedDate, newTime);
+    };
+
+    const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
+        if (date && time) {
+            setButtonText(`${date.format("MMM DD, YYYY")} - ${time.format("HH:mm")}`);
+        } else {
+            setButtonText("Post Now");
+        }
+    };
+
+    const handleSchedulePost = async () => {
+        if (!selectedDate || !selectedTime) {
+            return handlePostNow(); // Fallback to immediate posting
+        }
+
+        // Ensure selectedDate and selectedTime are not null before calling .hour()
+        const combinedDateTime = selectedDate
+            .set("hour", selectedTime.hour())
+            .set("minute", selectedTime.minute())
+            .set("second", 0);
+
+        const requestBody = {
+            message: submittedText,
+            dateTime: combinedDateTime.toISOString(),
+            timeZone, // Auto-detected time zone
+        };
+
+        try {
+            const response = await fetch("http://localhost:5000/postDiscord/schedulePost", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (response.ok) {
+                alert("Post scheduled successfully!");
+            } else {
+                alert("Failed to schedule post.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error scheduling post.");
+        }
+    };
     return (
         <>
             <Box
@@ -220,26 +296,46 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit }) 
                                         backgroundColor: "#FFA500",
                                     },
                                 }}
+                                onClick={handleClick}
                             >
                                 <img src="/calendar_month.png" alt="Calendar" />
                             </Button>
 
-                            {/* Post Now Button */}
+                            {/* Calendar & Time Picker Popover */}
+                            <Popover
+                                open={Boolean(anchorEl)}
+                                anchorEl={anchorEl}
+                                onClose={handleClose}
+                                anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "left",
+                                }}
+                            >
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <Box sx={{ p: 2 }}>
+                                        <DateCalendar value={selectedDate} onChange={handleDateChange} />
+                                        <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
+                                    </Box>
+                                </LocalizationProvider>
+                            </Popover>
+
+                            {/* Display Selected Date & Time on Button */}
                             <Button
-                                onClick={handlePostNow}
+                                onClick={handleSchedulePost}
                                 sx={{
                                     backgroundColor: "#191919",
-                                    color: "#666",
+                                    color: "#FFF",
                                     borderRadius: "12px",
                                     height: 50,
                                     flex: 1,
-                                    width: "150px",
+                                    width: "200px",
+                                    textTransform: "none",
                                     "&:hover": {
                                         backgroundColor: "#222",
                                     },
                                 }}
                             >
-                                Post Now
+                                {buttonText}
                             </Button>
                         </Box>
                     </>
