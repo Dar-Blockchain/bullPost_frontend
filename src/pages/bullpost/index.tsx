@@ -8,6 +8,7 @@ import BottomActionBar from "./components/BottomActionBar";
 import DiscordBlock from "@/components/socialMediaBlocks/DiscordBlock";
 import TwitterBlock from "@/components/socialMediaBlocks/TwitterBlock";
 import TelegramBlock from "@/components/socialMediaBlocks/TelegramBlock";
+import BackgroundImage from "./components/BackgroundImage";
 
 export default function BullPostPage() {
     const [open, setOpen] = useState(false);
@@ -28,21 +29,30 @@ export default function BullPostPage() {
             alert("Please enter text before submitting!");
             return;
         }
-
+        const token = localStorage.getItem("token"); // Adjust based on how you store it
+        if (!token) {
+            alert("Unauthorized: Token not found!");
+            return;
+        }
+        console.log(token, 'here my token')
         try {
-            const response = await fetch("http://localhost:5000/generationGemini/generate", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generate`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "authorization": `Bearer ${token}` // Add the Bearer token here
+                },
                 body: JSON.stringify({ prompt: text }),
             });
 
             const data = await response.json();
-            console.log("API Response:", data);
-            setSubmittedText(data.newPost);
-            setDiscordText(data.newPost.discord);
-            setTwitterText(data.newPost.twitter);
-            setTelegramText(data.newPost.telegram);
-            setId(data.newPost._id);
+            if (data && data.newPost) {
+                setSubmittedText(data.newPost);
+                setDiscordText(data.newPost.discord);
+                setTwitterText(data.newPost.twitter);
+                setTelegramText(data.newPost.telegram);
+                setId(data.newPost._id);
+            }
         } catch (error) {
             console.error("API Error:", error);
             alert("Failed to submit text!");
@@ -50,13 +60,13 @@ export default function BullPostPage() {
     };
 
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+    const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const [activeSection, setActiveSection] = useState<"calendar" | "drafts" | "discord" | "twitter" | "telegram" | "post">("drafts");
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#111", color: "#fff", overflow: "hidden", width: "100%", flexGrow: 1 }}>
             {/* Background Image */}
-            {/* <BackgroundImage />
+            <BackgroundImage />
 
             {/* Content */}
             <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: isMobile ? "column" : "row", height: "100%" }}>
@@ -71,9 +81,9 @@ export default function BullPostPage() {
 
                             <Box sx={{ display: "flex", flexDirection: isMobile ? "column" : "row", width: "100%", mt: 4 }}>
 
-                                <TwitterBlock submittedText={twitterText} _id={_id}  onSubmit={handleSubmit} />
-                                <TelegramBlock submittedText={telegramText} _id={_id}  onSubmit={handleSubmit} />
-                                <DiscordBlock submittedText={discordText} _id={_id}  onSubmit={handleSubmit} />
+                                <TwitterBlock submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />
+                                <TelegramBlock submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />
+                                <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />
 
                             </Box>
                         </>

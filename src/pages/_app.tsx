@@ -29,7 +29,6 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
   const router = useRouter(); // ✅ Fix: Get router from Next.js
   const { isLoggedIn } = useAuth(); // Get auth state from Redux
   const [isLoginOpen, setIsLoginOpen] = useState(false); // Control login modal
-  const dispatch = useDispatch();
   console.log(isLoggedIn, '-----------------isLoggedin------------------')
   const handleOpenLogin = () => {
     setIsLoginOpen(true);

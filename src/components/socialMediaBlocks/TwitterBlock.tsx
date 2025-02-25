@@ -16,7 +16,7 @@ interface TwitterBlockProps {
 
 const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+    const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const [displayText, setDisplayText] = useState("");
     const indexRef = useRef(0);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);

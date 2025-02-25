@@ -18,7 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const { user } = useAuth(); // ✅ Get user data
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"), { defaultMatches: true });
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
   useEffect(() => {
     if (!isMobile) {

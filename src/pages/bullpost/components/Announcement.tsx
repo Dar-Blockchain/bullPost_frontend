@@ -8,7 +8,7 @@ interface AnnouncementProps {
 
 const Announcement: React.FC<AnnouncementProps> = ({ text, setText }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // ✅ Detect mobile screen
+    const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
   return (
     <TextField
