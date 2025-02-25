@@ -21,7 +21,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText }) => {
       onChange={(e) => setText(e.target.value)}
       sx={{
         mt: isMobile ? "10px" : "0",
-        width: isMobile ? "360px" : "50%", // ✅ Ensures it takes full width
+        width: isMobile ? "100%" : "50%", // ✅ Ensures it takes full width
 
         textarea: {
           color: "#fff",

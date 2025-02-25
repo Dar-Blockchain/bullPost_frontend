@@ -19,7 +19,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection }) =
         console.log(`Active section changed to: ${activeSection}`);
         setActiveSection(activeSection)
         // You can perform other side effects here when activeSection updates
-      }, [activeSection]);
+    }, [activeSection]);
     return (
         <Box
             sx={{
@@ -27,7 +27,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection }) =
                 bottom: 0,
                 left: 0,
                 width: "100%",
-                backgroundColor: "#161616", 
+                backgroundColor: "#161616",
                 borderTop: "1px solid #222",
                 py: 1,
                 display: "flex",
@@ -45,7 +45,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection }) =
                         backgroundColor: activeSection === "calendar" ? "#555" : "transparent",
                         borderRadius: "10px",
                     }}
-                    onClick={() => {}}
+                    onClick={() => { }}
                 >
                     <CalendarMonthIcon fontSize="medium" />
                 </IconButton>
@@ -57,7 +57,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection }) =
                     display: "flex",
                     alignItems: "center",
                     gap: 2,
-                    backgroundColor: "#171717", 
+                    backgroundColor: "#171717",
                     padding: "10px 15px",
                     borderRadius: "10px",
                     border: "1px solid #262626",
@@ -85,8 +85,11 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection }) =
                     }}
                     onClick={() => setActiveSection("discord")}
                 >
-                    <SportsEsportsIcon fontSize="medium" />
-                </IconButton>
+                    <img
+                        src="/discordBottom.png"
+                        alt="Discord"
+                        style={{ marginRight: "10px" }}
+                    />                </IconButton>
 
                 {/* Twitter (X) Icon */}
                 <IconButton
@@ -121,7 +124,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection }) =
                         backgroundColor: activeSection === "post" ? "#555" : "transparent",
                         borderRadius: "10px",
                     }}
-                    onClick={() => {}}
+                    onClick={() => { }}
                 >
                     <SendIcon fontSize="medium" />
                 </IconButton>

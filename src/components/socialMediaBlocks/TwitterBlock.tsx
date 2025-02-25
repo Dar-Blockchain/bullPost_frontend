@@ -56,6 +56,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             <Box
                 sx={{
                     flex: 1,
+                    backgroundImage: "url('/XColor.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "top", 
                     backgroundColor: "#111112",
                     p: 2,
                     border: "1px solid #3C3C3C",
@@ -63,8 +66,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    minHeight: isMobile ? "500px" : "330px", // ✅ Increased height in mobile
-                    maxHeight: isMobile ? "500px" : "330px", // ✅ Prevent excessive resizing
+                    minHeight: isMobile ? "500px" : "400px", // ✅ Increased height in mobile
+                    maxHeight: isMobile ? "500px" : "400px", // ✅ Prevent excessive resizing
                     flexShrink: 0,
                     width: "100%", // ✅ Ensure full width within its container
                     mt: isMobile ? "10px" : "0",
@@ -139,7 +142,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         {displayText || "No announcement yet..."}
                     </Typography>
                 </Box>
-                {!isMobile && user && (
+                {user && (
                     <>
                         <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
                             {/* Toolbar Section */}
@@ -176,50 +179,51 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
 
                         </Box>
                         {/* Bottom Button Section */}
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-                            {/* Yellow Calendar Button */}
-                            <Button
-                                sx={{
-                                    backgroundColor: "#FFB300",
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "12px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    minWidth: "auto",
-                                    "&:hover": {
-                                        backgroundColor: "#FFA500",
-                                    },
-                                }}
-                            >
-                                <img src="/calendar_month.png" alt="Calendar" />
-                            </Button>
+                        {!isMobile &&
 
-                            {/* Post Now Button */}
-                            <Button
-                                sx={{
-                                    backgroundColor: "#191919",
-                                    color: "#666",
-                                    borderRadius: "12px",
-                                    height: 50,
-                                    flex: 1,
-                                    width: "150px",
-                                    "&:hover": {
-                                        backgroundColor: "#222",
-                                    },
-                                }}
-                            >
-                                Post Now
-                            </Button>
-                        </Box>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                                {/* Yellow Calendar Button */}
+                                <Button
+                                    sx={{
+                                        backgroundColor: "#FFB300",
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: "12px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        minWidth: "auto",
+                                        "&:hover": {
+                                            backgroundColor: "#FFA500",
+                                        },
+                                    }}
+                                >
+                                    <img src="/calendar_month.png" alt="Calendar" />
+                                </Button>
+
+                                {/* Post Now Button */}
+                                <Button
+                                    sx={{
+                                        backgroundColor: "#191919",
+                                        color: "#666",
+                                        borderRadius: "12px",
+                                        height: 50,
+                                        flex: 1,
+                                        width: "150px",
+                                        "&:hover": {
+                                            backgroundColor: "#222",
+                                        },
+                                    }}
+                                >
+                                    Post Now
+                                </Button>
+                            </Box>
+                        }
                     </>
                 )}
             </Box>
 
-            {isMobile && <Toolbar submittedText={submittedText} onSubmit={onSubmit} />}
 
-            {/* ✅ DESKTOP VERSION: Adding the Block from Image */}
 
         </>
     );

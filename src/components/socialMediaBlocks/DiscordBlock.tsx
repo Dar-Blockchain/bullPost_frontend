@@ -154,13 +154,16 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     flex: 1,
                     backgroundColor: "#111112",
                     p: 2,
+                    backgroundImage: "url('/DiscordColor.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "top",
                     border: "1px solid #3C3C3C",
                     textAlign: "center",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    minHeight: isMobile ? "500px" : "330px", // ✅ Increased height in mobile
-                    maxHeight: isMobile ? "500px" : "330px", // ✅ Prevent excessive resizing
+                    minHeight: isMobile ? "500px" : "400px", // ✅ Increased height in mobile
+                    maxHeight: isMobile ? "500px" : "400px", // ✅ Prevent excessive resizing
                     flexShrink: 0,
                     width: "100%", // ✅ Ensure full width within its container
                     mt: isMobile ? "10px" : "0",
@@ -211,8 +214,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     <Box sx={{ flexGrow: 1 }} />
                     <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
                 </Box>
-                {/* <p> discord content post from Gemini Platform here
-                </p> */}
+
                 {/* ✅ Scrolling Box with Fixed Width & Preventing Expansion */}
                 <Box
                     sx={{
@@ -241,7 +243,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         {displayText || "No announcement yet..."}
                     </Typography>
                 </Box>
-                {!isMobile && user && (
+                {user && (
                     <>
                         <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
                             {/* Toolbar Section */}
@@ -278,69 +280,69 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
                         </Box>
                         {/* Bottom Button Section */}
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-                            {/* Yellow Calendar Button */}
-                            <Button
-                                sx={{
-                                    backgroundColor: "#FFB300",
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "12px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    minWidth: "auto",
-                                    "&:hover": {
-                                        backgroundColor: "#FFA500",
-                                    },
-                                }}
-                                onClick={handleClick}
-                            >
-                                <img src="/calendar_month.png" alt="Calendar" />
-                            </Button>
+                        {!isMobile &&
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                                {/* Yellow Calendar Button */}
+                                <Button
+                                    sx={{
+                                        backgroundColor: "#FFB300",
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: "12px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        minWidth: "auto",
+                                        "&:hover": {
+                                            backgroundColor: "#FFA500",
+                                        },
+                                    }}
+                                    onClick={handleClick}
+                                >
+                                    <img src="/calendar_month.png" alt="Calendar" />
+                                </Button>
 
-                            {/* Calendar & Time Picker Popover */}
-                            <Popover
-                                open={Boolean(anchorEl)}
-                                anchorEl={anchorEl}
-                                onClose={handleClose}
-                                anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "left",
-                                }}
-                            >
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <Box sx={{ p: 2 }}>
-                                        <DateCalendar value={selectedDate} onChange={handleDateChange} />
-                                        <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
-                                    </Box>
-                                </LocalizationProvider>
-                            </Popover>
+                                {/* Calendar & Time Picker Popover */}
+                                <Popover
+                                    open={Boolean(anchorEl)}
+                                    anchorEl={anchorEl}
+                                    onClose={handleClose}
+                                    anchorOrigin={{
+                                        vertical: "bottom",
+                                        horizontal: "left",
+                                    }}
+                                >
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <Box sx={{ p: 2 }}>
+                                            <DateCalendar value={selectedDate} onChange={handleDateChange} />
+                                            <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
+                                        </Box>
+                                    </LocalizationProvider>
+                                </Popover>
 
-                            {/* Display Selected Date & Time on Button */}
-                            <Button
-                                onClick={handleSchedulePost}
-                                sx={{
-                                    backgroundColor: "#191919",
-                                    color: "#FFF",
-                                    borderRadius: "12px",
-                                    height: 50,
-                                    flex: 1,
-                                    width: "200px",
-                                    textTransform: "none",
-                                    "&:hover": {
-                                        backgroundColor: "#222",
-                                    },
-                                }}
-                            >
-                                {buttonText}
-                            </Button>
-                        </Box>
+                                {/* Display Selected Date & Time on Button */}
+                                <Button
+                                    onClick={handleSchedulePost}
+                                    sx={{
+                                        backgroundColor: "#191919",
+                                        color: "#666",
+                                        borderRadius: "12px",
+                                        height: 50,
+                                        flex: 1,
+                                        width: "150px",
+                                        "&:hover": {
+                                            backgroundColor: "#222",
+                                        },
+                                    }}
+                                >
+                                    {buttonText}
+                                </Button>
+                            </Box>
+                        }
                     </>
                 )}
             </Box>
 
-            {isMobile && <Toolbar submittedText={submittedText} onSubmit={onSubmit} />}
         </>
     );
 };
