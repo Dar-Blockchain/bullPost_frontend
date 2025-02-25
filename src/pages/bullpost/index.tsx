@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import Announcement from "./components/Announcement";
 import Toolbar from "./components/Toolbar";
-
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import LoginModal from "@/components/loginModal/LoginModal";
 import BottomActionBar from "./components/BottomActionBar";
 import DiscordBlock from "@/components/socialMediaBlocks/DiscordBlock";
@@ -26,36 +27,51 @@ export default function BullPostPage() {
 
     const handleSubmit = async () => {
         if (!text.trim()) {
-            alert("Please enter text before submitting!");
+            toast.warn("⚠️ Please enter text before submitting!", { position: "top-right" });
             return;
         }
-        const token = localStorage.getItem("token"); // Adjust based on how you store it
+
+        const token = localStorage.getItem("token"); // Retrieve the token securely
         if (!token) {
-            alert("Unauthorized: Token not found!");
+            toast.error("🚫 Unauthorized: Token not found!", { position: "top-right" });
             return;
         }
-        console.log(token, 'here my token')
+
+        console.log(token, "here my token");
+
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "authorization": `Bearer ${token}` // Add the Bearer token here
+                    "Authorization": `Bearer ${token}`, // Corrected 'authorization' to 'Authorization'
                 },
                 body: JSON.stringify({ prompt: text }),
             });
 
             const data = await response.json();
+
+            if (response.status === 400) {
+                toast.error(`❌ Bad Request: ${data.error || "Invalid request data!"}`, { position: "top-right" });
+                return;
+            }
+
+            if (!response.ok) {
+                toast.error(`❌ Error: ${data.error || "Something went wrong!"}`, { position: "top-right" });
+                return;
+            }
+
             if (data && data.newPost) {
                 setSubmittedText(data.newPost);
                 setDiscordText(data.newPost.discord);
                 setTwitterText(data.newPost.twitter);
                 setTelegramText(data.newPost.telegram);
                 setId(data.newPost._id);
+                toast.success("✅ Post generated successfully!", { position: "top-right" });
             }
         } catch (error) {
             console.error("API Error:", error);
-            alert("Failed to submit text!");
+            toast.error("❌ Failed to submit text!", { position: "top-right" });
         }
     };
 
