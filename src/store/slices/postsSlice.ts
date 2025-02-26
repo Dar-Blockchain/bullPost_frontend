@@ -42,7 +42,6 @@ export const fetchPostsByStatus = createAsyncThunk(
                 },
                 body: JSON.stringify({ status }),
             });
-
             if (!response.ok) {
                 const data = await response.json();
                 return rejectWithValue(data.error || "Failed to fetch posts");
@@ -55,15 +54,45 @@ export const fetchPostsByStatus = createAsyncThunk(
     }
 );
 
+export const updatePost = createAsyncThunk(
+    'posts/updatePost',
+    async (
+        payload: { id: string; body: { telegram?: string; discord?: string; twitter?: string } },
+        { rejectWithValue }
+    ) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            return rejectWithValue("Unauthorized: Token not found");
+        }
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}posts/updatePost/${payload.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload.body),
+            });
+            if (!response.ok) {
+                const data = await response.json();
+                return rejectWithValue(data.error || "Failed to update post");
+            }
+            const data = await response.json();
+            // Make sure the API returns an object with a key "post" or the post directly
+            return data.post || data;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 const postsSlice = createSlice({
     name: 'posts',
     initialState,
     reducers: {
-        // Reducer to set selected announcements
         setSelectedAnnouncement(state, action: PayloadAction<Post[]>) {
             state.selectedAnnouncement = action.payload;
         },
-        // Optionally, a reducer to clear the selected announcements
         clearSelectedAnnouncement(state) {
             state.selectedAnnouncement = [];
         },
@@ -79,6 +108,29 @@ const postsSlice = createSlice({
                 state.posts = action.payload;
             })
             .addCase(fetchPostsByStatus.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(updatePost.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updatePost.fulfilled, (state, action: PayloadAction<Post>) => {
+                state.loading = false;
+                const updatedPost = action.payload;
+                if (!updatedPost || !updatedPost._id) {
+                    // Optionally, you might set an error state here.
+                    return;
+                }
+                state.posts = state.posts.map((post) =>
+                    post && post._id === updatedPost._id ? updatedPost : post
+                );
+                state.selectedAnnouncement = state.selectedAnnouncement.map((post) =>
+                    post && post._id === updatedPost._id ? updatedPost : post
+                );
+            })
+
+            .addCase(updatePost.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

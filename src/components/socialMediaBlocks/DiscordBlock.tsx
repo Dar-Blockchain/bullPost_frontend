@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, Switch, Avatar, IconButton, Button, Popover } from "@mui/material";
+import { Box, Typography, Switch, Avatar, IconButton, Button, Popover, TextField } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { ArrowDropDownCircleOutlined, AutoAwesome, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
+import { ArrowDropDownCircleOutlined, AutoAwesome, Done, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
 import Toolbar from "@/pages/bullpost/components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "react-toastify";
@@ -10,8 +10,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { Dayjs } from "dayjs";
 import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { updatePost } from "@/store/slices/postsSlice";
 
 interface DiscordBlockProps {
     submittedText: string;
@@ -29,6 +30,11 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     const selectedAnnouncement = useSelector(
         (state: RootState) => state.posts.selectedAnnouncement
     );
+    const dispatch = useDispatch<AppDispatch>();
+
+    // State for editing mode and editable text
+    const [isEditing, setIsEditing] = useState(false);
+    const [editableText, setEditableText] = useState("");
     const handlePostNow = async () => {
         if (!submittedText.trim()) {
             toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
@@ -80,7 +86,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
-    }, [submittedText]);
+    }, [submittedText,isEditing]);
     //////////////// here 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -150,6 +156,25 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         } catch (error) {
             console.error("Error:", error);
             alert("Error scheduling post.");
+        }
+    };
+    const handleUpdate = async () => {
+        try {
+            const updatedPost = await dispatch(
+                updatePost({
+                    id: selectedAnnouncement[0]._id,
+                    body: { discord: editableText }
+                })
+            ).unwrap();
+            // If updatedPost exists and has twitter, use it; otherwise, use editableText.
+            setDisplayText(updatedPost?.discord || editableText);
+            // Optionally, call parent's onSubmit with the new text.
+            //   onSubmit(editableText);
+        } catch (error) {
+            console.error("Error updating post:", error);
+            // Optionally, show an error toast.
+        } finally {
+            setIsEditing(false);
         }
     };
     return (
@@ -244,11 +269,29 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         },
                     }}
                 >
-                    <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                        {selectedAnnouncement && selectedAnnouncement.length > 0
-                            ? selectedAnnouncement[0].discord
-                            : (displayText || "No announcement yet...")}                    </Typography>
-                </Box>
+                    {isEditing ? (
+                        <TextField
+                            fullWidth
+                            multiline
+                            variant="outlined"
+                            value={editableText}
+                            onChange={(e) => setEditableText(e.target.value)}
+                            sx={{
+                                "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "10px",
+                                    "& fieldset": { borderColor: "#333" },
+                                    "&:hover fieldset": { borderColor: "#444" },
+                                },
+                            }}
+                        />
+                    ) : (
+                        <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                            {selectedAnnouncement && selectedAnnouncement.length > 0
+                                ? selectedAnnouncement[0].discord
+                                : (displayText || "No announcement yet...")}
+                        </Typography>
+                    )}             </Box>
                 {user && (
                     <>
                         <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
@@ -264,8 +307,24 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     width: "fit-content",
                                 }}
                             >
-                                <IconButton sx={{ color: "#8F8F8F" }}>
-                                    <Edit fontSize="small" />
+                                <IconButton
+                                    sx={{ color: "#8F8F8F" }}
+                                    onClick={() => {
+                                        if (!isEditing) {
+                                            // Enter edit mode: load current twitter text
+                                            const currentText =
+                                                selectedAnnouncement && selectedAnnouncement.length > 0
+                                                    ? selectedAnnouncement[0].discord
+                                                    : displayText;
+                                            setEditableText(currentText);
+                                            setIsEditing(true);
+                                        } else {
+                                            // When done is clicked, dispatch updatePost from slice
+                                            handleUpdate();
+                                        }
+                                    }}
+                                >
+                                    {isEditing ? <Done fontSize="small" /> : <Edit fontSize="small" />}
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <Mood fontSize="small" />

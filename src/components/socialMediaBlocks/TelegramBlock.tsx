@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, Switch, Avatar, Button, IconButton } from "@mui/material";
+import { Box, Typography, Switch, Avatar, Button, IconButton, TextField } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Toolbar from "@/pages/bullpost/components/Toolbar";
-import { ArrowDropDownCircleOutlined, AutoAwesome, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
+import { ArrowDropDownCircleOutlined, AutoAwesome, Done, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
 import TelegramIcon from "@mui/icons-material/Telegram";
 import { useAuth } from "@/hooks/useAuth";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { updatePost } from "@/store/slices/postsSlice";
 
 interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
@@ -26,6 +27,11 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
     const selectedAnnouncement = useSelector(
         (state: RootState) => state.posts.selectedAnnouncement
     );
+    const dispatch = useDispatch<AppDispatch>();
+
+    // State for editing mode and editable text
+    const [isEditing, setIsEditing] = useState(false);
+    const [editableText, setEditableText] = useState("");
     useEffect(() => {
         if (!submittedText) {
             setDisplayText(""); // Reset when there's no text
@@ -54,8 +60,26 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current); // ✅ Cleanup timeout
         };
-    }, [submittedText]); // ✅ Trigger effect when new text is submitted
-
+    }, [submittedText, isEditing]); // ✅ Trigger effect when new text is submitted
+    const handleUpdate = async () => {
+        try {
+            const updatedPost = await dispatch(
+                updatePost({
+                    id: selectedAnnouncement[0]._id,
+                    body: { telegram: editableText }
+                })
+            ).unwrap();
+            // If updatedPost exists and has telegram, use it; otherwise, use editableText.
+            setDisplayText(updatedPost?.telegram || editableText);
+            // Optionally, call parent's onSubmit with the new text.
+            //   onSubmit(editableText);
+        } catch (error) {
+            console.error("Error updating post:", error);
+            // Optionally, show an error toast.
+        } finally {
+            setIsEditing(false);
+        }
+    };
     return (
         <>
             <Box
@@ -153,10 +177,29 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                         },
                     }}
                 >
-                    <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                        {selectedAnnouncement && selectedAnnouncement.length > 0
-                            ? selectedAnnouncement[0].telegram
-                            : (displayText || "No announcement yet...")}                    </Typography>
+                    {isEditing ? (
+                        <TextField
+                            fullWidth
+                            multiline
+                            variant="outlined"
+                            value={editableText}
+                            onChange={(e) => setEditableText(e.target.value)}
+                            sx={{
+                                "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "10px",
+                                    "& fieldset": { borderColor: "#333" },
+                                    "&:hover fieldset": { borderColor: "#444" },
+                                },
+                            }}
+                        />
+                    ) : (
+                        <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                            {selectedAnnouncement && selectedAnnouncement.length > 0
+                                ? selectedAnnouncement[0].telegram
+                                : (displayText || "No announcement yet...")}
+                        </Typography>
+                    )}
                 </Box>
                 {user && (
                     <>
@@ -173,8 +216,24 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                     width: "fit-content",
                                 }}
                             >
-                                <IconButton sx={{ color: "#8F8F8F" }}>
-                                    <Edit fontSize="small" />
+                                <IconButton
+                                    sx={{ color: "#8F8F8F" }}
+                                    onClick={() => {
+                                        if (!isEditing) {
+                                            // Enter edit mode: load current twitter text
+                                            const currentText =
+                                                selectedAnnouncement && selectedAnnouncement.length > 0
+                                                    ? selectedAnnouncement[0].telegram
+                                                    : displayText;
+                                            setEditableText(currentText);
+                                            setIsEditing(true);
+                                        } else {
+                                            // When done is clicked, dispatch updatePost from slice
+                                            handleUpdate();
+                                        }
+                                    }}
+                                >
+                                    {isEditing ? <Done fontSize="small" /> : <Edit fontSize="small" />}
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <Mood fontSize="small" />
