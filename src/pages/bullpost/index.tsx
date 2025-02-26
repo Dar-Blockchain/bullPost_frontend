@@ -82,11 +82,12 @@ export default function BullPostPage() {
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#111", color: "#fff", overflow: "hidden", width: "100%", flexGrow: 1 }}>
             {/* Background Image */}
-            <BackgroundImage />
 
             {/* Content */}
             <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: isMobile ? "column" : "row", height: "100%" }}>
                 {/* Main Content */}
+                <BackgroundImage />
+
                 <Box sx={{ mt: 5, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", p: 2 }}>
 
                     {/* ✅ Desktop: Show All Components */}
