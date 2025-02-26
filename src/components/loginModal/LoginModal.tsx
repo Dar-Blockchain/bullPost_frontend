@@ -52,7 +52,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
         if (user?.trafficCounter > 1) {
             handleClose(); // ✅ Close the modal if visitorsCount > 1
         }
-      }, [user?.trafficCounter]); // ✅ Runs when visitorsCount changes
+    }, [user?.trafficCounter]); // ✅ Runs when visitorsCount changes
 
     const handleGetCode = async () => {
         if (!email) {
@@ -143,18 +143,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
             provider: "twitter",
         },
         {
-            label: "Continue with Google",
-            icon: <GoogleIcon />,
-            color: "#EA4335",
-            provider: "google",
-        },
-        {
-            label: "Continue with Apple",
-            icon: <AppleIcon />,
-            color: "#fff",
-            provider: "apple",
-        },
-        {
             label: "Continue with Discord",
             icon: (
                 <img
@@ -166,6 +154,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
             color: "#5865F2",
             provider: "discord",
         },
+        {
+            label: "Continue with Google",
+            icon: <GoogleIcon />,
+            color: "#EA4335",
+            provider: "google",
+        },
+        {
+            label: "Continue with Apple",
+            icon: <AppleIcon />,
+            color: "#fff",
+            provider: "apple",
+        },
+
         {
             label: "Connect Wallet",
             icon: <AccountBalanceWalletIcon />,
@@ -316,6 +317,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                         borderWidth: 1,
                                         borderRadius: "10px",
                                         padding: "11px 10px 10px 10px",
+                                        textTransform: "none", // disables uppercase transformation
                                         "&:hover": { backgroundColor: "#222" },
                                     }}
                                 >
