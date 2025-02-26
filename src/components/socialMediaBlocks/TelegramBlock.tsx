@@ -6,6 +6,8 @@ import Toolbar from "@/pages/bullpost/components/Toolbar";
 import { ArrowDropDownCircleOutlined, AutoAwesome, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
 import TelegramIcon from "@mui/icons-material/Telegram";
 import { useAuth } from "@/hooks/useAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
@@ -21,7 +23,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
     const indexRef = useRef(0); // ✅ Track character index
     const typingTimeout = useRef<NodeJS.Timeout | null>(null); // ✅ Keep track of timeout
     const { user } = useAuth(); // ✅ Get user data
-
+    const selectedAnnouncement = useSelector(
+        (state: RootState) => state.posts.selectedAnnouncement
+    );
     useEffect(() => {
         if (!submittedText) {
             setDisplayText(""); // Reset when there's no text
@@ -150,8 +154,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                     }}
                 >
                     <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                        {displayText || "No announcement yet..."}
-                    </Typography>
+                        {selectedAnnouncement && selectedAnnouncement.length > 0
+                            ? selectedAnnouncement[0].telegram
+                            : (displayText || "No announcement yet...")}                    </Typography>
                 </Box>
                 {user && (
                     <>

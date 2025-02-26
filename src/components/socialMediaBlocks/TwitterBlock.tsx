@@ -6,6 +6,8 @@ import { ArrowDropDownCircleOutlined, AutoAwesome, Edit, InsertPhoto, Mood, Repl
 import TwitterIcon from "@mui/icons-material/Twitter";
 import Toolbar from "@/pages/bullpost/components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface TwitterBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
@@ -21,6 +23,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const indexRef = useRef(0);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
     const { user } = useAuth(); // ✅ Get user data
+    const selectedAnnouncement = useSelector(
+        (state: RootState) => state.posts.selectedAnnouncement
+    );
 
     useEffect(() => {
         if (!submittedText) {
@@ -58,7 +63,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     flex: 1,
                     backgroundImage: "url('/XColor.png')",
                     backgroundSize: "cover",
-                    backgroundPosition: "top", 
+                    backgroundPosition: "top",
                     backgroundColor: "#111112",
                     p: 2,
                     border: "1px solid #3C3C3C",
@@ -139,7 +144,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     }}
                 >
                     <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                        {displayText || "No announcement yet..."}
+                        {selectedAnnouncement && selectedAnnouncement.length > 0
+                            ? selectedAnnouncement[0].twitter
+                            : (displayText || "No announcement yet...")}
                     </Typography>
                 </Box>
                 {user && (

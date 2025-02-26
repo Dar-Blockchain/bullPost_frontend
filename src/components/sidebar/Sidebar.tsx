@@ -29,10 +29,13 @@ interface SidebarProps {
 
 interface Post {
   _id: string;
-  prompt: string;
-  createdAt: string;
   title: string;
+  prompt: string;
   status: string;
+  telegram: string;
+  createdAt: string;
+  twitter: string;
+  discord: string;
 }
 
 

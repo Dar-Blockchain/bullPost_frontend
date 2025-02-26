@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { Dayjs } from "dayjs";
 import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface DiscordBlockProps {
     submittedText: string;
@@ -24,6 +26,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     const indexRef = useRef(0);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
     const { user } = useAuth(); // ✅ Get user data
+    const selectedAnnouncement = useSelector(
+        (state: RootState) => state.posts.selectedAnnouncement
+    );
     const handlePostNow = async () => {
         if (!submittedText.trim()) {
             toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
@@ -240,8 +245,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     }}
                 >
                     <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                        {displayText || "No announcement yet..."}
-                    </Typography>
+                        {selectedAnnouncement && selectedAnnouncement.length > 0
+                            ? selectedAnnouncement[0].discord
+                            : (displayText || "No announcement yet...")}                    </Typography>
                 </Box>
                 {user && (
                     <>
