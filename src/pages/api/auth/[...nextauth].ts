@@ -42,7 +42,7 @@ const authOptions: NextAuthOptions = {
       console.log("SignIn callback - account:", account);
       console.log("SignIn callback - user:", user);
 
-      if (account?.provider === "google") {
+      if (account?.provider === "google" || account?.provider === "discord") {
         const email = profile?.email ?? null;
         user.email = email;
 
