@@ -31,18 +31,20 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         (state: RootState) => state.posts.selectedAnnouncement
     );
     const dispatch = useDispatch<AppDispatch>();
-
+    const postId = selectedAnnouncement && selectedAnnouncement.length > 0
+        ? selectedAnnouncement[0]._id
+        : _id;
     // State for editing mode and editable text
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
     const handlePostNow = async () => {
-        if (!submittedText.trim()) {
+        if (!submittedText.trim() && (!selectedAnnouncement || selectedAnnouncement.length === 0)) {
             toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
             return;
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/postNow/` + _id, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/postNow/` + postId, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
             });
@@ -50,7 +52,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             const data = await response.json();
 
             if (response.ok) {
-                toast.success("post sent successfully!", { position: "top-right" });
+                toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`❌ Error: ${data.error || "Failed to send message."}`, { position: "top-right" });
             }
@@ -86,7 +88,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
-    }, [submittedText,isEditing]);
+    }, [submittedText, isEditing]);
     //////////////// here 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -136,47 +138,70 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             .set("second", 0);
 
         const requestBody = {
-            message: submittedText,
+            // message: selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0].discord ? selectedAnnouncement[0].discord : submittedText,
             dateTime: combinedDateTime.toISOString(),
             timeZone, // Auto-detected time zone
         };
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost/` + postId, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestBody),
             });
 
             if (response.ok) {
-                alert("Post scheduled successfully!");
+                toast.success("Post scheduled successfully!");
             } else {
-                alert("Failed to schedule post.");
+                toast.error("Failed to schedule post.");
             }
         } catch (error) {
             console.error("Error:", error);
             alert("Error scheduling post.");
         }
     };
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
     const handleUpdate = async () => {
         try {
+            const formData = new FormData();
+            formData.append("discord", editableText);
+            if (selectedImage) {
+                formData.append("image_discord", selectedImage); // "image" is the key expected by your API
+            }
             const updatedPost = await dispatch(
                 updatePost({
                     id: selectedAnnouncement[0]._id,
-                    body: { discord: editableText }
+                    body: formData,
                 })
             ).unwrap();
-            // If updatedPost exists and has twitter, use it; otherwise, use editableText.
+            // Use the updated post's twitter field if available, otherwise fall back to editableText
             setDisplayText(updatedPost?.discord || editableText);
-            // Optionally, call parent's onSubmit with the new text.
-            //   onSubmit(editableText);
         } catch (error) {
             console.error("Error updating post:", error);
-            // Optionally, show an error toast.
         } finally {
             setIsEditing(false);
         }
     };
+    // const handleUpdate = async () => {
+    //     try {
+    //         const updatedPost = await dispatch(
+    //             updatePost({
+    //                 id: selectedAnnouncement[0]._id,
+    //                 body: { discord: editableText }
+    //             })
+    //         ).unwrap();
+    //         // If updatedPost exists and has twitter, use it; otherwise, use editableText.
+    //         setDisplayText(updatedPost?.discord || editableText);
+    //         // Optionally, call parent's onSubmit with the new text.
+    //         //   onSubmit(editableText);
+    //     } catch (error) {
+    //         console.error("Error updating post:", error);
+    //         // Optionally, show an error toast.
+    //     } finally {
+    //         setIsEditing(false);
+    //     }
+    // };
     return (
         <>
             <Box
@@ -251,6 +276,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         textAlign: "justify",
                         width: "100%",
                         padding: 2,
+                        mt: 2,
                         flexGrow: 1,
                         maxHeight: isMobile ? "400px" : "200px",
                         overflowY: "auto",
@@ -270,28 +296,58 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     }}
                 >
                     {isEditing ? (
-                        <TextField
-                            fullWidth
-                            multiline
-                            variant="outlined"
-                            value={editableText}
-                            onChange={(e) => setEditableText(e.target.value)}
-                            sx={{
-                                "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                    "& fieldset": { borderColor: "#333" },
-                                    "&:hover fieldset": { borderColor: "#444" },
-                                },
-                            }}
-                        />
+                        <Box>
+
+                            <TextField
+                                fullWidth
+                                multiline
+                                variant="outlined"
+                                value={editableText}
+                                onChange={(e) => setEditableText(e.target.value)}
+                                sx={{
+                                    "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: "10px",
+                                        "& fieldset": { borderColor: "#333" },
+                                        "&:hover fieldset": { borderColor: "#444" },
+                                    },
+                                }}
+                            />
+                            {selectedImage && (
+                                <Box mb={2} textAlign="center">
+                                    <img
+                                        src={URL.createObjectURL(selectedImage)}
+                                        alt="Image preview"
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "10px",
+                                            maxHeight: "200px",
+                                            objectFit: "contain",
+                                            borderRadius: "4px",
+                                        }}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
+
                     ) : (
-                        <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                            {selectedAnnouncement && selectedAnnouncement.length > 0
-                                ? selectedAnnouncement[0].discord
-                                : (displayText || "No announcement yet...")}
-                        </Typography>
-                    )}             </Box>
+                        <>
+                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_discord &&
+
+                                <img
+                                    src={selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0]?.image_discord : "/mnt/data/image.png"}
+                                    alt="Preview"
+                                    style={{ maxWidth: "100%", display: "block", margin: "0 auto", marginBottom: "10px" }}
+                                />
+                            }
+                            <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                {selectedAnnouncement && selectedAnnouncement.length > 0
+                                    ? selectedAnnouncement[0].discord
+                                    : (displayText || "No announcement yet...")}
+                            </Typography>
+                        </>
+                    )}
+                </Box>
                 {user && (
                     <>
                         <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
@@ -329,8 +385,18 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <Mood fontSize="small" />
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }}>
+                                <IconButton component="label" sx={{ color: "#8F8F8F" }}>
                                     <InsertPhoto fontSize="small" />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        hidden
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                setSelectedImage(e.target.files[0]);
+                                            }
+                                        }}
+                                    />
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <AutoAwesome fontSize="small" />

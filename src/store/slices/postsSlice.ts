@@ -9,6 +9,10 @@ interface Post {
     createdAt: string;
     twitter: string;
     discord: string;
+    image_discord: string;
+    image_twitter: string;
+    image_telegram: string;
+
     // Add other properties as needed
 }
 
@@ -57,7 +61,10 @@ export const fetchPostsByStatus = createAsyncThunk(
 export const updatePost = createAsyncThunk(
     'posts/updatePost',
     async (
-        payload: { id: string; body: { telegram?: string; discord?: string; twitter?: string } },
+        payload: {
+            id: string;
+            body: FormData | { telegram?: string; discord?: string; twitter?: string };
+        },
         { rejectWithValue }
     ) => {
         const token = localStorage.getItem("token");
@@ -65,26 +72,39 @@ export const updatePost = createAsyncThunk(
             return rejectWithValue("Unauthorized: Token not found");
         }
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}posts/updatePost/${payload.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload.body),
-            });
+            let requestBody: BodyInit;
+            if (payload.body instanceof FormData) {
+                requestBody = payload.body;
+            } else {
+                requestBody = JSON.stringify(payload.body);
+            }
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}posts/updatePost/${payload.id}`,
+                {
+                    method: "PUT",
+                    headers: payload.body instanceof FormData
+                        ? { "Authorization": `Bearer ${token}` }
+                        : {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`,
+                        },
+                    body: requestBody,
+                }
+            );
+
             if (!response.ok) {
                 const data = await response.json();
                 return rejectWithValue(data.error || "Failed to update post");
             }
             const data = await response.json();
-            // Make sure the API returns an object with a key "post" or the post directly
             return data.post || data;
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
     }
 );
+
 
 const postsSlice = createSlice({
     name: 'posts',

@@ -80,7 +80,7 @@ export default function BullPostPage() {
     const [activeSection, setActiveSection] = useState<"calendar" | "drafts" | "discord" | "twitter" | "telegram" | "post">("drafts");
 
     return (
-        <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#111", color: "#fff", overflow: "hidden", width: "100%", flexGrow: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#111112", color: "#fff", overflow: "hidden", width: "100%", flexGrow: 1 }}>
             {/* Background Image */}
 
             {/* Content */}

@@ -73,26 +73,30 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
     }, [submittedText, isEditing]);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
     const handleUpdate = async () => {
         try {
+            const formData = new FormData();
+            formData.append("twitter", editableText);
+            if (selectedImage) {
+                formData.append("image_twitter", selectedImage); // "image" is the key expected by your API
+            }
             const updatedPost = await dispatch(
                 updatePost({
                     id: selectedAnnouncement[0]._id,
-                    body: { twitter: editableText }
+                    body: formData,
                 })
             ).unwrap();
-            // If updatedPost exists and has twitter, use it; otherwise, use editableText.
+            // Use the updated post's twitter field if available, otherwise fall back to editableText
             setDisplayText(updatedPost?.twitter || editableText);
-            // Optionally, call parent's onSubmit with the new text.
-            //   onSubmit(editableText);
         } catch (error) {
             console.error("Error updating post:", error);
-            // Optionally, show an error toast.
         } finally {
             setIsEditing(false);
         }
     };
+
     return (
         <>
             <Box
@@ -161,27 +165,55 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     }}
                 >
                     {isEditing ? (
-                        <TextField
-                            fullWidth
-                            multiline
-                            variant="outlined"
-                            value={editableText}
-                            onChange={(e) => setEditableText(e.target.value)}
-                            sx={{
-                                "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                    "& fieldset": { borderColor: "#333" },
-                                    "&:hover fieldset": { borderColor: "#444" },
-                                },
-                            }}
-                        />
+                        <Box>
+
+                            <TextField
+                                fullWidth
+                                multiline
+                                variant="outlined"
+                                value={editableText}
+                                onChange={(e) => setEditableText(e.target.value)}
+                                sx={{
+                                    "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: "10px",
+                                        "& fieldset": { borderColor: "#333" },
+                                        "&:hover fieldset": { borderColor: "#444" },
+                                    },
+                                }}
+                            />
+                            {selectedImage && (
+                                <Box mb={2} textAlign="center">
+                                    <img
+                                        src={URL.createObjectURL(selectedImage)}
+                                        alt="Image preview"
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "10px",
+                                            maxHeight: "200px",
+                                            objectFit: "contain",
+                                            borderRadius: "4px",
+                                        }}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
+
                     ) : (
-                        <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                            {selectedAnnouncement && selectedAnnouncement.length > 0
-                                ? selectedAnnouncement[0].twitter
-                                : (displayText || "No announcement yet...")}
-                        </Typography>
+                        <>
+                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter &&
+                                <img
+                                    src={selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0]?.image_twitter : "/mnt/data/image.png"}
+                                    alt="Preview"
+                                    style={{ maxWidth: "100%", display: "block", margin: "0 auto", marginBottom: "10px" }}
+                                />
+                            }
+                            <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                {selectedAnnouncement && selectedAnnouncement.length > 0
+                                    ? selectedAnnouncement[0].twitter
+                                    : (displayText || "No announcement yet...")}
+                            </Typography>
+                        </>
                     )}
                 </Box>
 
@@ -222,8 +254,18 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <Mood fontSize="small" />
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }}>
+                                <IconButton component="label" sx={{ color: "#8F8F8F" }}>
                                     <InsertPhoto fontSize="small" />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        hidden
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                setSelectedImage(e.target.files[0]);
+                                            }
+                                        }}
+                                    />
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <AutoAwesome fontSize="small" />

@@ -36,6 +36,9 @@ interface Post {
   createdAt: string;
   twitter: string;
   discord: string;
+  image_discord: string;
+  image_twitter: string;
+  image_telegram: string;
 }
 
 
