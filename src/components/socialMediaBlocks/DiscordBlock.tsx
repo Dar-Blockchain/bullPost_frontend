@@ -12,7 +12,7 @@ import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pick
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 
 interface DiscordBlockProps {
     submittedText: string;
@@ -52,6 +52,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             const data = await response.json();
 
             if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`❌ Error: ${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -151,6 +153,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             });
 
             if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -469,7 +473,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         width: "150px",
                                         "&:hover": {
                                             backgroundColor: "#FFA500",
-                                            color:"black"
+                                            color: "black"
                                         },
                                     }}
                                 >

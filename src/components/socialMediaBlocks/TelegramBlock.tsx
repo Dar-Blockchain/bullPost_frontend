@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, Switch, Avatar, Button, IconButton, TextField } from "@mui/material";
+import { Box, Typography, Switch, Avatar, Button, IconButton, TextField, Popover } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import Toolbar from "@/pages/bullpost/components/Toolbar";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { ArrowDropDownCircleOutlined, AutoAwesome, Done, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
 import TelegramIcon from "@mui/icons-material/Telegram";
 import { useAuth } from "@/hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import { Dayjs } from "dayjs";
+import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
@@ -28,7 +32,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         (state: RootState) => state.posts.selectedAnnouncement
     );
     const dispatch = useDispatch<AppDispatch>();
-
+    const postId = selectedAnnouncement && selectedAnnouncement.length > 0
+        ? selectedAnnouncement[0]._id
+        : _id;
     // State for editing mode and editable text
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
@@ -72,11 +78,13 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             }
             const updatedPost = await dispatch(
                 updatePost({
-                    id: selectedAnnouncement[0]._id,
+                    id: postId,
                     body: formData,
                 })
             ).unwrap();
             // Use the updated post's twitter field if available, otherwise fall back to editableText
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            // Optionally, update your local display state if needed
             setDisplayText(updatedPost?.telegram || editableText);
         } catch (error) {
             console.error("Error updating post:", error);
@@ -84,25 +92,103 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             setIsEditing(false);
         }
     };
-    // const handleUpdate = async () => {
-    //     try {
-    //         const updatedPost = await dispatch(
-    //             updatePost({
-    //                 id: selectedAnnouncement[0]._id,
-    //                 body: { telegram: editableText }
-    //             })
-    //         ).unwrap();
-    //         // If updatedPost exists and has telegram, use it; otherwise, use editableText.
-    //         setDisplayText(updatedPost?.telegram || editableText);
-    //         // Optionally, call parent's onSubmit with the new text.
-    //         //   onSubmit(editableText);
-    //     } catch (error) {
-    //         console.error("Error updating post:", error);
-    //         // Optionally, show an error toast.
-    //     } finally {
-    //         setIsEditing(false);
-    //     }
-    // };
+    const handlePostNow = async () => {
+        if (!submittedText.trim() && (!selectedAnnouncement || selectedAnnouncement.length === 0)) {
+            toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
+            return;
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/postNow/` + postId, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
+                toast.success("Post sent successfully!", { position: "top-right" });
+            } else {
+                toast.error(`❌ Error: ${data.error || "Failed to send message."}`, { position: "top-right" });
+            }
+        } catch (error) {
+            console.error("Error sending message to Discord:", error);
+            toast.error("❌ Failed to send message!", { position: "top-right" });
+        }
+    };
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+    const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
+    const [timeZone, setTimeZone] = useState<string>("");
+    const [buttonText, setButtonText] = useState<string>("Post Now"); // Default button text
+
+    useEffect(() => {
+        // Automatically detect user's time zone
+        setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }, []);
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDateChange = (newDate: Dayjs | null) => {
+        setSelectedDate(newDate);
+        updateButtonText(newDate, selectedTime);
+    };
+
+    const handleTimeChange = (newTime: Dayjs | null) => {
+        setSelectedTime(newTime);
+        updateButtonText(selectedDate, newTime);
+    };
+
+    const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
+        if (date && time) {
+            setButtonText(`${date.format("MMM DD, YYYY")} - ${time.format("HH:mm")}`);
+        } else {
+            setButtonText("Post Now");
+        }
+    };
+    const handleSchedulePost = async () => {
+        if (!selectedDate || !selectedTime) {
+            return handlePostNow(); // Fallback to immediate posting
+        }
+
+        const combinedDateTime = selectedDate
+            .set("hour", selectedTime.hour())
+            .set("minute", selectedTime.minute())
+            .set("second", 0);
+
+        const requestBody = {
+            // message: selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0].discord ? selectedAnnouncement[0].discord : submittedText,
+            dateTime: combinedDateTime.toISOString(),
+            timeZone, // Auto-detected time zone
+        };
+        // http://localhost:5000/postTelegram/schedulePostTelegram/67c078ef42a08a64165bfa6c
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/schedulePostTelegram/` + postId, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
+                toast.success("Post scheduled successfully!");
+            } else {
+                toast.error("Failed to schedule post.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error scheduling post.");
+        }
+    };
     return (
         <>
             <Box
@@ -328,12 +414,32 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                             backgroundColor: "#FFA500",
                                         },
                                     }}
+                                    onClick={handleClick}
                                 >
                                     <img src="/calendar_month.png" alt="Calendar" />
                                 </Button>
 
-                                {/* Post Now Button */}
+                                {/* Calendar & Time Picker Popover */}
+                                <Popover
+                                    open={Boolean(anchorEl)}
+                                    anchorEl={anchorEl}
+                                    onClose={handleClose}
+                                    anchorOrigin={{
+                                        vertical: "bottom",
+                                        horizontal: "left",
+                                    }}
+                                >
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <Box sx={{ p: 2 }}>
+                                            <DateCalendar value={selectedDate} onChange={handleDateChange} />
+                                            <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
+                                        </Box>
+                                    </LocalizationProvider>
+                                </Popover>
+
+                                {/* Display Selected Date & Time on Button */}
                                 <Button
+                                    onClick={handleSchedulePost}
                                     sx={{
                                         backgroundColor: "#191919",
                                         color: "#666",
@@ -342,11 +448,12 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                         flex: 1,
                                         width: "150px",
                                         "&:hover": {
-                                            backgroundColor: "#222",
+                                            backgroundColor: "#FFA500",
+                                            color: "black"
                                         },
                                     }}
                                 >
-                                    Post Now
+                                    {buttonText}
                                 </Button>
                             </Box>
                         }
