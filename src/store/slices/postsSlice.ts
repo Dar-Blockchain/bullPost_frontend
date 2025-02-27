@@ -12,7 +12,6 @@ interface Post {
     image_discord: string;
     image_twitter: string;
     image_telegram: string;
-
     // Add other properties as needed
 }
 
@@ -38,14 +37,17 @@ export const fetchPostsByStatus = createAsyncThunk(
             return rejectWithValue("Unauthorized: Token not found");
         }
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}posts/postsByStatus`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({ status }),
-            });
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}posts/postsByStatus`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ status }),
+                }
+            );
             if (!response.ok) {
                 const data = await response.json();
                 return rejectWithValue(data.error || "Failed to fetch posts");
@@ -78,7 +80,6 @@ export const updatePost = createAsyncThunk(
             } else {
                 requestBody = JSON.stringify(payload.body);
             }
-
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}posts/updatePost/${payload.id}`,
                 {
@@ -86,13 +87,12 @@ export const updatePost = createAsyncThunk(
                     headers: payload.body instanceof FormData
                         ? { "Authorization": `Bearer ${token}` }
                         : {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
-                        },
+                              "Content-Type": "application/json",
+                              "Authorization": `Bearer ${token}`,
+                          },
                     body: requestBody,
                 }
             );
-
             if (!response.ok) {
                 const data = await response.json();
                 return rejectWithValue(data.error || "Failed to update post");
@@ -105,6 +105,45 @@ export const updatePost = createAsyncThunk(
     }
 );
 
+// New regeneratePost thunk
+export const regeneratePost = createAsyncThunk(
+    'posts/regeneratePost',
+    async (
+        payload: { platform: string; postId: string },
+        { rejectWithValue }
+    ) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            return rejectWithValue("Unauthorized: Token not found");
+        }
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/regenerate`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                }
+            );
+            if (!response.ok) {
+                const data = await response.json();
+                return rejectWithValue(data.error || "Failed to regenerate post");
+            }
+            const data = await response.json();
+            // Map the returned "content" to the "discord" property.
+            return {
+                _id: data.postId,
+                discord: data.content,
+                platform: data.platform,
+            } as Partial<Post>;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
 
 const postsSlice = createSlice({
     name: 'posts',
@@ -119,6 +158,7 @@ const postsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // fetchPostsByStatus cases
             .addCase(fetchPostsByStatus.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -131,6 +171,7 @@ const postsSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             })
+            // updatePost cases
             .addCase(updatePost.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -138,10 +179,7 @@ const postsSlice = createSlice({
             .addCase(updatePost.fulfilled, (state, action: PayloadAction<Post>) => {
                 state.loading = false;
                 const updatedPost = action.payload;
-                if (!updatedPost || !updatedPost._id) {
-                    // Optionally, you might set an error state here.
-                    return;
-                }
+                if (!updatedPost || !updatedPost._id) return;
                 state.posts = state.posts.map((post) =>
                     post && post._id === updatedPost._id ? updatedPost : post
                 );
@@ -149,8 +187,30 @@ const postsSlice = createSlice({
                     post && post._id === updatedPost._id ? updatedPost : post
                 );
             })
-
             .addCase(updatePost.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            // regeneratePost cases
+            .addCase(regeneratePost.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(regeneratePost.fulfilled, (state, action: PayloadAction<Partial<Post>>) => {
+                state.loading = false;
+                const updatedPost = action.payload;
+                state.posts = state.posts.map((post) =>
+                    post && post._id === updatedPost._id
+                        ? { ...post, ...updatedPost }
+                        : post
+                );
+                state.selectedAnnouncement = state.selectedAnnouncement.map((post) =>
+                    post && post._id === updatedPost._id
+                        ? { ...post, ...updatedPost }
+                        : post
+                );
+            })
+            .addCase(regeneratePost.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

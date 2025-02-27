@@ -12,7 +12,7 @@ import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pick
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { updatePost } from "@/store/slices/postsSlice";
+import { regeneratePost, updatePost } from "@/store/slices/postsSlice";
 
 interface DiscordBlockProps {
     submittedText: string;
@@ -400,7 +400,10 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     <AutoAwesome fontSize="small" />
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
-                                <IconButton sx={{ color: "red" }}>
+                                <IconButton
+                                    sx={{ color: "red" }}
+                                    onClick={() => dispatch(regeneratePost({ platform: "discord", postId: postId}))}
+                                >
                                     <Replay fontSize="small" />
                                 </IconButton>
                             </Box>
