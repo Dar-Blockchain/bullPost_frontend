@@ -280,19 +280,17 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         flexGrow: 1,
                         maxHeight: isMobile ? "400px" : "200px",
                         overflowY: "auto",
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#FFB300 #333",
-
+                        // scrollbarWidth: "thin",
+                        // scrollbarColor: "#FFB300 #333",
                         "&::-webkit-scrollbar": {
-                            width: "6px",
+                            width: "4px", // smaller scrollbar width
                         },
                         "&::-webkit-scrollbar-thumb": {
-                            backgroundColor: "#FFB300",
-                            borderRadius: "10px",
+                            backgroundColor: "#FFB300", // gold scrollbar thumb
+                            borderRadius: "3px",
                         },
-                        "&::-webkit-scrollbar-track": {
-                            backgroundColor: "#333",
-                        },
+
+
                     }}
                 >
                     {isEditing ? (
@@ -341,7 +339,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 />
                             }
                             <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                                {selectedAnnouncement && selectedAnnouncement.length > 0
+                                {(selectedAnnouncement && selectedAnnouncement.length > 0)
                                     ? selectedAnnouncement[0].discord
                                     : (displayText || "No announcement yet...")}
                             </Typography>

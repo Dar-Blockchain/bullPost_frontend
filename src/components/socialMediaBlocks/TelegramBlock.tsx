@@ -185,18 +185,12 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                         flexGrow: 1,
                         maxHeight: isMobile ? "400px" : "200px",
                         overflowY: "auto",
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#FFB300 #333",
-
                         "&::-webkit-scrollbar": {
-                            width: "6px",
+                            width: "4px", // smaller scrollbar width
                         },
                         "&::-webkit-scrollbar-thumb": {
-                            backgroundColor: "#FFB300",
-                            borderRadius: "10px",
-                        },
-                        "&::-webkit-scrollbar-track": {
-                            backgroundColor: "#333",
+                            backgroundColor: "#FFB300", // gold scrollbar thumb
+                            borderRadius: "3px",
                         },
                     }}
                 >

@@ -74,8 +74,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (isLoggedIn) {
       dispatch(fetchPostsByStatus(activeTab));
+      console.log("Dispatched fetchPostsByStatus", posts.length);
     }
-  }, [activeTab, isLoggedIn, dispatch]);
+  }, [activeTab, posts.length, isLoggedIn, dispatch]);
 
   // Handle tab change
   const handleTabChange = (
@@ -184,10 +185,28 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Posts Section */}
       {isLoggedIn && (
-        <Box sx={{ width: "100%" }}>
+        <Box
+          sx={{
+            width: "100%",
+            maxHeight: "400px", // adjust as needed
+            overflowY: "auto",  // enables vertical scrolling
+            "&::-webkit-scrollbar": {
+              width: "0px", // smaller scrollbar width
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#FFB300", // gold scrollbar thumb
+              borderRadius: "3px",
+            },
+          }}
+        >
           {loading ? (
             <Typography
-              sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}
+              sx={{
+                fontSize: "14px",
+                color: "#aaa",
+                mt: 2,
+                textAlign: "center",
+              }}
             >
               Loading...
             </Typography>
@@ -198,7 +217,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 sx={{ borderBottom: "1px solid #222", pb: 2, mt: 2 }}
                 onClick={() => {
                   // Update local state and dispatch the selected announcement
-                  // setPostPrompt(item.prompt);
                   dispatch(setSelectedAnnouncement([item]));
                 }}
               >
@@ -223,13 +241,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))
           ) : (
             <Typography
-              sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}
+              sx={{
+                fontSize: "14px",
+                color: "#aaa",
+                mt: 2,
+                textAlign: "center",
+              }}
             >
               No posts available.
             </Typography>
           )}
         </Box>
       )}
+
 
       {/* Login Button (if not logged in) */}
       {!isLoggedIn && (

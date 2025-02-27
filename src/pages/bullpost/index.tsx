@@ -10,15 +10,18 @@ import DiscordBlock from "@/components/socialMediaBlocks/DiscordBlock";
 import TwitterBlock from "@/components/socialMediaBlocks/TwitterBlock";
 import TelegramBlock from "@/components/socialMediaBlocks/TelegramBlock";
 import BackgroundImage from "./components/BackgroundImage";
+import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
 
 export default function BullPostPage() {
     const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
     const [submittedText, setSubmittedText] = useState("");
     const [discordText, setDiscordText] = useState("");
     const [twitterText, setTwitterText] = useState("");
     const [telegramText, setTelegramText] = useState("");
     const [_id, setId] = useState("");
+    const dispatch = useDispatch<AppDispatch>();
 
     const handleClose = () => setOpen(false);
     const [text, setText] = useState(
@@ -67,6 +70,9 @@ export default function BullPostPage() {
                 setTwitterText(data.newPost.twitter);
                 setTelegramText(data.newPost.telegram);
                 setId(data.newPost._id);
+
+                dispatch(fetchPostsByStatus("draft"));
+                dispatch(setSelectedAnnouncement([]));
                 toast.success("✅ Post generated successfully!", { position: "top-right" });
             }
         } catch (error) {
