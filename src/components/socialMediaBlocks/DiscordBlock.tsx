@@ -12,7 +12,7 @@ import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pick
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { regeneratePost, updatePost } from "@/store/slices/postsSlice";
+import { regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 
 interface DiscordBlockProps {
     submittedText: string;
@@ -167,15 +167,18 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             const formData = new FormData();
             formData.append("discord", editableText);
             if (selectedImage) {
-                formData.append("image_discord", selectedImage); // "image" is the key expected by your API
+                formData.append("image_discord", selectedImage); // "image_discord" is the key expected by your API
             }
+            // Dispatch the updatePost thunk and wait for the updated post
             const updatedPost = await dispatch(
                 updatePost({
-                    id: selectedAnnouncement[0]._id,
+                    id: postId,
                     body: formData,
                 })
             ).unwrap();
-            // Use the updated post's twitter field if available, otherwise fall back to editableText
+            // Update the Redux state so that your component refreshes with the updated post data
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            // Optionally, update your local display state if needed
             setDisplayText(updatedPost?.discord || editableText);
         } catch (error) {
             console.error("Error updating post:", error);
@@ -183,6 +186,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             setIsEditing(false);
         }
     };
+
     // const handleUpdate = async () => {
     //     try {
     //         const updatedPost = await dispatch(
@@ -202,6 +206,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     //         setIsEditing(false);
     //     }
     // };
+
     return (
         <>
             <Box
@@ -402,7 +407,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton
                                     sx={{ color: "red" }}
-                                    onClick={() => dispatch(regeneratePost({ platform: "discord", postId: postId}))}
+                                    onClick={() => dispatch(regeneratePost({ platform: "twitter", postId: postId }))}
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>
@@ -463,7 +468,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         flex: 1,
                                         width: "150px",
                                         "&:hover": {
-                                            backgroundColor: "#222",
+                                            backgroundColor: "#FFA500",
+                                            color:"black"
                                         },
                                     }}
                                 >
