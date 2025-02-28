@@ -6,22 +6,17 @@ import { RootState } from "@/store/store";
 interface AnnouncementProps {
   text: string;
   setText: (value: string) => void;
+  inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
 }
 
-const Announcement: React.FC<AnnouncementProps> = ({ text, setText }) => {
+const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
-  // Get the selected announcement from the Redux slice
-  const selectedAnnouncement = useSelector(
-    (state: RootState) => state.posts.selectedAnnouncement
-  );
+  const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
 
-  // If a selected announcement exists, update the text automatically.
   useEffect(() => {
-    console.log("Selected Announcement:", selectedAnnouncement);
     if (selectedAnnouncement && selectedAnnouncement.length > 0) {
-      // For example, take the first selected announcement's prompt
       setText(selectedAnnouncement[0].prompt);
     }
   }, [selectedAnnouncement, setText]);
@@ -30,14 +25,15 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText }) => {
     <TextField
       fullWidth
       multiline
-      rows={isMobile ? 6 : 4} // Increased rows for mobile
+      rows={isMobile ? 6 : 4}
       variant="outlined"
       placeholder="Write your announcement..."
       value={text}
       onChange={(e) => setText(e.target.value)}
+      inputRef={inputRef}
       sx={{
         mt: isMobile ? "10px" : "0",
-        width: isMobile ? "100%" : "50%", // Ensures it takes full width on mobile
+        width: isMobile ? "100%" : "50%",
         textarea: {
           color: "#fff",
           textAlign: "center",

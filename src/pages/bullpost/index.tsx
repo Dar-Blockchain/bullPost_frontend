@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import Announcement from "./components/Announcement";
 import Toolbar from "./components/Toolbar";
@@ -83,8 +83,31 @@ export default function BullPostPage() {
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
-    const [activeSection, setActiveSection] = useState<"calendar" | "drafts" | "discord" | "twitter" | "telegram" | "post">("drafts");
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null); // Ref for the announcement input
 
+    const [activeSection, setActiveSection] = useState<"calendar" | "drafts" | "discord" | "twitter" | "telegram" | "post">("drafts");
+    const handleEmojiSelect = (emoji: string) => {
+        if (inputRef.current) {
+            const start = inputRef.current.selectionStart || 0;
+            const end = inputRef.current.selectionEnd || 0;
+            const before = text.substring(0, start);
+            const after = text.substring(end);
+            const newText = before + emoji + after;
+            setText(newText);
+
+            // Use a short delay to ensure the DOM updates before re-focusing
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                    const newCursorPosition = start + emoji.length;
+                    inputRef.current.selectionStart = newCursorPosition;
+                    inputRef.current.selectionEnd = newCursorPosition;
+                }
+            }, 0);
+        } else {
+            setText((prev) => prev + emoji);
+        }
+    };
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#111112", color: "#fff", overflow: "hidden", width: "100%", flexGrow: 1 }}>
             {/* Background Image */}
@@ -100,7 +123,7 @@ export default function BullPostPage() {
                     {!isMobile ? (
                         <>
                             <Announcement text={text} setText={setText} />
-                            <Toolbar submittedText={submittedText} onSubmit={handleSubmit} />
+                            <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
 
                             <Box sx={{ display: "flex", flexDirection: isMobile ? "column" : "row", width: "100%", mt: 4 }}>
 
@@ -115,7 +138,7 @@ export default function BullPostPage() {
                             {activeSection === "drafts" && (
                                 <>
                                     <Announcement text={text} setText={setText} />
-                                    <Toolbar submittedText={submittedText} onSubmit={handleSubmit} />
+                                    <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
                                 </>
                             )}
                             {activeSection === "discord" && <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />}
