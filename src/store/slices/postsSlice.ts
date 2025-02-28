@@ -12,6 +12,12 @@ interface Post {
     image_discord: string;
     image_twitter: string;
     image_telegram: string;
+    publishedAtDiscord: string;
+    scheduledAtDiscord: string;
+    publishedAtTwitter: string;
+    scheduledAtTwitter: string;
+
+    publishedAtTelegram: string;
     // Add other properties as needed
 }
 
@@ -87,9 +93,9 @@ export const updatePost = createAsyncThunk(
                     headers: payload.body instanceof FormData
                         ? { "Authorization": `Bearer ${token}` }
                         : {
-                              "Content-Type": "application/json",
-                              "Authorization": `Bearer ${token}`,
-                          },
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`,
+                        },
                     body: requestBody,
                 }
             );
@@ -134,11 +140,26 @@ export const regeneratePost = createAsyncThunk(
             }
             const data = await response.json();
             // Map the returned "content" to the "discord" property.
-            return {
-                _id: data.postId,
-                discord: data.content,
-                platform: data.platform,
-            } as Partial<Post>;
+            if (payload.platform === "twitter") {
+                return {
+                    _id: data.postId,
+                    twitter: data.content,
+                    platform: data.platform,
+                } as Partial<Post>;
+            } else if (payload.platform === "telegram") {
+                return {
+                    _id: data.postId,
+                    telegram: data.content,
+                    platform: data.platform,
+                } as Partial<Post>;
+            } else {
+                // Default to Discord if none match.
+                return {
+                    _id: data.postId,
+                    discord: data.content,
+                    platform: data.platform,
+                } as Partial<Post>;
+            }
         } catch (error: any) {
             return rejectWithValue(error.message);
         }

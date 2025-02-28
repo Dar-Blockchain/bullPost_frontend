@@ -9,7 +9,7 @@ import TelegramIcon from "@mui/icons-material/Telegram";
 import { useAuth } from "@/hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchPostsByStatus, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 import { Dayjs } from "dayjs";
 import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -388,7 +388,10 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton sx={{ color: "red" }}>
-                                    <Replay fontSize="small" />
+                                    <Replay
+                                        onClick={() => dispatch(regeneratePost({ platform: "telegram", postId: postId }))}
+
+                                        fontSize="small" />
                                 </IconButton>
                             </Box>
 

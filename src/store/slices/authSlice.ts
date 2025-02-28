@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { ThunkAction } from "redux-thunk";
 import { RootState } from "../store";
 
-// ✅ Helper functions to safely access `localStorage`
+// ✅ Helper functions to safely access localStorage
 const getInitialToken = (): string | undefined => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token") || undefined;
@@ -68,7 +68,7 @@ export const loginUser = createAsyncThunk(
         });
       }
 
-      // ✅ Ensure data.token & data.user exist before storing them
+      // ✅ Store token and user data in localStorage
       if (typeof window !== "undefined") {
         try {
           if (data.token && data.user) {
@@ -85,7 +85,6 @@ export const loginUser = createAsyncThunk(
       return { ...data, status: statusCode };
     } catch (error: any) {
       console.error("Login error:", error);
-
       return thunkAPI.rejectWithValue({
         message: error.message || "Server error",
         status: 500,
@@ -94,14 +93,25 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-
-// ✅ Logout action (removes token & user from localStorage)
+// ✅ Logout thunk that removes token/user from localStorage and clears cookies
 export const logoutUser = (): ThunkAction<void, RootState, unknown, any> => (dispatch) => {
   if (typeof window !== "undefined") {
+    // Remove localStorage items
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
+    // Name of the cookie we want to delete
+    const cookieName = "next-auth.session-token";
+
+    // Delete cookie by setting expiration date in the past.
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost;`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`;
+
+    // Force a page reload to ensure changes take effect.
+    window.location.reload();
   }
-  dispatch(authSlice.actions.logout());
+  dispatch(logout());
 };
 
 // ✅ Define the authentication state
@@ -130,6 +140,7 @@ const authSlice = createSlice({
       state.user = undefined;
       state.codeSent = false;
     },
+    // Add other reducers if needed...
   },
   extraReducers: (builder) => {
     builder
@@ -143,24 +154,27 @@ const authSlice = createSlice({
       })
       .addCase(getCode.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = (action.payload as any)?.message || "Error sending OTP";
       })
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = undefined;
       })
-      .addCase(loginUser.fulfilled, (state, action: PayloadAction<{ token: string; user: any }>) => {
-        state.loading = false;
-        state.token = action.payload.token;
-        state.user = action.payload.user;
-      })
+      .addCase(
+        loginUser.fulfilled,
+        (state, action: PayloadAction<{ token: string; user: any }>) => {
+          state.loading = false;
+          state.token = action.payload.token;
+          state.user = action.payload.user;
+        }
+      )
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = (action.payload as any)?.message || "Login failed";
       });
   },
 });
 
-// ✅ Export logout action
+// ✅ Export logout action and reducer
 export const { logout } = authSlice.actions;
 export default authSlice.reducer;

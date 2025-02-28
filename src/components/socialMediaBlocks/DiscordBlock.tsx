@@ -3,7 +3,6 @@ import { Box, Typography, Switch, Avatar, IconButton, Button, Popover, TextField
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { ArrowDropDownCircleOutlined, AutoAwesome, Done, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
-import Toolbar from "@/pages/bullpost/components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,7 +12,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
-
+import dayjs from "dayjs";
 interface DiscordBlockProps {
     submittedText: string;
     onSubmit: () => void;
@@ -121,13 +120,27 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         updateButtonText(selectedDate, newTime);
     };
 
+
     const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
-        if (date && time) {
+        // If a post is selected and has a publishedAtDiscord property, show it
+        if (
+            selectedAnnouncement &&
+            selectedAnnouncement.length > 0 &&
+            selectedAnnouncement[0].publishedAtDiscord
+        ) {
+            const publishedDate = dayjs(selectedAnnouncement[0].publishedAtDiscord);
+            setButtonText(
+                `Published at: ${publishedDate.format("MMM DD, YYYY")} - ${publishedDate.format("HH:mm")}`
+            );
+        } else if (date && time) {
+            // Otherwise, if a schedule date/time is selected, show that
             setButtonText(`${date.format("MMM DD, YYYY")} - ${time.format("HH:mm")}`);
         } else {
+            // Fallback button text
             setButtonText("Post Now");
         }
     };
+
 
     const handleSchedulePost = async () => {
         if (!selectedDate || !selectedTime) {
@@ -411,7 +424,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton
                                     sx={{ color: "red" }}
-                                    onClick={() => dispatch(regeneratePost({ platform: "twitter", postId: postId }))}
+                                    onClick={() => dispatch(regeneratePost({ platform: "discord", postId: postId }))}
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>
@@ -473,12 +486,25 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         width: "150px",
                                         "&:hover": {
                                             backgroundColor: "#FFA500",
-                                            color: "black"
+                                            color: "black",
                                         },
                                     }}
                                 >
-                                    {buttonText}
+                                    {(selectedAnnouncement && selectedAnnouncement.length > 0)
+                                        ? (
+                                            selectedAnnouncement[0].publishedAtDiscord
+                                                ? `Published at: ${dayjs(selectedAnnouncement[0].publishedAtDiscord).format("MMM DD, YYYY")} - ${dayjs(selectedAnnouncement[0].publishedAtDiscord).format("HH:mm")}`
+                                                : selectedAnnouncement[0].scheduledAtDiscord
+                                                    ? `Scheduled at: ${dayjs(selectedAnnouncement[0].scheduledAtDiscord).format("MMM DD, YYYY")} - ${dayjs(selectedAnnouncement[0].scheduledAtDiscord).format("HH:mm")}`
+                                                    : (selectedDate && selectedTime
+                                                        ? `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
+                                                        : "Post Now")
+                                        )
+                                        : (selectedDate && selectedTime
+                                            ? `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
+                                            : "Post Now")}
                                 </Button>
+
                             </Box>
                         }
                     </>

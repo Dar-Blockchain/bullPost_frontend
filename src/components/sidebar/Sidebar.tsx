@@ -19,6 +19,8 @@ import dayjs from "dayjs";
 import { AppDispatch } from "@/store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { logout, logoutUser } from "@/store/slices/authSlice";
 
 interface SidebarProps {
   handleOpen: () => void;
@@ -39,6 +41,12 @@ interface Post {
   image_discord: string;
   image_twitter: string;
   image_telegram: string;
+  publishedAtDiscord: string;
+  scheduledAtDiscord: string;
+  publishedAtTwitter: string;
+  scheduledAtTwitter: string;
+
+  publishedAtTelegram: string;
 }
 
 
@@ -53,6 +61,26 @@ const Sidebar: React.FC<SidebarProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/logout`, {
+        method: "POST",
+        credentials: "include", // include credentials if required (for HTTP-only cookies)
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        dispatch(logoutUser());
+        // Optionally, force a page reload
+        window.location.reload();
+      } else {
+        console.error("Failed to logout", await response.text());
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
   const dispatch = useDispatch<AppDispatch>();
   // Get posts and loading state from Redux slice
   const { posts, loading } = useSelector((state: any) => state.posts);
@@ -292,7 +320,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             src={`http://localhost:5000/${user?.user_image}`}
             sx={{ width: 40, height: 40 }}
           />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
             <Box>
               <Typography sx={{ color: "#fff", fontWeight: 600 }}>
                 {user && user.userName}
@@ -302,6 +330,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               </Typography>
             </Box>
           </Box>
+          <IconButton
+            onClick={handleLogout}          >
+            <LogoutIcon sx={{ color: "#fff" }} />
+          </IconButton>
         </Box>
       )}
     </Box>
