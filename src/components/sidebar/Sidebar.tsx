@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import dayjs from "dayjs";
 import { AppDispatch } from "@/store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
+import { clearSelectedAnnouncement, fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logout, logoutUser } from "@/store/slices/authSlice";
 
@@ -182,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             mb: 3,
             "&:hover": { backgroundColor: "#FFA500" },
           }}
-          onClick={handleOpen}
+          onClick={() => dispatch(clearSelectedAnnouncement())}
         >
           New post
         </Button>
