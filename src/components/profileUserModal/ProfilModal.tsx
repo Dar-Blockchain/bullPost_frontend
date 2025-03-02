@@ -10,8 +10,10 @@ import {
     Tab,
     IconButton,
     Divider,
+    TextField,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // Example icons (replace if you have custom ones)
 import TwitterIcon from '@mui/icons-material/Twitter';
@@ -35,9 +37,7 @@ function TabPanel({ children, value, index, ...other }: TabPanelProps) {
             aria-labelledby={`tab-${index}`}
             {...other}
         >
-            {value === index && (
-                <Box sx={{ py: 2, px: 1 }}>{children}</Box>
-            )}
+            {value === index && <Box sx={{ py: 2, px: 1 }}>{children}</Box>}
         </div>
     );
 }
@@ -142,11 +142,17 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
             fullWidth
             PaperProps={{
                 sx: {
-                    background: "#101010",
+                    // // Add your background image here:
+                    // backgroundImage: "url('/Ellipse 4.png')",
+                    // backgroundSize: 'cover',
+                    // backgroundPosition: 'top',
+                    // backgroundRepeat: 'no-repeat',
+                    backgroundColor: '#101010', // fallback color behind the image
                     color: '#555555',
                     borderRadius: 3,
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
                     overflow: 'hidden',
+                    height: '80vh',
                 },
             }}
         >
@@ -157,7 +163,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     background: '#101010',
-                    borderBottom: '1px solid #333',
+                    
                     py: 1.5,
                     px: 2,
                 }}
@@ -173,14 +179,13 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     </Typography>
                 </Box>
                 <IconButton onClick={onClose}>
-                    <CloseIcon sx={{ color: '#fff' }} />
+                    <CloseIcon sx={{ color: '#FFB300' }} />
                 </IconButton>
             </DialogTitle>
 
             {/* Tabs */}
             <Box
                 sx={{
-                    borderBottom: '1px solid #333',
                     backgroundColor: 'transparent',
                     px: 2,
                 }}
@@ -204,7 +209,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                             },
                         },
                         '& .Mui-selected': {
-                            color: '#fff !important',
+                            color: '#FFB300 !important',
                             fontWeight: 'bold',
                         },
                     }}
@@ -221,7 +226,6 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
             <DialogContent sx={{ backgroundColor: 'transparent', py: 2, px: 3 }}>
                 {/* TAB 0: Accounts */}
                 <TabPanel value={activeTab} index={0}>
-
                     {/* 3 columns for X / Discord / Telegram */}
                     <Box
                         sx={{
@@ -236,13 +240,11 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                 <TwitterIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
                                 X Accounts
                             </Typography>
-                            <Divider sx={{ mb: 2, borderColor: '#444' }} />
 
                             {/* Example existing account */}
                             <AccountItem
                                 name="OxJulio"
                                 onRemove={() => {
-                                    // handle remove logic
                                     console.log('Remove X account');
                                 }}
                             />
@@ -268,7 +270,6 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                 <DiscordIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
                                 Discord Accounts
                             </Typography>
-                            <Divider sx={{ mb: 2, borderColor: '#444' }} />
 
                             <AccountItem
                                 name="OxJulio"
@@ -296,7 +297,6 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                 <TelegramIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
                                 Telegram Accounts
                             </Typography>
-                            <Divider sx={{ mb: 2, borderColor: '#444' }} />
 
                             <AccountItem
                                 name="OxJulio"
@@ -325,9 +325,53 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
                         My Team
                     </Typography>
-                    <Typography variant="body1" sx={{ color: '#ccc' }}>
-                        Manage team members, invite new members, and set permissions.
-                    </Typography>
+
+                    {/* 3 columns for team members */}
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gap: 4,
+                        }}
+                    >
+                        {/* Column 1 */}
+                        <Box>
+                            <AccountItem
+                                name="Member 01"
+                                onRemove={() => {
+                                    console.log('Remove Member 01');
+                                }}
+                            />
+                            {/* Optionally add more team members here if desired */}
+
+                            {/* Add member pill at the bottom of Column 1 */}
+                            <AddAccountItem
+                                onClick={() => {
+                                    console.log('Add new team member');
+                                }}
+                            />
+                        </Box>
+
+                        {/* Column 2 */}
+                        <Box>
+                            <AccountItem
+                                name="Member 02"
+                                onRemove={() => {
+                                    console.log('Remove Member 02');
+                                }}
+                            />
+                        </Box>
+
+                        {/* Column 3 */}
+                        <Box>
+                            <AccountItem
+                                name="Member 03"
+                                onRemove={() => {
+                                    console.log('Remove Member 03');
+                                }}
+                            />
+                        </Box>
+                    </Box>
                 </TabPanel>
 
                 {/* TAB 2: API Keys */}
@@ -335,9 +379,152 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
                         API Keys
                     </Typography>
-                    <Typography variant="body1" sx={{ color: '#ccc' }}>
-                        Manage your API keys for programmatic access. Generate new keys, revoke existing ones, etc.
+
+                    {/* Single-column layout for all providers */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {/* 1. OpenAI */}
+                        <Box>
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                                OpenAI
+                            </Typography>
+                            <Divider sx={{ mb: 2, borderColor: '#444' }} />
+
+                            {/* GPT-4o */}
+                            <Box sx={{ mb: 3 }}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 2,
+                                    }}
+                                >
+                                    <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
+                                        GPT-4o
+                                    </Typography>
+                                    <TextField
+                                        placeholder="Enter API Key"
+                                        value="12e3fa789-abde723-23afw3-23vfra"
+                                        sx={{
+                                            width: '100%',
+                                            backgroundColor: '#171717',
+                                            borderRadius: '8px',
+                                            input: { color: '#fff' },
+                                        }}
+                                    />
+                                    {/* Example if you want the "Key valid" indicator inline:
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      color: '#3FAE3F',
+                    }}
+                  >
+                    <CheckCircleIcon fontSize="small" />
+                    <Typography variant="body2" sx={{ color: 'inherit' }}>
+                      Key valid
                     </Typography>
+                  </Box> */}
+                                </Box>
+                            </Box>
+
+                            {/* o1-mini */}
+                            <Box sx={{ mb: 3 }}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 2,
+                                    }}
+                                >
+                                    <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
+                                        o1-mini
+                                    </Typography>
+                                    <TextField
+                                        placeholder="Enter API Key"
+                                        fullWidth
+                                        sx={{
+                                            backgroundColor: '#171717',
+                                            borderRadius: '8px',
+                                            input: { color: '#fff' },
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+
+                            {/* o1 */}
+                            <Box sx={{ mb: 3 }}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 2,
+                                    }}
+                                >
+                                    <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
+                                        o1
+                                    </Typography>
+                                    <TextField
+                                        placeholder="Enter API Key"
+                                        fullWidth
+                                        sx={{
+                                            backgroundColor: '#171717',
+                                            borderRadius: '8px',
+                                            input: { color: '#fff' },
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+                        </Box>
+
+                        {/* 2. Anthropic */}
+                        <Box>
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                                Anthropic
+                            </Typography>
+                            <Divider sx={{ mb: 2, borderColor: '#444' }} />
+
+                            {/* Sonnet 3.5 */}
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
+                                    Sonnet 3.5
+                                </Typography>
+                                <TextField
+                                    placeholder="Enter API Key"
+                                    fullWidth
+                                    sx={{
+                                        backgroundColor: '#171717',
+                                        borderRadius: '8px',
+                                        input: { color: '#fff' },
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+
+                        {/* 3. Deepseek */}
+                        <Box>
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                                Deepseek
+                            </Typography>
+                            <Divider sx={{ mb: 2, borderColor: '#444' }} />
+
+                            {/* v3 */}
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
+                                    v3
+                                </Typography>
+                                <TextField
+                                    placeholder="Enter API Key"
+                                    fullWidth
+                                    sx={{
+                                        backgroundColor: '#171717',
+                                        borderRadius: '8px',
+                                        input: { color: '#fff' },
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+                    </Box>
                 </TabPanel>
 
                 {/* TAB 3: Plans */}
