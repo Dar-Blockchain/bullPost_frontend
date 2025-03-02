@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearSelectedAnnouncement, fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logout, logoutUser } from "@/store/slices/authSlice";
+import ProfileModal from "../profileUserModal/ProfilModal";
 
 interface SidebarProps {
   handleOpen: () => void;
@@ -60,7 +61,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const [openProfile, setOpenProfile] = useState(false);
 
+  const handleOpenProfile = () => {
+    setOpenProfile(true);
+  };
+
+  const handleCloseProfile = () => {
+    setOpenProfile(false);
+  };
   const handleLogout = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/logout`, {
@@ -319,8 +328,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           <Avatar
             src={`http://localhost:5000/${user?.user_image}`}
             sx={{ width: 40, height: 40 }}
+            onClick={handleOpenProfile}
+
           />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }} onClick={handleOpenProfile}
+          >
             <Box>
               <Typography sx={{ color: "#fff", fontWeight: 600 }}>
                 {user && user.userName}
@@ -336,6 +348,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           </IconButton>
         </Box>
       )}
+      <ProfileModal open={openProfile} onClose={handleCloseProfile} user={user} />
+
     </Box>
   );
 
