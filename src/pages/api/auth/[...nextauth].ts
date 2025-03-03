@@ -20,6 +20,8 @@ const authOptions: NextAuthOptions = {
     TwitterProvider({
       clientId: process.env.TWITTER_CLIENT_ID!,
       clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+      version: "2.0",  // <-- Make sure to add this
+
     }),
     // Uncomment and configure if you want to use Apple:
 
@@ -42,10 +44,9 @@ const authOptions: NextAuthOptions = {
       console.log("SignIn callback - account:", account);
       console.log("SignIn callback - user:", user);
 
-      if (account?.provider === "google" || account?.provider === "discord") {
+      if (account?.provider === "google" || account?.provider === "discord" || account?.provider === "twitter") {
         const email = profile?.email ?? null;
         user.email = email;
-
         try {
           const response = await fetch("http://localhost:5000/auth/auth_Api", {
             method: "POST",
@@ -92,7 +93,7 @@ const authOptions: NextAuthOptions = {
     }
     ,
     async redirect({ baseUrl }) {
-      return `/bullpost`;
+      return `/`;
     },
   },
 };

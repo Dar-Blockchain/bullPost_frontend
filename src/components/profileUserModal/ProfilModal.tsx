@@ -11,6 +11,7 @@ import {
     IconButton,
     Divider,
     TextField,
+    Input,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -147,7 +148,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     // backgroundSize: 'cover',
                     // backgroundPosition: 'top',
                     // backgroundRepeat: 'no-repeat',
-                    backgroundColor: '#101010', // fallback color behind the image
+                    backgroundColor: '#171717', // fallback color behind the image
                     color: '#555555',
                     borderRadius: 3,
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
@@ -163,19 +164,19 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     background: '#101010',
-                    
+
                     py: 1.5,
                     px: 2,
                 }}
             >
                 <Box display="flex" alignItems="center" gap={2}>
                     <Avatar
-                        src={user.avatarUrl}
-                        alt={user.name}
+                        src={"user.avatarUrl"}
+                        alt={"user.name"}
                         sx={{ width: 45, height: 45 }}
                     />
                     <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
-                        {user.name}
+                        {"user.name"}
                     </Typography>
                 </Box>
                 <IconButton onClick={onClose}>
@@ -186,8 +187,9 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
             {/* Tabs */}
             <Box
                 sx={{
-                    backgroundColor: 'transparent',
+                    backgroundColor: '#101010',
                     px: 2,
+
                 }}
             >
                 <Tabs
@@ -198,6 +200,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     TabIndicatorProps={{
                         style: { backgroundColor: '#FFB300', height: '3px' },
                     }}
+
                     sx={{
                         '& .MuiTab-root': {
                             color: '#bbb',
@@ -207,11 +210,13 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                             '&:hover': {
                                 color: '#fff',
                             },
+                            backgroundColor: "#101010"
                         },
                         '& .Mui-selected': {
                             color: '#FFB300 !important',
                             fontWeight: 'bold',
                         },
+
                     }}
                 >
                     <Tab label="Accounts" />
@@ -223,7 +228,15 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
             </Box>
 
             {/* Content */}
-            <DialogContent sx={{ backgroundColor: 'transparent', py: 2, px: 3 }}>
+            <DialogContent sx={{
+                backgroundColor: '#101010', py: 2, px: 3, "&::-webkit-scrollbar": {
+                    width: "4px", // smaller scrollbar width
+                },
+                "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: "#FFB300", // gold scrollbar thumb
+                    borderRadius: "3px",
+                },
+            }}>
                 {/* TAB 0: Accounts */}
                 <TabPanel value={activeTab} index={0}>
                     {/* 3 columns for X / Discord / Telegram */}
@@ -376,9 +389,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
 
                 {/* TAB 2: API Keys */}
                 <TabPanel value={activeTab} index={2}>
-                    <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                        API Keys
-                    </Typography>
+
 
                     {/* Single-column layout for all providers */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -401,14 +412,18 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                     <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
                                         GPT-4o
                                     </Typography>
-                                    <TextField
-                                        placeholder="Enter API Key"
-                                        value="12e3fa789-abde723-23afw3-23vfra"
+                                    <Input
                                         sx={{
-                                            width: '100%',
+                                            width: '710px',
+                                            height: '40px',
+
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            borderRadius: '5px',
+                                            border: '1px solid #ccc', // You can adjust the border color as needed
+                                            padding: '10px',
                                             backgroundColor: '#171717',
-                                            borderRadius: '8px',
-                                            input: { color: '#fff' },
+                                            '& input': { color: '#fff' },
                                         }}
                                     />
                                     {/* Example if you want the "Key valid" indicator inline:
@@ -440,13 +455,18 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                     <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
                                         o1-mini
                                     </Typography>
-                                    <TextField
-                                        placeholder="Enter API Key"
-                                        fullWidth
+                                    <Input
                                         sx={{
+                                            width: '710px',
+                                            height: '40px',
+
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            borderRadius: '5px',
+                                            border: '1px solid #ccc', // You can adjust the border color as needed
+                                            padding: '10px',
                                             backgroundColor: '#171717',
-                                            borderRadius: '8px',
-                                            input: { color: '#fff' },
+                                            '& input': { color: '#fff' },
                                         }}
                                     />
                                 </Box>
@@ -461,16 +481,21 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                         gap: 2,
                                     }}
                                 >
-                                    <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
+                                    <Typography variant="body2" sx={{ color: '#aaa', mb: 1, mr: 4 }}>
                                         o1
                                     </Typography>
-                                    <TextField
-                                        placeholder="Enter API Key"
-                                        fullWidth
+                                    <Input
                                         sx={{
+                                            width: '710px',
+                                            height: '40px',
+
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            borderRadius: '5px',
+                                            border: '1px solid #ccc', // You can adjust the border color as needed
+                                            padding: '10px',
                                             backgroundColor: '#171717',
-                                            borderRadius: '8px',
-                                            input: { color: '#fff' },
+                                            '& input': { color: '#fff' },
                                         }}
                                     />
                                 </Box>
@@ -483,22 +508,34 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                 Anthropic
                             </Typography>
                             <Divider sx={{ mb: 2, borderColor: '#444' }} />
-
-                            {/* Sonnet 3.5 */}
-                            <Box sx={{ mb: 3 }}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                }}
+                            >
                                 <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
                                     Sonnet 3.5
+
                                 </Typography>
-                                <TextField
-                                    placeholder="Enter API Key"
-                                    fullWidth
+                                <Input
                                     sx={{
+                                        width: '710px',
+                                        height: '40px',
+
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ccc', // You can adjust the border color as needed
+                                        padding: '10px',
                                         backgroundColor: '#171717',
-                                        borderRadius: '8px',
-                                        input: { color: '#fff' },
+                                        '& input': { color: '#fff' },
                                     }}
                                 />
                             </Box>
+                            {/* Sonnet 3.5 */}
+
                         </Box>
 
                         {/* 3. Deepseek */}
@@ -509,17 +546,29 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                             <Divider sx={{ mb: 2, borderColor: '#444' }} />
 
                             {/* v3 */}
-                            <Box sx={{ mb: 3 }}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                }}
+                            >
                                 <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
-                                    v3
+                                    V3
+
                                 </Typography>
-                                <TextField
-                                    placeholder="Enter API Key"
-                                    fullWidth
+                                <Input
                                     sx={{
+                                        width: '710px',
+                                        height: '40px',
+
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ccc', // You can adjust the border color as needed
+                                        padding: '10px',
                                         backgroundColor: '#171717',
-                                        borderRadius: '8px',
-                                        input: { color: '#fff' },
+                                        '& input': { color: '#fff' },
                                     }}
                                 />
                             </Box>
