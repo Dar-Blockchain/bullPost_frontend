@@ -35,21 +35,25 @@ export default function BullPostPage() {
         }
 
         const token = localStorage.getItem("token"); // Retrieve the token securely
-        if (!token) {
-            toast.error("🚫 Unauthorized: Token not found!", { position: "top-right" });
-            return;
-        }
+        // if (!token) {
+        //     toast.error("🚫 Unauthorized: Token not found!", { position: "top-right" });
+        //     return;
+        // }
 
         console.log(token, "here my token");
+        const apiUrl = token
+            ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generatePlatformPost`
+            : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generate`, {
+            const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`, // Corrected 'authorization' to 'Authorization'
+                    // Include Authorization header only if token exists
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ prompt: text }),
+                body: JSON.stringify({ prompt: text, platforms: ["twitter", "discord", "telegram"] }),
             });
 
             const data = await response.json();
