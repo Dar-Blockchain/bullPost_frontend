@@ -32,7 +32,67 @@ interface TwitterBlockProps {
     onSubmit: () => void; // ✅ Accept API submit function
 
 }
+// 1) Define mappings for bold & italic letters
+// (Uppercase, Lowercase)
+const BOLD_UPPER = "𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭";
+const BOLD_LOWER = "𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇";
+const ITALIC_UPPER = "𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍";
+const ITALIC_LOWER = "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧";
+const REG_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const REG_LOWER = "abcdefghijklmnopqrstuvwxyz";
 
+// 2) Helper functions to transform text
+function toBold(text: string): string {
+    let result = "";
+    for (const char of text) {
+        if (REG_UPPER.includes(char)) {
+            // Bold uppercase
+            const index = REG_UPPER.indexOf(char);
+            result += BOLD_UPPER[index];
+        } else if (REG_LOWER.includes(char)) {
+            // Bold lowercase
+            const index = REG_LOWER.indexOf(char);
+            result += BOLD_LOWER[index];
+        } else {
+            result += char; // unchanged
+        }
+    }
+    return result;
+}
+
+function toItalic(text: string): string {
+    let result = "";
+    for (const char of text) {
+        if (REG_UPPER.includes(char)) {
+            const index = REG_UPPER.indexOf(char);
+            result += ITALIC_UPPER[index];
+        } else if (REG_LOWER.includes(char)) {
+            const index = REG_LOWER.indexOf(char);
+            result += ITALIC_LOWER[index];
+        } else {
+            result += char;
+        }
+    }
+    return result;
+}
+
+// Underline & strikethrough rely on combining characters
+// Each character is followed by the combining mark.
+function toUnderline(text: string): string {
+    // Combining low line = \u0332
+    return text
+        .split("")
+        .map((char) => char + "\u0332")
+        .join("");
+}
+
+function toStrikethrough(text: string): string {
+    // Combining long stroke overlay = \u0336
+    return text
+        .split("")
+        .map((char) => char + "\u0336")
+        .join("");
+}
 const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -95,6 +155,70 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         } finally {
             setIsEditing(false);
         }
+    };
+    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
+    const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
+
+    // Mouse event handler: set popover position if text is selected
+    const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        if (start !== end) {
+            setAnchorPosition({ top: e.clientY, left: e.clientX });
+        } else {
+            setAnchorPosition(null);
+        }
+    };
+
+    // Keyboard event handler: set fallback popover position if text is selected
+    const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        if (start !== end) {
+            // For keyboard events, we use a fixed fallback position
+            setAnchorPosition({ top: 100, left: 100 });
+        } else {
+            setAnchorPosition(null);
+        }
+    };
+
+    // Handle formatting by transforming the selected text with the chosen style
+    const handleFormat = (formatType: string) => {
+        if (!textFieldRef.current) return;
+        const field = textFieldRef.current;
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+        if (start == null || end == null || start === end) return;
+
+        const selected = editableText.substring(start, end);
+        let transformed = selected;
+
+        switch (formatType) {
+            case "bold":
+                transformed = toBold(selected);
+                break;
+            case "italic":
+                transformed = toItalic(selected);
+                break;
+            case "underline":
+                transformed = toUnderline(selected);
+                break;
+            case "strike":
+                transformed = toStrikethrough(selected);
+                break;
+            default:
+                break;
+        }
+
+        const newText =
+            editableText.slice(0, start) + transformed + editableText.slice(end);
+        setEditableText(newText);
+
+        // Hide the popover and restore focus
+        setAnchorPosition(null);
+        setTimeout(() => field.focus(), 0);
     };
 
     return (
