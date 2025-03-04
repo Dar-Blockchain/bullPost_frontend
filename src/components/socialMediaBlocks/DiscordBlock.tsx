@@ -39,6 +39,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         (state: RootState) => state.posts.selectedAnnouncement
     );
     const dispatch = useDispatch<AppDispatch>();
+
     const postId = selectedAnnouncement && selectedAnnouncement.length > 0
         ? selectedAnnouncement[0]._id
         : _id;
@@ -163,6 +164,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             .set("hour", selectedTime.hour())
             .set("minute", selectedTime.minute())
             .set("second", 0);
+        const token = localStorage.getItem("token");
 
         const requestBody = {
             // message: selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0].discord ? selectedAnnouncement[0].discord : submittedText,
@@ -173,7 +175,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost/` + postId, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(requestBody),
             });
 
