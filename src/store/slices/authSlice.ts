@@ -99,6 +99,7 @@ export const logoutUser = (): ThunkAction<void, RootState, unknown, any> => (dis
     // Remove localStorage items
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("userPreference");
 
     // Name of the cookie we want to delete
     const cookieName = "next-auth.session-token";

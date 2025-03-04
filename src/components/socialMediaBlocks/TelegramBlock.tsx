@@ -13,7 +13,13 @@ import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost
 import { Dayjs } from "dayjs";
 import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
+import {
+    FormatBold as FormatBoldIcon,
+    FormatItalic as FormatItalicIcon,
+    FormatUnderlined as FormatUnderlinedIcon,
+    StrikethroughS as StrikethroughSIcon,
+    Code as CodeIcon
+} from "@mui/icons-material";
 interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
     onSubmit: () => void; // ✅ Accept API submit function
@@ -189,6 +195,106 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             alert("Error scheduling post.");
         }
     };
+    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
+    const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
+
+    // Fixed tokens (Telegram-style)
+    const tokens = {
+        bold: "*",         // Telegram: *text*
+        italic: "_",       // Telegram: _text_
+        underline: "",     // No native underline token in Telegram Markdown
+        strike: "~",       // Using ~ for strikethrough
+        inlineCode: "`",   // For inline code
+        codeBlock: "```",  // For code blocks
+        spoiler: "||"      // For spoilers (Telegram MarkdownV2 supports this)
+    };
+
+    // Mouse event handler: set popover position if text is selected
+    const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        if (start !== end) {
+            setAnchorPosition({ top: e.clientY, left: e.clientX });
+        } else {
+            setAnchorPosition(null);
+        }
+    };
+
+    // Keyboard event handler: set fallback popover position if text is selected
+    const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        if (start !== end) {
+            setAnchorPosition({ top: 100, left: 100 });
+        } else {
+            setAnchorPosition(null);
+        }
+    };
+
+    // Handle formatting: wrap the selected text with the appropriate tokens.
+    const handleFormat = (formatType: string) => {
+        if (!textFieldRef.current) return;
+        const field = textFieldRef.current;
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+        if (start == null || end == null || start === end) return;
+
+        const selected = editableText.substring(start, end);
+        let newText = editableText;
+
+        switch (formatType) {
+            case "bold":
+                newText =
+                    editableText.slice(0, start) +
+                    `${tokens.bold}${selected}${tokens.bold}` +
+                    editableText.slice(end);
+                break;
+            case "italic":
+                newText =
+                    editableText.slice(0, start) +
+                    `${tokens.italic}${selected}${tokens.italic}` +
+                    editableText.slice(end);
+                break;
+            case "underline":
+                // Underline not supported: leave unchanged or optionally implement HTML formatting
+                newText = editableText;
+                break;
+            case "strike":
+                newText =
+                    editableText.slice(0, start) +
+                    `${tokens.strike}${selected}${tokens.strike}` +
+                    editableText.slice(end);
+                break;
+            case "inlineCode":
+                newText =
+                    editableText.slice(0, start) +
+                    `${tokens.inlineCode}${selected}${tokens.inlineCode}` +
+                    editableText.slice(end);
+                break;
+            case "codeBlock":
+                newText =
+                    editableText.slice(0, start) +
+                    `${tokens.codeBlock}\n${selected}\n${tokens.codeBlock}` +
+                    editableText.slice(end);
+                break;
+            case "spoiler":
+                newText =
+                    editableText.slice(0, start) +
+                    `${tokens.spoiler}${selected}${tokens.spoiler}` +
+                    editableText.slice(end);
+                break;
+            default:
+                break;
+        }
+
+        setEditableText(newText);
+        // Hide the popover and restore focus
+        setAnchorPosition(null);
+        setTimeout(() => field.focus(), 0);
+    };
+
     return (
         <>
             <Box
@@ -282,13 +388,17 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                 >
                     {isEditing ? (
                         <Box>
-
                             <TextField
                                 fullWidth
                                 multiline
                                 variant="outlined"
                                 value={editableText}
                                 onChange={(e) => setEditableText(e.target.value)}
+                                inputRef={textFieldRef}
+                                inputProps={{
+                                    onMouseUp: handleMouseUp,
+                                    onKeyUp: handleKeyUp,
+                                }}
                                 sx={{
                                     "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
                                     "& .MuiOutlinedInput-root": {
@@ -298,21 +408,40 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                     },
                                 }}
                             />
-                            {selectedImage && (
-                                <Box mb={2} textAlign="center">
-                                    <img
-                                        src={URL.createObjectURL(selectedImage)}
-                                        alt="Image preview"
-                                        style={{
-                                            width: "100%",
-                                            marginTop: "10px",
-                                            maxHeight: "200px",
-                                            objectFit: "contain",
-                                            borderRadius: "4px",
-                                        }}
-                                    />
+
+                            <Popover
+                                open={Boolean(anchorPosition)}
+                                anchorReference="anchorPosition"
+                                anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
+                                onClose={() => setAnchorPosition(null)}
+                                anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                            >
+                                <Box sx={{ display: "flex", gap: 1, p: 1 }}>
+                                    <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatBoldIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("italic")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatItalicIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("underline")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatUnderlinedIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("strike")} sx={{ color: "#8F8F8F" }}>
+                                        <StrikethroughSIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("inlineCode")} sx={{ color: "#8F8F8F" }}>
+                                        <CodeIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("codeBlock")} sx={{ color: "#8F8F8F" }}>
+                                        <CodeIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("spoiler")} sx={{ color: "#8F8F8F" }}>
+                                        <Typography variant="caption" sx={{ fontSize: 12 }}>
+                                            ||
+                                        </Typography>
+                                    </IconButton>
                                 </Box>
-                            )}
+                            </Popover>
                         </Box>
 
                     ) : (
