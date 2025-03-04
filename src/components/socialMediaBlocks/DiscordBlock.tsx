@@ -12,6 +12,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import {
+    // ... other icons
+    FormatBold as FormatBoldIcon,
+    FormatUnderlined as FormatUnderlinedIcon,
+    StrikethroughS as StrikethroughSIcon,
+} from "@mui/icons-material";
 import dayjs from "dayjs";
 interface DiscordBlockProps {
     submittedText: string;
@@ -21,6 +27,8 @@ interface DiscordBlockProps {
 
 const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
+    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
+
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const [displayText, setDisplayText] = useState("");
     const indexRef = useRef(0);
@@ -204,25 +212,61 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         }
     };
 
-    // const handleUpdate = async () => {
-    //     try {
-    //         const updatedPost = await dispatch(
-    //             updatePost({
-    //                 id: selectedAnnouncement[0]._id,
-    //                 body: { discord: editableText }
-    //             })
-    //         ).unwrap();
-    //         // If updatedPost exists and has twitter, use it; otherwise, use editableText.
-    //         setDisplayText(updatedPost?.discord || editableText);
-    //         // Optionally, call parent's onSubmit with the new text.
-    //         //   onSubmit(editableText);
-    //     } catch (error) {
-    //         console.error("Error updating post:", error);
-    //         // Optionally, show an error toast.
-    //     } finally {
-    //         setIsEditing(false);
-    //     }
-    // };
+    const handleFormat = (formatType: string) => {
+        if (!textFieldRef.current) return;
+
+        // current text inside the TextField
+        const field = textFieldRef.current;
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+
+        // If nothing is selected or indices are null, do nothing
+        if (start == null || end == null || start === end) return;
+
+        const selected = editableText.substring(start, end);
+        let newText = editableText;
+
+        switch (formatType) {
+            case "bold":
+                // **selected**
+                newText =
+                    editableText.slice(0, start) +
+                    `**${selected}**` +
+                    editableText.slice(end);
+                break;
+
+            case "underline":
+                // __selected__
+                newText =
+                    editableText.slice(0, start) +
+                    `__${selected}__` +
+                    editableText.slice(end);
+                break;
+
+            case "strike":
+                // ~~selected~~
+                newText =
+                    editableText.slice(0, start) +
+                    `~~${selected}~~` +
+                    editableText.slice(end);
+                break;
+
+            default:
+                break;
+        }
+
+        // Update the state
+        setEditableText(newText);
+
+        // (Optional) Restore focus & selection
+        // so the user can see the newly inserted Markdown
+        setTimeout(() => {
+            field.focus();
+            // Move cursor to after the inserted symbols
+            const symbolLength = 4; // e.g. "**" + "**" = 4 chars
+            field.setSelectionRange(start, end + symbolLength);
+        }, 0);
+    };
 
     return (
         <>
@@ -317,12 +361,33 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 >
                     {isEditing ? (
                         <Box>
+                            {/* Formatting Toolbar */}
+                            <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
+                                <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>
+                                    <FormatBoldIcon fontSize="small" />
+                                </IconButton>
 
+                                <IconButton
+                                    onClick={() => handleFormat("underline")}
+                                    sx={{ color: "#8F8F8F" }}
+                                >
+                                    <FormatUnderlinedIcon fontSize="small" />
+                                </IconButton>
+
+                                <IconButton onClick={() => handleFormat("strike")} sx={{ color: "#8F8F8F" }}>
+                                    <StrikethroughSIcon fontSize="small" />
+                                </IconButton>
+
+                                {/* ... you can add more icons for italic, link, etc. */}
+                            </Box>
+
+                            {/* The TextField for editing Discord text */}
                             <TextField
                                 fullWidth
                                 multiline
                                 variant="outlined"
                                 value={editableText}
+                                inputRef={textFieldRef}
                                 onChange={(e) => setEditableText(e.target.value)}
                                 sx={{
                                     "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
@@ -333,11 +398,12 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     },
                                 }}
                             />
+
                             {selectedImage && (
                                 <Box mb={2} textAlign="center">
                                     <img
                                         src={URL.createObjectURL(selectedImage)}
-                                        alt="Image preview"
+                                        alt="Preview"
                                         style={{
                                             width: "100%",
                                             marginTop: "10px",
@@ -349,17 +415,18 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 </Box>
                             )}
                         </Box>
-
                     ) : (
+                        // The non-editing view (existing code)
                         <>
-                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_discord &&
+                            {selectedAnnouncement && selectedAnnouncement.length > 0 &&
+                                selectedAnnouncement[0]?.image_discord && (
+                                    <img
+                                        src={selectedAnnouncement[0].image_discord}
+                                        alt="Preview"
+                                        style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                    />
+                                )}
 
-                                <img
-                                    src={selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0]?.image_discord : "/mnt/data/image.png"}
-                                    alt="Preview"
-                                    style={{ maxWidth: "100%", display: "block", margin: "0 auto", marginBottom: "10px" }}
-                                />
-                            }
                             <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                                 {(selectedAnnouncement && selectedAnnouncement.length > 0)
                                     ? selectedAnnouncement[0].discord
