@@ -38,19 +38,19 @@ export default function BullPostPage() {
         console.log(token, "here my token");
 
         // Retrieve user preferences from localStorage (stored as a JSON string)
-        const userStr = localStorage.getItem("user");
+        const userStr = localStorage.getItem("userPreference");
         const userSettings = userStr ? JSON.parse(userStr) : {};
-        console.log(userSettings.Preference
+        console.log(userSettings
             , 'hahahahahah')
         let apiUrl = "";
 
         // Check the user's preference and select the appropriate endpoint.
         // For example, if OpenIA is true, then use the OpenAI endpoint.
-        if (userSettings?.Preference?.OpenIA === true) {
+        if (userSettings?.OpenIA === true) {
             apiUrl = token
                 ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationOpenIA/generate`
                 : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
-        } else if (userSettings?.Preference?.Gemini === true) {
+        } else if (userSettings?.Gemini === true) {
             apiUrl = token
                 ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generatePlatformPost`
                 : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;

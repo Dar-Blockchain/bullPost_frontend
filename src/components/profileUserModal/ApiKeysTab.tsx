@@ -1,5 +1,5 @@
 // src/components/ApiKeysTab.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -11,19 +11,59 @@ import {
 } from '@mui/material';
 
 const ApiKeysTab: React.FC = () => {
-    // State for the preferred provider, defaulting to "Gemini"
-    const [preferredProvider, setPreferredProvider] = useState("Gemini");
+    // Retrieve the stored preference from its own key (fallback to "Gemini" if not available)
+    const storedPreference = localStorage.getItem("userPreference");
+    const initialProvider = storedPreference
+        ? JSON.parse(storedPreference).OpenIA
+            ? "OpenAI"
+            : "Gemini"
+        : "Gemini";
 
-    // States for additional keys (with default values based on your sample)
+    const [preferredProvider, setPreferredProvider] = useState(initialProvider);
+
+    // States for additional keys (with default values)
     const [openIaKey, setOpenIaKey] = useState("");
-    const [discordWebhookUrl, setDiscordWebhookUrl] = useState(
-        "");
+    const [geminiKey, setGeminiKey] = useState("");
+    const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
     const [telegramChatId, setTelegramChatId] = useState("");
-    // For simplicity, assume these booleans are fixed (or could be enhanced with toggles)
+    // For simplicity, assume these booleans are fixed
     const twitterEnabled = true;
     const telegramEnabled = true;
     const discordEnabled = true;
-    // Assume a default user id (in a real app you might pull this from auth data)
+
+    // When the provider changes, save it to its own localStorage key.
+    useEffect(() => {
+        const preference = {
+            OpenIA: preferredProvider === "OpenAI",
+            Gemini: preferredProvider === "Gemini"
+        };
+        localStorage.setItem("userPreference", JSON.stringify(preference));
+    }, [preferredProvider]);
+
+    // On component mount, fetch the saved preferences from the backend API
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data) {
+                    // Update provider based on the returned data
+                    setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
+                    setOpenIaKey(data.OpenIaKey || "");
+                    setGeminiKey(data.GeminiKey || "");
+                    setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
+                    setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+                }
+            })
+            .catch((err) => console.error("Error fetching preferences:", err));
+    }, []);
 
     const handleSave = async () => {
         // Build the provider preference based on the dropdown selection.
@@ -31,35 +71,39 @@ const ApiKeysTab: React.FC = () => {
             OpenIA: preferredProvider === "OpenAI",
             Gemini: preferredProvider === "Gemini"
         };
+        const token = localStorage.getItem("token");
 
-        // Retrieve existing user settings from localStorage (if any)
+        // Optionally merge this with your user object.
         const userStr = localStorage.getItem("user");
         const userSettings = userStr ? JSON.parse(userStr) : {};
-
-        // Update the Preference property based on the selected provider
         userSettings.Preference = preference;
         localStorage.setItem("user", JSON.stringify(userSettings));
         console.log("Local preferences saved:", userSettings);
 
-        // Build the request body matching your sample JSON
-        const requestBody = {
-            twitter: twitterEnabled,
-            telegram: telegramEnabled,
-            discord: discordEnabled,
+        // Build the request body and only include keys if they have non-empty values.
+        const requestBody: any = {
             OpenIA: preference.OpenIA,
-            Gemini: preference.Gemini,
-            DISCORD_WEBHOOK_URL: discordWebhookUrl,
-            TELEGRAM_CHAT_ID: telegramChatId,
-            OpenIaKey: openIaKey,
-            user: userSettings._id
+            Gemini: preference.Gemini
         };
-
+        if (openIaKey.trim() !== "") {
+            requestBody.OpenIaKey = openIaKey;
+        }
+        if (geminiKey.trim() !== "") {
+            requestBody.GeminiKey = geminiKey;
+        }
+        if (discordWebhookUrl.trim() !== "") {
+            requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
+        }
+        if (telegramChatId.trim() !== "") {
+            requestBody.TELEGRAM_CHAT_ID = telegramChatId;
+        }
 
         try {
-            const response = await fetch("http://localhost:5000/preferences/addPreferences", {
-                method: "POST",
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`, {
+                method: "PUT",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -137,6 +181,8 @@ const ApiKeysTab: React.FC = () => {
                         Gemini API Key
                     </Typography>
                     <Input
+                        value={geminiKey}
+                        onChange={(e) => setGeminiKey(e.target.value)}
                         sx={{
                             width: '710px',
                             height: '40px',
@@ -149,6 +195,8 @@ const ApiKeysTab: React.FC = () => {
                     />
                 </Box>
             </Box>
+
+            {/* Anthropic Section */}
             <Box>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
                     Anthropic
@@ -166,13 +214,13 @@ const ApiKeysTab: React.FC = () => {
                             border: '1px solid #ccc',
                             padding: '10px',
                             backgroundColor: '#171717',
-                            '& input': { color: '#fff' },
+                            '& input': { color: '#fff' }
                         }}
                     />
                 </Box>
             </Box>
 
-            {/* Deepseek */}
+            {/* Deepseek Section */}
             <Box>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
                     Deepseek
@@ -190,12 +238,11 @@ const ApiKeysTab: React.FC = () => {
                             border: '1px solid #ccc',
                             padding: '10px',
                             backgroundColor: '#171717',
-                            '& input': { color: '#fff' },
+                            '& input': { color: '#fff' }
                         }}
                     />
                 </Box>
             </Box>
-            {/* Additional sections (Anthropic, Deepseek, etc.) can be added similarly */}
 
             {/* Save Data Button */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

@@ -13,10 +13,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 import {
-    // ... other icons
     FormatBold as FormatBoldIcon,
+    FormatItalic as FormatItalicIcon,
     FormatUnderlined as FormatUnderlinedIcon,
     StrikethroughS as StrikethroughSIcon,
+    Code as CodeIcon
 } from "@mui/icons-material";
 import dayjs from "dayjs";
 interface DiscordBlockProps {
@@ -212,15 +213,40 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         }
     };
 
+
+
+    const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
+
+    // Separate event handler for mouse events
+    const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        if (start !== end) {
+            setAnchorPosition({ top: e.clientY, left: e.clientX });
+        } else {
+            setAnchorPosition(null);
+        }
+    };
+
+    // Separate event handler for keyboard events
+    const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        // For keyboard events, we use a fallback position (customize as needed)
+        if (start !== end) {
+            setAnchorPosition({ top: 100, left: 100 });
+        } else {
+            setAnchorPosition(null);
+        }
+    };
+
     const handleFormat = (formatType: string) => {
         if (!textFieldRef.current) return;
-
-        // current text inside the TextField
         const field = textFieldRef.current;
         const start = field.selectionStart;
         const end = field.selectionEnd;
-
-        // If nothing is selected or indices are null, do nothing
         if (start == null || end == null || start === end) return;
 
         const selected = editableText.substring(start, end);
@@ -228,46 +254,35 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
         switch (formatType) {
             case "bold":
-                // **selected**
-                newText =
-                    editableText.slice(0, start) +
-                    `**${selected}**` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `**${selected}**` + editableText.slice(end);
                 break;
-
+            case "italic":
+                newText = editableText.slice(0, start) + `*${selected}*` + editableText.slice(end);
+                break;
             case "underline":
-                // __selected__
-                newText =
-                    editableText.slice(0, start) +
-                    `__${selected}__` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `__${selected}__` + editableText.slice(end);
                 break;
-
             case "strike":
-                // ~~selected~~
-                newText =
-                    editableText.slice(0, start) +
-                    `~~${selected}~~` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `~~${selected}~~` + editableText.slice(end);
                 break;
-
+            case "inlineCode":
+                newText = editableText.slice(0, start) + `\`${selected}\`` + editableText.slice(end);
+                break;
+            case "codeBlock":
+                newText = editableText.slice(0, start) + "```\n" + selected + "\n```" + editableText.slice(end);
+                break;
+            case "spoiler":
+                newText = editableText.slice(0, start) + `||${selected}||` + editableText.slice(end);
+                break;
             default:
                 break;
         }
 
-        // Update the state
         setEditableText(newText);
-
-        // (Optional) Restore focus & selection
-        // so the user can see the newly inserted Markdown
-        setTimeout(() => {
-            field.focus();
-            // Move cursor to after the inserted symbols
-            const symbolLength = 4; // e.g. "**" + "**" = 4 chars
-            field.setSelectionRange(start, end + symbolLength);
-        }, 0);
+        // Hide the popover after formatting
+        setAnchorPosition(null);
+        setTimeout(() => field.focus(), 0);
     };
-
     return (
         <>
             <Box
@@ -361,34 +376,17 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 >
                     {isEditing ? (
                         <Box>
-                            {/* Formatting Toolbar */}
-                            <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
-                                <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>
-                                    <FormatBoldIcon fontSize="small" />
-                                </IconButton>
-
-                                <IconButton
-                                    onClick={() => handleFormat("underline")}
-                                    sx={{ color: "#8F8F8F" }}
-                                >
-                                    <FormatUnderlinedIcon fontSize="small" />
-                                </IconButton>
-
-                                <IconButton onClick={() => handleFormat("strike")} sx={{ color: "#8F8F8F" }}>
-                                    <StrikethroughSIcon fontSize="small" />
-                                </IconButton>
-
-                                {/* ... you can add more icons for italic, link, etc. */}
-                            </Box>
-
-                            {/* The TextField for editing Discord text */}
                             <TextField
                                 fullWidth
                                 multiline
                                 variant="outlined"
                                 value={editableText}
-                                inputRef={textFieldRef}
                                 onChange={(e) => setEditableText(e.target.value)}
+                                inputRef={textFieldRef}
+                                inputProps={{
+                                    onMouseUp: handleMouseUp,
+                                    onKeyUp: handleKeyUp,
+                                }}
                                 sx={{
                                     "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
                                     "& .MuiOutlinedInput-root": {
@@ -399,21 +397,39 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 }}
                             />
 
-                            {selectedImage && (
-                                <Box mb={2} textAlign="center">
-                                    <img
-                                        src={URL.createObjectURL(selectedImage)}
-                                        alt="Preview"
-                                        style={{
-                                            width: "100%",
-                                            marginTop: "10px",
-                                            maxHeight: "200px",
-                                            objectFit: "contain",
-                                            borderRadius: "4px",
-                                        }}
-                                    />
+                            <Popover
+                                open={Boolean(anchorPosition)}
+                                anchorReference="anchorPosition"
+                                anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
+                                onClose={() => setAnchorPosition(null)}
+                                anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                            >
+                                <Box sx={{ display: "flex", gap: 1, p: 1 }}>
+                                    <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatBoldIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("italic")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatItalicIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("underline")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatUnderlinedIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("strike")} sx={{ color: "#8F8F8F" }}>
+                                        <StrikethroughSIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("inlineCode")} sx={{ color: "#8F8F8F" }}>
+                                        <CodeIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("codeBlock")} sx={{ color: "#8F8F8F" }}>
+                                        <CodeIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("spoiler")} sx={{ color: "#8F8F8F" }}>
+                                        <Typography variant="caption" sx={{ fontSize: 12 }}>
+                                            ||
+                                        </Typography>
+                                    </IconButton>
                                 </Box>
-                            )}
+                            </Popover>
                         </Box>
                     ) : (
                         // The non-editing view (existing code)
