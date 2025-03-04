@@ -27,23 +27,39 @@ export default function BullPostPage() {
     const [text, setText] = useState(
         "We have now moved from our private Beta phase into public, onboarding new users and taking wider feedback.\n\nPlease continue to share bugs you find with the team!"
     );
-
     const handleSubmit = async () => {
         if (!text.trim()) {
             toast.warn("⚠️ Please enter text before submitting!", { position: "top-right" });
             return;
         }
 
-        const token = localStorage.getItem("token"); // Retrieve the token securely
-        // if (!token) {
-        //     toast.error("🚫 Unauthorized: Token not found!", { position: "top-right" });
-        //     return;
-        // }
-
+        // Retrieve token from localStorage
+        const token = localStorage.getItem("token");
         console.log(token, "here my token");
-        const apiUrl = token
-            ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generatePlatformPost`
-            : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
+
+        // Retrieve user preferences from localStorage (stored as a JSON string)
+        const userStr = localStorage.getItem("user");
+        const userSettings = userStr ? JSON.parse(userStr) : {};
+        console.log(userSettings.Preference
+            , 'hahahahahah')
+        let apiUrl = "";
+
+        // Check the user's preference and select the appropriate endpoint.
+        // For example, if OpenIA is true, then use the OpenAI endpoint.
+        if (userSettings?.Preference?.OpenIA === true) {
+            apiUrl = token
+                ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationOpenIA/generate`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
+        } else if (userSettings?.Preference?.Gemini === true) {
+            apiUrl = token
+                ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generatePlatformPost`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
+        } else {
+            // Fallback: default to Gemini endpoints if no preference is set
+            apiUrl = token
+                ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generatePlatformPost`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
+        }
 
         try {
             const response = await fetch(apiUrl, {
@@ -84,6 +100,7 @@ export default function BullPostPage() {
             toast.error("❌ Failed to submit text!", { position: "top-right" });
         }
     };
+
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));

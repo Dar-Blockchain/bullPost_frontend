@@ -109,7 +109,7 @@ export const logoutUser = (): ThunkAction<void, RootState, unknown, any> => (dis
     document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`;
 
     // Force a page reload to ensure changes take effect.
-    window.location.reload();
+    // window.location.reload();
   }
   dispatch(logout());
 };
