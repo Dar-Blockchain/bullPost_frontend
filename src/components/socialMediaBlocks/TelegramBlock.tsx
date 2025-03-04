@@ -103,11 +103,17 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
             return;
         }
-
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return
+        }
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/postNow/` + postId, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                },
             });
 
             const data = await response.json();
@@ -169,7 +175,11 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             .set("hour", selectedTime.hour())
             .set("minute", selectedTime.minute())
             .set("second", 0);
-
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return
+        }
         const requestBody = {
             // message: selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0].discord ? selectedAnnouncement[0].discord : submittedText,
             dateTime: combinedDateTime.toISOString(),
@@ -179,8 +189,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/schedulePostTelegram/` + postId, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestBody),
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                }, body: JSON.stringify(requestBody),
             });
 
             if (response.ok) {
