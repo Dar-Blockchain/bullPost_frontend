@@ -117,7 +117,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
 
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
-                toast.error(`❌ Error: ${data.error || "Failed to send message."}`, { position: "top-right" });
+                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
             }
         } catch (error) {
             console.error("Error sending message to Discord:", error);

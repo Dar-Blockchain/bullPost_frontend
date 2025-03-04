@@ -50,11 +50,14 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
             return;
         }
-
+        const token = localStorage.getItem("token");
+        if (!token) return;
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/postNow/` + postId, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                },
             });
 
             const data = await response.json();
@@ -64,7 +67,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
-                toast.error(`❌ Error: ${data.error || "Failed to send message."}`, { position: "top-right" });
+                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
             }
         } catch (error) {
             console.error("Error sending message to Discord:", error);
