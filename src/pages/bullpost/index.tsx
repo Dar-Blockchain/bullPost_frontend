@@ -171,7 +171,7 @@ export default function BullPostPage() {
             </Box>
 
             {/* ✅ Pass `activeSection` to BottomActionBar */}
-            {isMobile && <BottomActionBar activeSection={activeSection} setActiveSection={setActiveSection} />}
+            {isMobile && <BottomActionBar activeSection={activeSection} setActiveSection={setActiveSection} _id={_id} />}
 
             {/* Login Modal */}
             <LoginModal open={open} handleClose={handleClose} />
