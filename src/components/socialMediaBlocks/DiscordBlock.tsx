@@ -20,6 +20,8 @@ import {
     Code as CodeIcon
 } from "@mui/icons-material";
 import dayjs from "dayjs";
+import ReactMarkdown from "react-markdown";
+
 interface DiscordBlockProps {
     submittedText: string;
     onSubmit: () => void;
@@ -441,7 +443,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     ) : (
                         // The non-editing view (existing code)
                         <>
-                            {selectedAnnouncement && selectedAnnouncement.length > 0 &&
+                            {/* {selectedAnnouncement && selectedAnnouncement.length > 0 &&
                                 selectedAnnouncement[0]?.image_discord && (
                                     <img
                                         src={selectedAnnouncement[0].image_discord}
@@ -454,7 +456,21 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 {(selectedAnnouncement && selectedAnnouncement.length > 0)
                                     ? selectedAnnouncement[0].discord
                                     : (displayText || "No announcement yet...")}
-                            </Typography>
+                            </Typography> */}
+                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_discord && (
+                                <img
+                                    src={selectedAnnouncement[0].image_discord}
+                                    alt="Preview"
+                                    style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                />
+                            )}
+                            <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                <ReactMarkdown>
+                                    {(selectedAnnouncement && selectedAnnouncement.length > 0)
+                                        ? selectedAnnouncement[0].discord
+                                        : (displayText || "No announcement yet...")}
+                                </ReactMarkdown>
+                            </Box>
                         </>
                     )}
                 </Box>

@@ -7,6 +7,7 @@ import {
     Button,
     IconButton,
     TextField,
+    Popover,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -24,7 +25,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { updatePost } from "@/store/slices/postsSlice";
-import dayjs from "dayjs";
+import {
+    FormatBold as FormatBoldIcon,
+    FormatItalic as FormatItalicIcon,
+    FormatUnderlined as FormatUnderlinedIcon,
+    StrikethroughS as StrikethroughSIcon,
+    Code as CodeIcon
+} from "@mui/icons-material";
+import ReactMarkdown from "react-markdown";
 
 interface TwitterBlockProps {
     submittedText: string; // Accept submitted text as a prop
@@ -292,13 +300,17 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 >
                     {isEditing ? (
                         <Box>
-
                             <TextField
                                 fullWidth
                                 multiline
                                 variant="outlined"
                                 value={editableText}
                                 onChange={(e) => setEditableText(e.target.value)}
+                                inputRef={textFieldRef}
+                                inputProps={{
+                                    onMouseUp: handleMouseUp,
+                                    onKeyUp: handleKeyUp,
+                                }}
                                 sx={{
                                     "& .MuiOutlinedInput-input": { color: "#8F8F8F", fontSize: "14px" },
                                     "& .MuiOutlinedInput-root": {
@@ -308,26 +320,44 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     },
                                 }}
                             />
-                            {selectedImage && (
-                                <Box mb={2} textAlign="center">
-                                    <img
-                                        src={URL.createObjectURL(selectedImage)}
-                                        alt="Image preview"
-                                        style={{
-                                            width: "100%",
-                                            marginTop: "10px",
-                                            maxHeight: "200px",
-                                            objectFit: "contain",
-                                            borderRadius: "4px",
-                                        }}
-                                    />
-                                </Box>
-                            )}
-                        </Box>
 
+                            <Popover
+                                open={Boolean(anchorPosition)}
+                                anchorReference="anchorPosition"
+                                anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
+                                onClose={() => setAnchorPosition(null)}
+                                anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                            >
+                                <Box sx={{ display: "flex", gap: 1, p: 1 }}>
+                                    <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatBoldIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("italic")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatItalicIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("underline")} sx={{ color: "#8F8F8F" }}>
+                                        <FormatUnderlinedIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("strike")} sx={{ color: "#8F8F8F" }}>
+                                        <StrikethroughSIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("inlineCode")} sx={{ color: "#8F8F8F" }}>
+                                        <CodeIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("codeBlock")} sx={{ color: "#8F8F8F" }}>
+                                        <CodeIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleFormat("spoiler")} sx={{ color: "#8F8F8F" }}>
+                                        <Typography variant="caption" sx={{ fontSize: 12 }}>
+                                            ||
+                                        </Typography>
+                                    </IconButton>
+                                </Box>
+                            </Popover>
+                        </Box>
                     ) : (
                         <>
-                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter &&
+                            {/* {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter &&
                                 <img
                                     src={selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0]?.image_twitter : "/mnt/data/image.png"}
                                     alt="Preview"
@@ -338,7 +368,21 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 {selectedAnnouncement && selectedAnnouncement.length > 0
                                     ? selectedAnnouncement[0].twitter
                                     : (displayText || "No announcement yet...")}
-                            </Typography>
+                            </Typography> */}
+                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter && (
+                                <img
+                                    src={selectedAnnouncement[0].image_twitter}
+                                    alt="Preview"
+                                    style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                />
+                            )}
+                            <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                <ReactMarkdown>
+                                    {(selectedAnnouncement && selectedAnnouncement.length > 0)
+                                        ? selectedAnnouncement[0].twitter
+                                        : (displayText || "No announcement yet...")}
+                                </ReactMarkdown>
+                            </Box>
                         </>
                     )}
                 </Box>

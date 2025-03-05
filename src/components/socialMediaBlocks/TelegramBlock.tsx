@@ -20,12 +20,24 @@ import {
     StrikethroughS as StrikethroughSIcon,
     Code as CodeIcon
 } from "@mui/icons-material";
+import ReactMarkdown from "react-markdown";
+
 interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
     onSubmit: () => void; // ✅ Accept API submit function
     _id: string;
 
 }
+// Fixed tokens (Telegram-style)
+const tokens = {
+    bold: "*",         // Telegram: *text*
+    italic: "_",       // Telegram: _text_
+    underline: "",     // No native underline token in Telegram Markdown
+    strike: "~",       // Using ~ for strikethrough
+    inlineCode: "`",   // For inline code
+    codeBlock: "```",  // For code blocks
+    spoiler: "||"      // For spoilers (Telegram MarkdownV2 supports this)
+};
 
 const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id }) => {
     const theme = useTheme();
@@ -209,18 +221,6 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
 
-    // Fixed tokens (Telegram-style)
-    const tokens = {
-        bold: "*",         // Telegram: *text*
-        italic: "_",       // Telegram: _text_
-        underline: "",     // No native underline token in Telegram Markdown
-        strike: "~",       // Using ~ for strikethrough
-        inlineCode: "`",   // For inline code
-        codeBlock: "```",  // For code blocks
-        spoiler: "||"      // For spoilers (Telegram MarkdownV2 supports this)
-    };
-
-    // Mouse event handler: set popover position if text is selected
     const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
         if (!textFieldRef.current) return;
         const start = textFieldRef.current.selectionStart;
@@ -232,7 +232,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         }
     };
 
-    // Keyboard event handler: set fallback popover position if text is selected
+    // Keyboard event handler: use a fallback position
     const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (!textFieldRef.current) return;
         const start = textFieldRef.current.selectionStart;
@@ -244,7 +244,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         }
     };
 
-    // Handle formatting: wrap the selected text with the appropriate tokens.
+    // Handle formatting: wrap selected text with tokens
     const handleFormat = (formatType: string) => {
         if (!textFieldRef.current) return;
         const field = textFieldRef.current;
@@ -257,55 +257,34 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
 
         switch (formatType) {
             case "bold":
-                newText =
-                    editableText.slice(0, start) +
-                    `${tokens.bold}${selected}${tokens.bold}` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `**${selected}**` + editableText.slice(end);
                 break;
             case "italic":
-                newText =
-                    editableText.slice(0, start) +
-                    `${tokens.italic}${selected}${tokens.italic}` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `*${selected}*` + editableText.slice(end);
                 break;
             case "underline":
-                // Underline not supported: leave unchanged or optionally implement HTML formatting
-                newText = editableText;
+                newText = editableText.slice(0, start) + `__${selected}__` + editableText.slice(end);
                 break;
             case "strike":
-                newText =
-                    editableText.slice(0, start) +
-                    `${tokens.strike}${selected}${tokens.strike}` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `~~${selected}~~` + editableText.slice(end);
                 break;
             case "inlineCode":
-                newText =
-                    editableText.slice(0, start) +
-                    `${tokens.inlineCode}${selected}${tokens.inlineCode}` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `\`${selected}\`` + editableText.slice(end);
                 break;
             case "codeBlock":
-                newText =
-                    editableText.slice(0, start) +
-                    `${tokens.codeBlock}\n${selected}\n${tokens.codeBlock}` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + "```\n" + selected + "\n```" + editableText.slice(end);
                 break;
             case "spoiler":
-                newText =
-                    editableText.slice(0, start) +
-                    `${tokens.spoiler}${selected}${tokens.spoiler}` +
-                    editableText.slice(end);
+                newText = editableText.slice(0, start) + `||${selected}||` + editableText.slice(end);
                 break;
             default:
                 break;
         }
 
         setEditableText(newText);
-        // Hide the popover and restore focus
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
     };
-
     return (
         <>
             <Box
@@ -457,7 +436,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
 
                     ) : (
                         <>
-                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_telegram &&
+                            {/* {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_telegram &&
 
                                 <img
                                     src={selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0]?.image_telegram : "/mnt/data/image.png"}
@@ -469,7 +448,21 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                 {selectedAnnouncement && selectedAnnouncement.length > 0
                                     ? selectedAnnouncement[0].telegram
                                     : (displayText || "No announcement yet...")}
-                            </Typography>
+                            </Typography> */}
+                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_telegram && (
+                                <img
+                                    src={selectedAnnouncement[0].image_telegram}
+                                    alt="Preview"
+                                    style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                />
+                            )}
+                            <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                <ReactMarkdown>
+                                    {(selectedAnnouncement && selectedAnnouncement.length > 0)
+                                        ? selectedAnnouncement[0].telegram
+                                        : (displayText || "No announcement yet...")}
+                                </ReactMarkdown>
+                            </Box>
                         </>
                     )}
                 </Box>
