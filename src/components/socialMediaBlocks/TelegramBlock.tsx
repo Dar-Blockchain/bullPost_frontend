@@ -9,7 +9,7 @@ import TelegramIcon from "@mui/icons-material/Telegram";
 import { useAuth } from "@/hooks/useAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, regeneratePost, regeneratePostOpenAi, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 import { Dayjs } from "dayjs";
 import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -285,6 +285,16 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
     };
+    const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
+    const preference = storedPreference ? JSON.parse(storedPreference) : {};
+
+    const handleRegenerate = () => {
+        if (preference?.Gemini === true) {
+            dispatch(regeneratePost({ platform: "telegram", postId }));
+        } else {
+            dispatch(regeneratePostOpenAi({ platform: "telegram", postId }));
+        }
+    };
     return (
         <>
             <Box
@@ -522,7 +532,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton sx={{ color: "red" }}>
                                     <Replay
-                                        onClick={() => dispatch(regeneratePost({ platform: "telegram", postId: postId }))}
+                                        onClick={handleRegenerate}
 
                                         fontSize="small" />
                                 </IconButton>

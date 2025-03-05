@@ -24,7 +24,7 @@ import Done from "@mui/icons-material/Done";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { updatePost } from "@/store/slices/postsSlice";
+import { regeneratePost, regeneratePostOpenAi, updatePost } from "@/store/slices/postsSlice";
 import {
     FormatBold as FormatBoldIcon,
     FormatItalic as FormatItalicIcon,
@@ -112,7 +112,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         (state: RootState) => state.posts.selectedAnnouncement
     );
     const dispatch = useDispatch<AppDispatch>();
-
+    const postId = selectedAnnouncement && selectedAnnouncement.length > 0
+        ? selectedAnnouncement[0]._id
+        : _id;
     // State for editing mode and editable text
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
@@ -152,7 +154,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             }
             const updatedPost = await dispatch(
                 updatePost({
-                    id: selectedAnnouncement[0]._id,
+                    id: postId,
                     body: formData,
                 })
             ).unwrap();
@@ -228,7 +230,16 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
     };
+    const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
+    const preference = storedPreference ? JSON.parse(storedPreference) : {};
 
+    const handleRegenerate = () => {
+        if (preference?.Gemini === true) {
+            dispatch(regeneratePost({ platform: "twitter", postId }));
+        } else {
+            dispatch(regeneratePostOpenAi({ platform: "twitter", postId }));
+        }
+    };
     return (
         <>
             <Box
@@ -442,7 +453,10 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton sx={{ color: "red" }}>
-                                    <Replay fontSize="small" />
+                                    <Replay
+                                        onClick={handleRegenerate}
+
+                                        fontSize="small" />
                                 </IconButton>
                             </Box>
                         </Box>
