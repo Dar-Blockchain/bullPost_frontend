@@ -67,6 +67,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
                     overflow: 'hidden',
                     height: '80vh',
+
                 },
             }}
         >
@@ -79,7 +80,9 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     "&::-webkit-scrollbar-thumb": {
                         backgroundColor: "#FFB300",
                         borderRadius: "3px",
-                    },
+                    }, backgroundImage: "url('/Ellipse 4.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "top",
                 }}
             >
                 {/* Header */}
@@ -88,7 +91,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        background: '#101010',
+                        // background: '#101010',
                         py: 1.5,
                         px: 2,
                         mb: 2,
@@ -105,7 +108,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                     </IconButton>
                 </Box>
                 {/* Tabs */}
-                <Box sx={{ backgroundColor: '#101010' }}>
+                <Box >
                     <Tabs
                         value={activeTab}
                         onChange={handleTabChange}
@@ -119,7 +122,7 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                                 fontWeight: 500,
                                 transition: 'color 0.2s',
                                 '&:hover': { color: '#fff' },
-                                backgroundColor: "#101010",
+                                // backgroundColor: "#101010",
                             },
                             '& .Mui-selected': { color: '#FFB300 !important', fontWeight: 'bold' },
                         }}
