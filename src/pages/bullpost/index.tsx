@@ -40,8 +40,7 @@ export default function BullPostPage() {
         // Retrieve user preferences from localStorage (stored as a JSON string)
         const userStr = localStorage.getItem("userPreference");
         const userSettings = userStr ? JSON.parse(userStr) : {};
-        console.log(userSettings
-            , 'hahahahahah')
+
         let apiUrl = "";
 
         // Check the user's preference and select the appropriate endpoint.
@@ -143,14 +142,28 @@ export default function BullPostPage() {
                     {/* ✅ Desktop: Show All Components */}
                     {!isMobile ? (
                         <>
-                            <Announcement text={text} setText={setText} />
+                            <Announcement
+                                text={text}
+                                setText={setText}
+                                inputRef={inputRef}
+                                submittedText={submittedText}
+                                setSubmittedText={setSubmittedText}
+                                discordText={discordText}
+                                setDiscordText={setDiscordText}
+                                twitterText={twitterText}
+                                setTwitterText={setTwitterText}
+                                telegramText={telegramText}
+                                setTelegramText={setTelegramText}
+                                _id={_id}
+                                setId={setId}
+                            />
                             <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
 
                             <Box sx={{ display: "flex", flexDirection: isMobile ? "column" : "row", width: "100%", mt: 4 }}>
 
                                 <TwitterBlock submittedText={twitterText ? twitterText : text} _id={_id} onSubmit={handleSubmit} />
-                                <TelegramBlock submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />
-                                <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />
+                                <TelegramBlock submittedText={telegramText ? telegramText : text} _id={_id} onSubmit={handleSubmit} />
+                                <DiscordBlock submittedText={discordText ? discordText : text} _id={_id} onSubmit={handleSubmit} />
 
                             </Box>
                         </>
@@ -158,8 +171,21 @@ export default function BullPostPage() {
                         <>
                             {activeSection === "drafts" && (
                                 <>
-                                    <Announcement text={text} setText={setText} />
-                                    <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
+                                    <Announcement
+                                        text={text}
+                                        setText={setText}
+                                        inputRef={inputRef}
+                                        submittedText={submittedText}
+                                        setSubmittedText={setSubmittedText}
+                                        discordText={discordText}
+                                        setDiscordText={setDiscordText}
+                                        twitterText={twitterText}
+                                        setTwitterText={setTwitterText}
+                                        telegramText={telegramText}
+                                        setTelegramText={setTelegramText}
+                                        _id={_id}
+                                        setId={setId}
+                                    />                                    <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
                                 </>
                             )}
                             {activeSection === "discord" && <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />}
