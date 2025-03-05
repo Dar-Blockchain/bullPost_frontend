@@ -326,7 +326,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <Avatar
-            src={`http://localhost:5000/${user?.user_image}`}
+            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
             sx={{ width: 40, height: 40 }}
             onClick={handleOpenProfile}
 

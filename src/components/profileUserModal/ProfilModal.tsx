@@ -16,6 +16,7 @@ import MyTeamTab from './MyTeamTab';
 import ApiKeysTab from './ApiKeysTab';
 import PlansTab from './PlansTab';
 import AppSettingsTab from './AppSettingsTab';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -46,8 +47,9 @@ interface ProfileModalProps {
     };
 }
 
-export default function ProfileModal({ open, onClose, user }: ProfileModalProps) {
+export default function ProfileModal({ open, onClose }: ProfileModalProps) {
     const [activeTab, setActiveTab] = useState(0);
+    const { user } = useAuth(); // ✅ Get user data
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
@@ -97,12 +99,14 @@ export default function ProfileModal({ open, onClose, user }: ProfileModalProps)
                         mb: 2,
                     }}
                 >
-                    <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar src={"user.avatarUrl"} alt={"user.name"} sx={{ width: 45, height: 45 }} />
-                        <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
-                            {"user.name"}
-                        </Typography>
-                    </Box>
+                    {user &&
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <Avatar src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
+                                alt={"user.name"} sx={{ width: 45, height: 45 }} />
+                            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
+                                {user.userName}
+                            </Typography>
+                        </Box>}
                     <IconButton onClick={onClose}>
                         <CloseIcon sx={{ color: '#FFB300' }} />
                     </IconButton>

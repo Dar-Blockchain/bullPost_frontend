@@ -48,7 +48,7 @@ const authOptions: NextAuthOptions = {
         const email = profile?.email ?? null;
         user.email = email;
         try {
-          const response = await fetch("http://localhost:5000/auth/auth_Api", {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/auth_Api`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
