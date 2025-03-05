@@ -148,7 +148,7 @@ export default function BullPostPage() {
 
                             <Box sx={{ display: "flex", flexDirection: isMobile ? "column" : "row", width: "100%", mt: 4 }}>
 
-                                <TwitterBlock submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />
+                                <TwitterBlock submittedText={twitterText ? twitterText : text} _id={_id} onSubmit={handleSubmit} />
                                 <TelegramBlock submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />
                                 <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />
 

@@ -11,7 +11,7 @@ import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pick
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchPostsByStatus, regeneratePost, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, regeneratePost, regeneratePostOpenAi, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 import {
     FormatBold as FormatBoldIcon,
     FormatItalic as FormatItalicIcon,
@@ -292,6 +292,16 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
     };
+    const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
+    const preference = storedPreference ? JSON.parse(storedPreference) : {};
+
+    const handleRegenerate = () => {
+        if (preference?.Gemini === true) {
+            dispatch(regeneratePost({ platform: "discord", postId }));
+        } else {
+            dispatch(regeneratePostOpenAi({ platform: "discord", postId }));
+        }
+    };
     return (
         <>
             <Box
@@ -530,7 +540,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton
                                     sx={{ color: "red" }}
-                                    onClick={() => dispatch(regeneratePost({ platform: "discord", postId: postId }))}
+                                    onClick={handleRegenerate}
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>
