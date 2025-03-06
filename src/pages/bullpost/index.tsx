@@ -148,7 +148,7 @@ export default function BullPostPage() {
                                 text={text}
                                 setText={setText}
                                 inputRef={inputRef}
-
+                                _id={_id}
                             />
                             <Toolbar onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} submittedText={submittedText}
                                 setSubmittedText={setSubmittedText}
@@ -179,6 +179,7 @@ export default function BullPostPage() {
                                         text={text}
                                         setText={setText}
                                         inputRef={inputRef}
+                                        _id={_id}
 
                                     />
                                     <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} setSubmittedText={setSubmittedText}
@@ -195,7 +196,7 @@ export default function BullPostPage() {
                                 </>
                             )}
                             {activeSection === "discord" && <DiscordBlock ai={ai} submittedText={discordText} _id={_id} onSubmit={handleSubmit} />}
-                            {activeSection === "twitter" && <TwitterBlock  ai={ai} submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />}
+                            {activeSection === "twitter" && <TwitterBlock ai={ai} submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />}
                             {activeSection === "telegram" && <TelegramBlock ai={ai} submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />}
                         </>
                     )}

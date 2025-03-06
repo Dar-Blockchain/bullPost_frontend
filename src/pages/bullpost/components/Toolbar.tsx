@@ -4,7 +4,7 @@ import MoodOutlinedIcon from "@mui/icons-material/MoodOutlined";
 import InsertPhotoOutlinedIcon from "@mui/icons-material/InsertPhotoOutlined";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import EmojiPicker from "emoji-picker-react";
-import CampaignIcon from '@mui/icons-material/Campaign';
+import SaveIcon from '@mui/icons-material/Save';
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { toast } from "react-toastify";
@@ -137,7 +137,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ text,
       />
       <Tooltip title="Generate post manually (without AI assistance)" arrow>
         <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
-          <CampaignIcon fontSize="small" />
+          <SaveIcon fontSize="small" />
         </IconButton>
       </Tooltip>
     </Box>
