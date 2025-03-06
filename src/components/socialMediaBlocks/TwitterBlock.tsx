@@ -38,7 +38,7 @@ interface TwitterBlockProps {
     submittedText: string; // Accept submitted text as a prop
     _id: string;
     onSubmit: () => void; // ✅ Accept API submit function
-
+    ai: boolean;
 }
 // 1) Define mappings for bold & italic letters
 // (Uppercase, Lowercase)
@@ -101,7 +101,7 @@ function toStrikethrough(text: string): string {
         .map((char) => char + "\u0336")
         .join("");
 }
-const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id }) => {
+const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const [displayText, setDisplayText] = useState("");
@@ -119,15 +119,22 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
 
-    // Animate text when not in editing mode
     useEffect(() => {
-        if (!submittedText || isEditing) {
+        if (!submittedText) {
             setDisplayText("");
             indexRef.current = 0;
             return;
         }
+        // If AI is disabled, show the full text immediately
+        if (!ai) {
+            setDisplayText(submittedText);
+            return;
+        }
+
+        // Otherwise, run the typewriter effect
         setDisplayText(submittedText[0] || "");
         indexRef.current = 1;
+
         const typeNextCharacter = () => {
             if (indexRef.current < submittedText.length) {
                 const nextChar = submittedText[indexRef.current];
@@ -138,11 +145,14 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 }
             }
         };
+
         typingTimeout.current = setTimeout(typeNextCharacter, 30);
+
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
-    }, [submittedText, isEditing]);
+    }, [submittedText, isEditing, ai]);
+
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
     const handleUpdate = async () => {

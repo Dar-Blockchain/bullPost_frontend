@@ -1,4 +1,3 @@
-// src/components/ApiKeysTab.tsx
 import React, { useState, useEffect } from 'react';
 import {
     Box,
@@ -30,6 +29,17 @@ const ApiKeysTab: React.FC = () => {
     const twitterEnabled = true;
     const telegramEnabled = true;
     const discordEnabled = true;
+
+    // Common Input styles
+    const inputStyles = {
+        width: '710px',
+        height: '40px',
+        borderRadius: '5px',
+        border: '1px solid #ccc',
+        padding: '10px',
+        backgroundColor: '#171717',
+        '& input': { color: '#fff' }
+    };
 
     // When the provider changes, save it to its own localStorage key.
     useEffect(() => {
@@ -156,15 +166,7 @@ const ApiKeysTab: React.FC = () => {
                         <Input
                             value={openIaKey}
                             onChange={(e) => setOpenIaKey(e.target.value)}
-                            sx={{
-                                width: '710px',
-                                height: '40px',
-                                borderRadius: '5px',
-                                border: '1px solid #ccc',
-                                padding: '10px',
-                                backgroundColor: '#171717',
-                                '& input': { color: '#fff' }
-                            }}
+                            sx={inputStyles}
                         />
                     </Box>
                 </Box>
@@ -178,20 +180,12 @@ const ApiKeysTab: React.FC = () => {
                 <Divider sx={{ mb: 2, borderColor: '#444' }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
-                        Gemini API Key
+                        Gemini
                     </Typography>
                     <Input
                         value={geminiKey}
                         onChange={(e) => setGeminiKey(e.target.value)}
-                        sx={{
-                            width: '710px',
-                            height: '40px',
-                            borderRadius: '5px',
-                            border: '1px solid #ccc',
-                            padding: '10px',
-                            backgroundColor: '#171717',
-                            '& input': { color: '#fff' }
-                        }}
+                        sx={inputStyles}
                     />
                 </Box>
             </Box>
@@ -204,24 +198,16 @@ const ApiKeysTab: React.FC = () => {
                 <Divider sx={{ mb: 2, borderColor: '#444' }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
-                        Sonnet 3.5
+                        Sonnet
                     </Typography>
                     <Input
-                        sx={{
-                            width: '710px',
-                            height: '40px',
-                            borderRadius: '5px',
-                            border: '1px solid #ccc',
-                            padding: '10px',
-                            backgroundColor: '#171717',
-                            '& input': { color: '#fff' }
-                        }}
+                        sx={inputStyles}
                     />
                 </Box>
             </Box>
 
             {/* Deepseek Section */}
-            <Box>
+            {/* <Box>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
                     Deepseek
                 </Typography>
@@ -231,18 +217,41 @@ const ApiKeysTab: React.FC = () => {
                         V3
                     </Typography>
                     <Input
-                        sx={{
-                            width: '710px',
-                            height: '40px',
-                            borderRadius: '5px',
-                            border: '1px solid #ccc',
-                            padding: '10px',
-                            backgroundColor: '#171717',
-                            '& input': { color: '#fff' }
-                        }}
+                        sx={inputStyles}
                     />
                 </Box>
-            </Box>
+            </Box> */}
+
+            {/* Discord & Telegram Section (if needed) */}
+            {/* <Box>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                    DISCORD_WEBHOOK_URL 👍 😂 ❤️
+                </Typography>
+                <Divider sx={{ mb: 2, borderColor: '#444' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Input
+                        value={discordWebhookUrl}
+                        onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+                        placeholder="Enter Discord Webhook URL"
+                        sx={inputStyles}
+                    />
+                </Box>
+            </Box> */}
+
+            {/* <Box>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                    TELEGRAM_CHAT_ID
+                </Typography>
+                <Divider sx={{ mb: 2, borderColor: '#444' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Input
+                        value={telegramChatId}
+                        onChange={(e) => setTelegramChatId(e.target.value)}
+                        placeholder="Enter Telegram Chat ID"
+                        sx={inputStyles}
+                    />
+                </Box>
+            </Box> */}
 
             {/* Save Data Button */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

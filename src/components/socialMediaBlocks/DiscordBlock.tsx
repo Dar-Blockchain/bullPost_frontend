@@ -26,9 +26,10 @@ interface DiscordBlockProps {
     submittedText: string;
     onSubmit: () => void;
     _id: string;
+    ai: boolean
 }
 
-const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id }) => {
+const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -83,14 +84,19 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             indexRef.current = 0;
             return;
         }
+        // If AI is disabled, show the full text immediately
+        if (!ai) {
+            setDisplayText(submittedText);
+            return;
+        }
 
+        // Otherwise, run the typewriter effect
         setDisplayText(submittedText[0] || "");
         indexRef.current = 1;
 
         const typeNextCharacter = () => {
             if (indexRef.current < submittedText.length) {
                 const nextChar = submittedText[indexRef.current];
-
                 if (nextChar !== undefined) {
                     setDisplayText((prev) => prev + nextChar);
                     indexRef.current += 1;
@@ -104,7 +110,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
-    }, [submittedText, isEditing]);
+    }, [submittedText, isEditing, ai]);
+
     //////////////// here 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);

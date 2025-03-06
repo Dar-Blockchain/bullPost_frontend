@@ -21,6 +21,8 @@ export default function BullPostPage() {
     const [twitterText, setTwitterText] = useState("");
     const [telegramText, setTelegramText] = useState("");
     const [_id, setId] = useState("");
+    const [ai, setAi] = useState(false);
+
     const dispatch = useDispatch<AppDispatch>();
 
     const handleClose = () => setOpen(false);
@@ -32,7 +34,7 @@ export default function BullPostPage() {
             toast.warn("⚠️ Please enter text before submitting!", { position: "top-right" });
             return;
         }
-
+        setAi(true)
         // Retrieve token from localStorage
         const token = localStorage.getItem("token");
         console.log(token, "here my token");
@@ -146,7 +148,9 @@ export default function BullPostPage() {
                                 text={text}
                                 setText={setText}
                                 inputRef={inputRef}
-                                submittedText={submittedText}
+
+                            />
+                            <Toolbar onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} submittedText={submittedText}
                                 setSubmittedText={setSubmittedText}
                                 discordText={discordText}
                                 setDiscordText={setDiscordText}
@@ -156,14 +160,14 @@ export default function BullPostPage() {
                                 setTelegramText={setTelegramText}
                                 _id={_id}
                                 setId={setId}
-                            />
-                            <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
+                                text={text}
+                                setText={setText} setAi={setAi} />
 
                             <Box sx={{ display: "flex", flexDirection: isMobile ? "column" : "row", width: "100%", mt: 4 }}>
 
-                                <TwitterBlock submittedText={twitterText ? twitterText : text} _id={_id} onSubmit={handleSubmit} />
-                                <TelegramBlock submittedText={telegramText ? telegramText : text} _id={_id} onSubmit={handleSubmit} />
-                                <DiscordBlock submittedText={discordText ? discordText : text} _id={_id} onSubmit={handleSubmit} />
+                                <TwitterBlock ai={ai} submittedText={twitterText ? twitterText : text} _id={_id} onSubmit={handleSubmit} />
+                                <TelegramBlock ai={ai} submittedText={telegramText ? telegramText : text} _id={_id} onSubmit={handleSubmit} />
+                                <DiscordBlock ai={ai} submittedText={discordText ? discordText : text} _id={_id} onSubmit={handleSubmit} />
 
                             </Box>
                         </>
@@ -175,8 +179,9 @@ export default function BullPostPage() {
                                         text={text}
                                         setText={setText}
                                         inputRef={inputRef}
-                                        submittedText={submittedText}
-                                        setSubmittedText={setSubmittedText}
+
+                                    />
+                                    <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} setSubmittedText={setSubmittedText}
                                         discordText={discordText}
                                         setDiscordText={setDiscordText}
                                         twitterText={twitterText}
@@ -185,12 +190,13 @@ export default function BullPostPage() {
                                         setTelegramText={setTelegramText}
                                         _id={_id}
                                         setId={setId}
-                                    />                                    <Toolbar submittedText={submittedText} onSubmit={handleSubmit} onEmojiSelect={handleEmojiSelect} />
+                                        text={text}
+                                        setText={setText} setAi={setAi} />
                                 </>
                             )}
-                            {activeSection === "discord" && <DiscordBlock submittedText={discordText} _id={_id} onSubmit={handleSubmit} />}
-                            {activeSection === "twitter" && <TwitterBlock submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />}
-                            {activeSection === "telegram" && <TelegramBlock submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />}
+                            {activeSection === "discord" && <DiscordBlock ai={ai} submittedText={discordText} _id={_id} onSubmit={handleSubmit} />}
+                            {activeSection === "twitter" && <TwitterBlock  ai={ai} submittedText={twitterText} _id={_id} onSubmit={handleSubmit} />}
+                            {activeSection === "telegram" && <TelegramBlock ai={ai} submittedText={telegramText} _id={_id} onSubmit={handleSubmit} />}
                         </>
                     )}
                 </Box>

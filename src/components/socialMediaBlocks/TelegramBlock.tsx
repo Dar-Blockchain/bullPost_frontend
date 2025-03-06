@@ -26,6 +26,7 @@ interface TelegramBlockProps {
     submittedText: string; // ✅ Accept submitted text as a prop
     onSubmit: () => void; // ✅ Accept API submit function
     _id: string;
+    ai: boolean
 
 }
 // Fixed tokens (Telegram-style)
@@ -39,7 +40,7 @@ const tokens = {
     spoiler: "||"      // For spoilers (Telegram MarkdownV2 supports this)
 };
 
-const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id }) => {
+const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const [displayText, setDisplayText] = useState(""); // ✅ Store dynamically revealed text
@@ -58,33 +59,37 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
     const [editableText, setEditableText] = useState("");
     useEffect(() => {
         if (!submittedText) {
-            setDisplayText(""); // Reset when there's no text
+            setDisplayText("");
             indexRef.current = 0;
             return;
         }
+        // If AI is disabled, show the full text immediately
+        if (!ai) {
+            setDisplayText(submittedText);
+            return;
+        }
 
-        setDisplayText(submittedText[0] || ""); // ✅ Ensure first character is displayed immediately
-        indexRef.current = 1; // ✅ Start from second character
+        // Otherwise, run the typewriter effect
+        setDisplayText(submittedText[0] || "");
+        indexRef.current = 1;
 
-        // ✅ Typing effect function
         const typeNextCharacter = () => {
             if (indexRef.current < submittedText.length) {
-                const nextChar = submittedText[indexRef.current]; // ✅ Get next character
-
-                if (nextChar !== undefined) { // ✅ Check if not undefined
-                    setDisplayText((prev) => prev + nextChar); // ✅ Append character
+                const nextChar = submittedText[indexRef.current];
+                if (nextChar !== undefined) {
+                    setDisplayText((prev) => prev + nextChar);
                     indexRef.current += 1;
-                    typingTimeout.current = setTimeout(typeNextCharacter, 30); // ✅ Faster typing speed (30ms per character)
+                    typingTimeout.current = setTimeout(typeNextCharacter, 30);
                 }
             }
         };
 
-        typingTimeout.current = setTimeout(typeNextCharacter, 30); // ✅ Start typing after delay (30ms)
+        typingTimeout.current = setTimeout(typeNextCharacter, 30);
 
         return () => {
-            if (typingTimeout.current) clearTimeout(typingTimeout.current); // ✅ Cleanup timeout
+            if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
-    }, [submittedText, isEditing]); // ✅ Trigger effect when new text is submitted
+    }, [submittedText, isEditing, ai]);
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
     const handleUpdate = async () => {

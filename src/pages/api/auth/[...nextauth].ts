@@ -18,10 +18,15 @@ const authOptions: NextAuthOptions = {
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     }),
     TwitterProvider({
-      clientId: process.env.TWITTER_CLIENT_ID!,
-      clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+      clientId: "pQ29kNVdrTnZOREZObUtPc2hYdUM6MTpjaQ",
+      clientSecret: "klt_kbGjRQgI9PgGJmlB_PH0WYKHugQfDG8kIlutjmY0omO0a0",
       version: "2.0",  // <-- Make sure to add this
-
+      authorization: {
+        params: {
+          scope: "tweet.read tweet.write users.read offline.access", // Adjust scopes as needed
+          response_type: "code", // required for OAuth 2.0
+        },
+      },
     }),
     // Uncomment and configure if you want to use Apple:
 
