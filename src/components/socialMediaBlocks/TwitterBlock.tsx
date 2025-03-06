@@ -207,26 +207,40 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
 
         switch (formatType) {
             case "bold":
-                transformed = toBold(selected);
+                // Insert Markdown syntax for bold
+                transformed = `**${selected}**`;
                 break;
             case "italic":
-                transformed = toItalic(selected);
+                // Insert Markdown syntax for italic
+                transformed = `*${selected}*`;
                 break;
             case "underline":
-                transformed = toUnderline(selected);
+                // Markdown doesn't natively support underline.
+                // You can use HTML if your renderer allows it.
+                transformed = `<u>${selected}</u>`;
                 break;
             case "strike":
-                transformed = toStrikethrough(selected);
+                // Markdown syntax for strikethrough
+                transformed = `~~${selected}~~`;
+                break;
+            case "inlineCode":
+                transformed = `\`${selected}\``;
+                break;
+            case "codeBlock":
+                transformed = "```\n" + selected + "\n```";
+                break;
+            case "spoiler":
+                // If your markdown renderer supports spoiler syntax
+                transformed = `||${selected}||`;
                 break;
             default:
                 break;
         }
 
-        const newText =
-            editableText.slice(0, start) + transformed + editableText.slice(end);
+        const newText = editableText.slice(0, start) + transformed + editableText.slice(end);
         setEditableText(newText);
 
-        // Hide the popover and restore focus
+        // Hide the formatting popover and re-focus the input field
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
     };
