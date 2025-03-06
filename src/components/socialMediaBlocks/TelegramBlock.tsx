@@ -380,7 +380,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                         padding: 2,
                         mt: 2,
                         flexGrow: 1,
-                        maxHeight: isMobile ? "400px" : "200px",
+                        maxHeight: isMobile ? "400px" : "400px",
                         overflowY: "auto",
                         "&::-webkit-scrollbar": {
                             width: "4px", // smaller scrollbar width

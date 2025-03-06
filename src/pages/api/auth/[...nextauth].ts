@@ -98,7 +98,7 @@ const authOptions: NextAuthOptions = {
     }
     ,
     async redirect({ baseUrl }) {
-      return `/`;
+      return `/bullpost`;
     },
   },
 };

@@ -385,7 +385,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         padding: 2,
                         mt: 2,
                         flexGrow: 1,
-                        maxHeight: isMobile ? "400px" : "200px",
+                        maxHeight: isMobile ? "400px" : "400px",
                         overflowY: "auto",
                         // scrollbarWidth: "thin",
                         // scrollbarColor: "#FFB300 #333",

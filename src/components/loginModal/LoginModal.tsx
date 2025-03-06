@@ -5,7 +5,6 @@ import {
     InputAdornment,
     Divider
 } from "@mui/material";
-import { signOut } from "next-auth/react";
 import { toast } from "react-toastify";
 
 import CloseIcon from "@mui/icons-material/Close";

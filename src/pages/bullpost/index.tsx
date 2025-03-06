@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import Announcement from "./components/Announcement";
 import Toolbar from "./components/Toolbar";
@@ -130,6 +130,53 @@ export default function BullPostPage() {
             setText((prev) => prev + emoji);
         }
     };
+    const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
+
+    const initialProvider = storedPreference
+        ? JSON.parse(storedPreference).OpenIA
+            ? "OpenAI"
+            : "Gemini"
+        : "Gemini";
+
+    const [preferredProvider, setPreferredProvider] = useState(initialProvider);
+
+    // States for additional keys (with default values)
+    const [openIaKey, setOpenIaKey] = useState("");
+    const [geminiKey, setGeminiKey] = useState("");
+    const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
+    const [telegramChatId, setTelegramChatId] = useState("");
+    useEffect(() => {
+        const preference = {
+            OpenIA: preferredProvider === "OpenAI",
+            Gemini: preferredProvider === "Gemini"
+        };
+        localStorage.setItem("userPreference", JSON.stringify(preference));
+    }, [preferredProvider]);
+
+    // On component mount, fetch the saved preferences from the backend API
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data) {
+                    // Update provider based on the returned data
+                    setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
+                    setOpenIaKey(data.OpenIaKey || "");
+                    setGeminiKey(data.GeminiKey || "");
+                    setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
+                    setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+                }
+            })
+            .catch((err) => console.error("Error fetching preferences:", err));
+    }, []);
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#111112", color: "#fff", overflow: "hidden", width: "100%", flexGrow: 1 }}>
             {/* Background Image */}

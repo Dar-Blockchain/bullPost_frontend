@@ -8,6 +8,7 @@ import {
     Select,
     MenuItem
 } from '@mui/material';
+import { toast } from "react-toastify";
 
 const ApiKeysTab: React.FC = () => {
     // Retrieve the stored preference from its own key (fallback to "Gemini" if not available)
@@ -122,6 +123,8 @@ const ApiKeysTab: React.FC = () => {
                 return;
             }
             const data = await response.json();
+            toast.success("Data Saved", { position: "top-right" });
+
             console.log("Preferences saved to backend:", data);
         } catch (error) {
             console.error("Error saving preferences:", error);

@@ -35,6 +35,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
         variant="caption"
         sx={{
           mb: 1,
+          mt: isMobile ? "20px" : "0",
           color: "grey",
           textAlign: "start", // Left-aligned text
           width: isMobile ? "100%" : "50%",
