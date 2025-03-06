@@ -330,7 +330,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         "&::-webkit-scrollbar-thumb": {
                             backgroundColor: "#FFB300", // gold scrollbar thumb
                             borderRadius: "3px",
-                        },
+                        }, 
+                        
                     }}
                 >
                     {isEditing ? (
