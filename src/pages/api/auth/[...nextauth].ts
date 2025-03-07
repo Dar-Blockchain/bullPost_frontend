@@ -51,7 +51,7 @@ const authOptions: NextAuthOptions = {
       console.log("SignIn callback - account:", account);
       console.log("SignIn callback - user:", user);
 
-      if (account?.provider === "google" || account?.provider === "discord" || account?.provider === "twitter") {
+      if (account?.provider === "google" || account?.provider === "discord") {
         const email = profile?.email ?? null;
         user.email = email;
         try {
@@ -79,9 +79,40 @@ const authOptions: NextAuthOptions = {
           console.error("Error sending Google login to backend:", error);
           return false;
         }
-      }
+      } else if (account?.provider === "twitter") {
+        try {
+          // For Twitter, call /auth/auth_ApiTwitter with provider and providerAccountId
+          const provider = account.provider; // should be "twitter"
+          const providerAccountId = account.providerAccountId;
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/auth_ApiTwitter`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ provider, providerAccountId }),
+          });
 
-      return true; // Allow sign-in if no issues
+          const data = await response.json();
+          console.log(data, "-------------------------Twitter response---------------------------");
+
+          if (!response.ok) {
+            console.error("Failed to sync Twitter login with backend");
+            return false;
+          }
+
+          account.access_token = data.token;
+          account.user_data = data.user;
+          console.log("account", account.user_data);
+        } catch (error) {
+          console.error("Error sending Twitter login to backend:", error);
+          return false;
+        }
+      } else {
+        console.error("Unsupported provider:", account?.provider);
+        return false;
+      }
+      return true;
+
     }
 
     ,
