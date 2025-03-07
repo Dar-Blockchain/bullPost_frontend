@@ -41,7 +41,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           width: isMobile ? "100%" : "50%",
         }}
       >
-        {postId ? "Your post saved" : "Your post is not saved"}
+        {postId ? "Your post is saved" : "Your post is not saved"}
       </Typography>
       <TextField
         fullWidth
