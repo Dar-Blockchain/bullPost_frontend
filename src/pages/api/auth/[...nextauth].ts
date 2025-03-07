@@ -84,12 +84,15 @@ const authOptions: NextAuthOptions = {
           // For Twitter, call /auth/auth_ApiTwitter with provider and providerAccountId
           const provider = account.provider; // should be "twitter"
           const providerAccountId = account.providerAccountId;
+          const twitterAccessToken = account.access_token; // access token provided by Twitter
+          const username = user.name; // refresh token provided by Twitter
+          const refresh_token = account.refresh_token
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/auth_ApiTwitter`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ provider, providerAccountId }),
+            body: JSON.stringify({ provider, providerAccountId ,twitterAccessToken ,username,refresh_token}),
           });
 
           const data = await response.json();
