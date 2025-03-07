@@ -287,7 +287,12 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 }}
             >
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                    <TwitterIcon fontSize="large" sx={{ color: "#1DA1F2" }} />
+                    {/* <TwitterIcon fontSize="large" sx={{ color: "#1DA1F2" }} /> */}
+                    <img
+                        src="/X.png"
+                        alt="X"
+                        style={{ width: 30, height: 30, marginRight: "10px" }}
+                    />
                     {user && (
                         <Box
                             sx={{
@@ -330,8 +335,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         "&::-webkit-scrollbar-thumb": {
                             backgroundColor: "#FFB300", // gold scrollbar thumb
                             borderRadius: "3px",
-                        }, 
-                        
+                        },
+
                     }}
                 >
                     {isEditing ? (
@@ -356,7 +361,21 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     },
                                 }}
                             />
-
+                            {selectedImage && (
+                                <Box mb={2} textAlign="center">
+                                    <img
+                                        src={URL.createObjectURL(selectedImage)}
+                                        alt="Image preview"
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "10px",
+                                            maxHeight: "200px",
+                                            objectFit: "contain",
+                                            borderRadius: "4px",
+                                        }}
+                                    />
+                                </Box>
+                            )}
                             <Popover
                                 open={Boolean(anchorPosition)}
                                 anchorReference="anchorPosition"

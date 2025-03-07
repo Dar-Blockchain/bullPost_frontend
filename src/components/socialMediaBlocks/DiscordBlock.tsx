@@ -422,7 +422,21 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     },
                                 }}
                             />
-
+                            {selectedImage && (
+                                <Box mb={2} textAlign="center">
+                                    <img
+                                        src={URL.createObjectURL(selectedImage)}
+                                        alt="Image preview"
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "10px",
+                                            maxHeight: "200px",
+                                            objectFit: "contain",
+                                            borderRadius: "4px",
+                                        }}
+                                    />
+                                </Box>
+                            )}
                             <Popover
                                 open={Boolean(anchorPosition)}
                                 anchorReference="anchorPosition"
