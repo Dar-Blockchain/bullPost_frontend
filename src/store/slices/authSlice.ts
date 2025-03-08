@@ -101,13 +101,18 @@ export const logoutUser = (): ThunkAction<void, RootState, unknown, any> => (dis
     localStorage.removeItem("user");
     localStorage.removeItem("userPreference");
 
-    // Name of the cookie we want to delete
-    const cookieName = "next-auth.session-token";
+    // Define both possible cookie names
+    const cookieNames = [
+      "next-auth.session-token",
+      "__Secure-next-auth.session-token"
+    ];
 
-    // Delete cookie by setting expiration date in the past.
-    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost;`;
-    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`;
+    cookieNames.forEach((cookieName) => {
+      // Delete cookie by setting expiration date in the past.
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost;`;
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`;
+    });
 
     // Force a page reload to ensure changes take effect.
     window.location.reload();

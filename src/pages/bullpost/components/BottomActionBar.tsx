@@ -10,8 +10,9 @@ import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pick
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import { toast } from "react-toastify";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchPostsByStatus } from "@/store/slices/postsSlice";
 
 interface Props {
     activeSection: "calendar" | "drafts" | "discord" | "twitter" | "telegram" | "post";
@@ -25,6 +26,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
         console.log(`Active section changed to: ${activeSection}`);
         setActiveSection(activeSection);
     }, [activeSection, setActiveSection]);
+    const dispatch = useDispatch<AppDispatch>();
 
     // Calendar scheduling state
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -129,7 +131,75 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             }
         }
     };
+    const handlePostNow = async () => {
 
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return
+        }
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/postNow/` + postId, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
+                toast.success("Post sent successfully!", { position: "top-right" });
+            } else {
+                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
+            }
+        } catch (error) {
+            console.error("Error sending message to Discord:", error);
+            toast.error("❌ Failed to send message!", { position: "top-right" });
+        }
+    };
+    const handleSchedulePost = async () => {
+        if (!selectedDate || !selectedTime) {
+            return handlePostNow(); // Fallback to immediate posting
+        }
+
+        const combinedDateTime = selectedDate
+            .set("hour", selectedTime.hour())
+            .set("minute", selectedTime.minute())
+            .set("second", 0);
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return
+        }
+        const requestBody = {
+            // message: selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0].discord ? selectedAnnouncement[0].discord : submittedText,
+            dateTime: combinedDateTime.toISOString(),
+            timeZone, // Auto-detected time zone
+        };
+        // http://localhost:5000/postTelegram/schedulePostTelegram/67c078ef42a08a64165bfa6c
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/schedulePostTelegram/` + postId, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                }, body: JSON.stringify(requestBody),
+            });
+
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
+                toast.success("Post scheduled successfully!");
+            } else {
+                toast.error("Failed to schedule post.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error scheduling post.");
+        }
+    };
     return (
         <Box
             sx={{
@@ -248,8 +318,14 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
                         backgroundColor: activeSection === "post" ? "#555" : "transparent",
                         borderRadius: "10px",
                     }}
-                    onClick={() => { }
-                    }               >
+                    onClick={() => {
+                        if (activeSection === "discord") {
+                            handlePost();
+                        } else if (activeSection === "telegram") {
+                            handleSchedulePost()
+                        }
+                    }}
+                >
                     <SendIcon fontSize="medium" />
                 </IconButton>
             )}

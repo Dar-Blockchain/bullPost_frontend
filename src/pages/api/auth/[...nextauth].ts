@@ -79,7 +79,8 @@ const authOptions: NextAuthOptions = {
           console.error("Error sending Google login to backend:", error);
           return false;
         }
-      } else if (account?.provider === "twitter") {
+      } 
+      else if (account?.provider === "twitter") {
         try {
           // For Twitter, call /auth/auth_ApiTwitter with provider and providerAccountId
           const provider = account.provider; // should be "twitter"
