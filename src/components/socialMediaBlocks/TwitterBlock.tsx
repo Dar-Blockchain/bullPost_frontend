@@ -19,12 +19,13 @@ import {
     Mood,
     Replay,
 } from "@mui/icons-material";
-import TwitterIcon from "@mui/icons-material/Twitter";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Done from "@mui/icons-material/Done";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { regeneratePost, regeneratePostOpenAi, updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, regeneratePost, regeneratePostOpenAi, updatePost } from "@/store/slices/postsSlice";
 import {
     FormatBold as FormatBoldIcon,
     FormatItalic as FormatItalicIcon,
@@ -40,67 +41,7 @@ interface TwitterBlockProps {
     onSubmit: () => void; // ✅ Accept API submit function
     ai: boolean;
 }
-// 1) Define mappings for bold & italic letters
-// (Uppercase, Lowercase)
-const BOLD_UPPER = "𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭";
-const BOLD_LOWER = "𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇";
-const ITALIC_UPPER = "𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍";
-const ITALIC_LOWER = "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧";
-const REG_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const REG_LOWER = "abcdefghijklmnopqrstuvwxyz";
 
-// 2) Helper functions to transform text
-function toBold(text: string): string {
-    let result = "";
-    for (const char of text) {
-        if (REG_UPPER.includes(char)) {
-            // Bold uppercase
-            const index = REG_UPPER.indexOf(char);
-            result += BOLD_UPPER[index];
-        } else if (REG_LOWER.includes(char)) {
-            // Bold lowercase
-            const index = REG_LOWER.indexOf(char);
-            result += BOLD_LOWER[index];
-        } else {
-            result += char; // unchanged
-        }
-    }
-    return result;
-}
-
-function toItalic(text: string): string {
-    let result = "";
-    for (const char of text) {
-        if (REG_UPPER.includes(char)) {
-            const index = REG_UPPER.indexOf(char);
-            result += ITALIC_UPPER[index];
-        } else if (REG_LOWER.includes(char)) {
-            const index = REG_LOWER.indexOf(char);
-            result += ITALIC_LOWER[index];
-        } else {
-            result += char;
-        }
-    }
-    return result;
-}
-
-// Underline & strikethrough rely on combining characters
-// Each character is followed by the combining mark.
-function toUnderline(text: string): string {
-    // Combining low line = \u0332
-    return text
-        .split("")
-        .map((char) => char + "\u0332")
-        .join("");
-}
-
-function toStrikethrough(text: string): string {
-    // Combining long stroke overlay = \u0336
-    return text
-        .split("")
-        .map((char) => char + "\u0336")
-        .join("");
-}
 const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -262,6 +203,38 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             dispatch(regeneratePost({ platform: "twitter", postId }));
         } else {
             dispatch(regeneratePostOpenAi({ platform: "twitter", postId }));
+        }
+    };
+    const handlePostNow = async () => {
+        if (!submittedText.trim() && (!selectedAnnouncement || selectedAnnouncement.length === 0)) {
+            toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
+            return;
+        }
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return
+        }
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/postNow/` + postId, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
+                toast.success("Post sent successfully!", { position: "top-right" });
+            } else {
+                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
+            }
+        } catch (error) {
+            console.error("Error sending message to Discord:", error);
+            toast.error("❌ Failed to send message!", { position: "top-right" });
         }
     };
     return (
@@ -524,6 +497,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     <img src="/calendar_month.png" alt="Calendar" />
                                 </Button>
                                 <Button
+                                    onClick={handlePostNow}
                                     sx={{
                                         backgroundColor: "#191919",
                                         color: "#666",
