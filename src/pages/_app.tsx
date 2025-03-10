@@ -43,7 +43,7 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
       <CssBaseline />
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <Box sx={{ display: "flex", minHeight: "100vh", width: '100%' }}> {/* ✅ Ensure full width */}
+      <Box sx={{ display: "flex", width: '100%'  }}> {/* ✅ Ensure full width */}
         {/* Sidebar */}
         <Sidebar handleOpen={handleOpenLogin} isLoggedIn={isLoggedIn} />
 

@@ -1,8 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, Switch, Avatar, IconButton, Button, Popover, TextField } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
+import {
+    Box,
+    Typography,
+    Switch,
+    Avatar,
+    IconButton,
+    Button,
+    Popover,
+    TextField,
+    CircularProgress,
+} from "@mui/material";
+import { keyframes, useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { ArrowDropDownCircleOutlined, AutoAwesome, Done, Edit, InsertPhoto, Mood, Replay } from "@mui/icons-material";
+import {
+    ArrowDropDownCircleOutlined,
+    AutoAwesome,
+    Done,
+    Edit,
+    InsertPhoto,
+    Mood,
+    Replay,
+} from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,89 +29,93 @@ import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pick
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchPostsByStatus, regeneratePost, regeneratePostOpenAi, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
+import {
+    fetchPostsByStatus,
+    regeneratePost,
+    regeneratePostOpenAi,
+    setSelectedAnnouncement,
+    updatePost,
+} from "@/store/slices/postsSlice";
 import {
     FormatBold as FormatBoldIcon,
     FormatItalic as FormatItalicIcon,
     FormatUnderlined as FormatUnderlinedIcon,
     StrikethroughS as StrikethroughSIcon,
-    Code as CodeIcon
+    Code as CodeIcon,
 } from "@mui/icons-material";
 import dayjs from "dayjs";
 import ReactMarkdown from "react-markdown";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
 
 interface DiscordBlockProps {
     submittedText: string;
     onSubmit: () => void;
     _id: string;
-    ai: boolean
+    ai: boolean;
 }
 
 const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
-    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
-
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
-    const [displayText, setDisplayText] = useState("");
-    const indexRef = useRef(0);
-    const typingTimeout = useRef<NodeJS.Timeout | null>(null);
-    const { user } = useAuth(); // ✅ Get user data
-    const selectedAnnouncement = useSelector(
-        (state: RootState) => state.posts.selectedAnnouncement
-    );
     const dispatch = useDispatch<AppDispatch>();
+    const { user } = useAuth();
 
-    const postId = selectedAnnouncement && selectedAnnouncement.length > 0
-        ? selectedAnnouncement[0]._id
-        : _id;
-    // State for editing mode and editable text
+    // Redux state
+    const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
+    const announcement = selectedAnnouncement?.[0];
+
+    // States for text and typewriter effect
+    const [displayText, setDisplayText] = useState("");
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
-    const handlePostNow = async () => {
-        if (!submittedText.trim() && (!selectedAnnouncement || selectedAnnouncement.length === 0)) {
-            toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
-            return;
-        }
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/postNow/` + postId, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
-                },
-            });
+    const [isPosting, setIsPosting] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
-            const data = await response.json();
+    // States for scheduling
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+    const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
+    const [timeZone, setTimeZone] = useState<string>("");
+    const [buttonText, setButtonText] = useState<string>("Post Now");
 
-            if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+    // State for image
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-                toast.success("Post sent successfully!", { position: "top-right" });
-            } else {
-                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
-            }
-        } catch (error) {
-            console.error("Error sending message to Discord:", error);
-            toast.error("❌ Failed to send message!", { position: "top-right" });
-        }
-    };
+    // Other states
+    const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
+    const [isRegenerating, setIsRegenerating] = useState(false);
+
+    // Refs for typewriter effect and text field
+    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
+    const indexRef = useRef(0);
+    const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    // Determine postId (announcement takes precedence)
+    const postId = announcement?._id || _id;
+
+    // Detect user's time zone on mount
+    useEffect(() => {
+        setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }, []);
+
+    // Typewriter effect for submitted text
     useEffect(() => {
         if (!submittedText) {
             setDisplayText("");
             indexRef.current = 0;
             return;
         }
-        // If AI is disabled, show the full text immediately
         if (!ai) {
             setDisplayText(submittedText);
             return;
         }
-
-        // Otherwise, run the typewriter effect
         setDisplayText(submittedText[0] || "");
         indexRef.current = 1;
-
         const typeNextCharacter = () => {
             if (indexRef.current < submittedText.length) {
                 const nextChar = submittedText[indexRef.current];
@@ -104,154 +126,184 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 }
             }
         };
-
         typingTimeout.current = setTimeout(typeNextCharacter, 30);
-
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
     }, [submittedText, isEditing, ai]);
 
-    //////////////// here 
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-    const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
-    const [timeZone, setTimeZone] = useState<string>("");
-    const [buttonText, setButtonText] = useState<string>("Post Now"); // Default button text
+    // Update button text based on scheduling or published status
+    const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
+        if (announcement?.publishedAtDiscord) {
+            const publishedDate = dayjs(announcement.publishedAtDiscord);
+            setButtonText(
+                `Published at: ${publishedDate.format("MMM DD, YYYY")} - ${publishedDate.format("HH:mm")}`
+            );
+        } else if (date && time) {
+            setButtonText(`${date.format("MMM DD, YYYY")} - ${time.format("HH:mm")}`);
+        } else {
+            setButtonText("Post Now");
+        }
+    };
 
-    useEffect(() => {
-        // Automatically detect user's time zone
-        setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    }, []);
-
+    // Handlers for scheduling popover
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
     };
-
     const handleClose = () => {
         setAnchorEl(null);
     };
-
     const handleDateChange = (newDate: Dayjs | null) => {
         setSelectedDate(newDate);
         updateButtonText(newDate, selectedTime);
     };
-
     const handleTimeChange = (newTime: Dayjs | null) => {
         setSelectedTime(newTime);
         updateButtonText(selectedDate, newTime);
     };
 
-
-    const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
-        // If a post is selected and has a publishedAtDiscord property, show it
-        if (
-            selectedAnnouncement &&
-            selectedAnnouncement.length > 0 &&
-            selectedAnnouncement[0].publishedAtDiscord
-        ) {
-            const publishedDate = dayjs(selectedAnnouncement[0].publishedAtDiscord);
-            setButtonText(
-                `Published at: ${publishedDate.format("MMM DD, YYYY")} - ${publishedDate.format("HH:mm")}`
+    // Handle immediate posting
+    const handlePostNow = async () => {
+        const textToPost = submittedText.trim() || announcement?.discord || "";
+        if (!textToPost) {
+            toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
+            return;
+        }
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        try {
+            setIsPosting(true);
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/postNow/${postId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
-        } else if (date && time) {
-            // Otherwise, if a schedule date/time is selected, show that
-            setButtonText(`${date.format("MMM DD, YYYY")} - ${time.format("HH:mm")}`);
-        } else {
-            // Fallback button text
-            setButtonText("Post Now");
+            const data = await response.json(); console.log(data, "jzjzjzjzjzj")
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+
+                toast.success("Post sent successfully!", { position: "top-right" });
+            } else {
+                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
+            }
+        } catch (error) {
+            console.error("Error sending message to Discord:", error);
+            toast.error("❌ Failed to send message!", { position: "top-right" });
+        } finally {
+            setIsPosting(false);
         }
     };
 
-
+    // Handle scheduling a post (or fallback to immediate posting)
     const handleSchedulePost = async () => {
         if (!selectedDate || !selectedTime) {
-            return handlePostNow(); // Fallback to immediate posting
+            return handlePostNow();
         }
-
         const combinedDateTime = selectedDate
             .set("hour", selectedTime.hour())
             .set("minute", selectedTime.minute())
             .set("second", 0);
         const token = localStorage.getItem("token");
-
         const requestBody = {
-            // message: selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0].discord ? selectedAnnouncement[0].discord : submittedText,
             dateTime: combinedDateTime.toISOString(),
-            timeZone, // Auto-detected time zone
+            timeZone,
         };
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost/` + postId, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(requestBody),
-            });
-
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost/${postId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
             if (response.ok) {
                 dispatch(fetchPostsByStatus("draft"));
-
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
             }
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Error scheduling post:", error);
             alert("Error scheduling post.");
         }
     };
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
+    // Handle file change for image upload
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            console.log("Selected file:", file.name);
+            const currentText = announcement?.discord || displayText;
+            console.log("Setting editableText:", currentText);
+            setEditableText(currentText);
+            setSelectedImage(file);
+        }
+    };
+
+    // Update post with new text or image
     const handleUpdate = async () => {
         try {
+            setIsLoading(true);
+            const textToSend = editableText.trim() || displayText;
+            console.log("Updating post...");
+            console.log("Text:", textToSend);
+            console.log("Image:", selectedImage ? selectedImage.name : "No image selected");
             const formData = new FormData();
-            formData.append("discord", editableText);
+            formData.append("discord", textToSend);
             if (selectedImage) {
-                formData.append("image_discord", selectedImage); // "image_discord" is the key expected by your API
+                formData.append("image_discord", selectedImage);
+            } else {
+                console.warn("No image found in selectedImage state.");
             }
-            // Dispatch the updatePost thunk and wait for the updated post
-            const updatedPost = await dispatch(
-                updatePost({
-                    id: postId,
-                    body: formData,
-                })
-            ).unwrap();
-            // Update the Redux state so that your component refreshes with the updated post data
+            // Debug: Log form data entries
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ": " + pair[1]);
+            }
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            // Optionally, update your local display state if needed
-            setDisplayText(updatedPost?.discord || editableText);
+            setDisplayText(updatedPost?.discord || textToSend);
+            setSelectedImage(null);
         } catch (error) {
             console.error("Error updating post:", error);
         } finally {
+            setIsLoading(false);
             setIsEditing(false);
         }
     };
 
+    // Automatically update the post when an image is selected
+    useEffect(() => {
+        if (selectedImage) {
+            handleUpdate();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedImage]);
 
-
-    const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
-
-    // Separate event handler for mouse events
+    // Handlers for text formatting popover
     const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
         if (!textFieldRef.current) return;
-        const start = textFieldRef.current.selectionStart;
-        const end = textFieldRef.current.selectionEnd;
-        if (start !== end) {
+        const { selectionStart, selectionEnd } = textFieldRef.current;
+        if (selectionStart !== selectionEnd) {
             setAnchorPosition({ top: e.clientY, left: e.clientX });
         } else {
             setAnchorPosition(null);
         }
     };
 
-    // Separate event handler for keyboard events
     const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (!textFieldRef.current) return;
-        const start = textFieldRef.current.selectionStart;
-        const end = textFieldRef.current.selectionEnd;
-        // For keyboard events, we use a fallback position (customize as needed)
-        if (start !== end) {
+        const { selectionStart, selectionEnd } = textFieldRef.current;
+        if (selectionStart !== selectionEnd) {
             setAnchorPosition({ top: 100, left: 100 });
         } else {
             setAnchorPosition(null);
@@ -267,7 +319,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
         const selected = editableText.substring(start, end);
         let newText = editableText;
-
         switch (formatType) {
             case "bold":
                 newText = editableText.slice(0, start) + `**${selected}**` + editableText.slice(end);
@@ -293,22 +344,31 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             default:
                 break;
         }
-
         setEditableText(newText);
-        // Hide the popover after formatting
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
     };
+
     const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
     const preference = storedPreference ? JSON.parse(storedPreference) : {};
 
-    const handleRegenerate = () => {
-        if (preference?.Gemini === true) {
-            dispatch(regeneratePost({ platform: "discord", postId }));
-        } else {
-            dispatch(regeneratePostOpenAi({ platform: "discord", postId }));
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        try {
+            if (preference?.Gemini) {
+                await dispatch(regeneratePost({ platform: "discord", postId })).unwrap();
+            } else {
+                await dispatch(regeneratePostOpenAi({ platform: "discord", postId })).unwrap();
+            }
+            toast.success("Regenerate successful! 🎉");
+        } catch (error) {
+            console.error("Regenerate failed:", error);
+            toast.error("Regenerate failed. Please try again.");
+        } finally {
+            setIsRegenerating(false);
         }
     };
+
     return (
         <>
             <Box
@@ -324,21 +384,16 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    minHeight: isMobile ? "500px" : "400px", // ✅ Increased height in mobile
-                    maxHeight: isMobile ? "500px" : "400px", // ✅ Prevent excessive resizing
+                    minHeight: isMobile ? "500px" : "400px",
+                    maxHeight: isMobile ? "500px" : "400px",
                     flexShrink: 0,
-                    width: "100%", // ✅ Ensure full width within its container
+                    width: "100%",
                     mt: isMobile ? "10px" : "0",
                 }}
             >
-
+                {/* Top Bar: Discord Icon and User Profile */}
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                    {/* ✅ Box for Discord Icon + Profile */}
-                    <img
-                        src="/discord.svg"
-                        alt="Discord"
-                        style={{ width: 30, height: 30, marginRight: "10px" }}
-                    />
+                    <img src="/discord.svg" alt="Discord" style={{ width: 30, height: 30, marginRight: "10px" }} />
                     {user && (
                         <Box
                             sx={{
@@ -351,25 +406,10 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 backgroundColor: "#0F0F0F",
                             }}
                         >
-                            <Avatar
-                                src="/mnt/data/image.png"
-                                alt="Julio"
-                                sx={{
-                                    width: 26,
-                                    height: 26,
-                                }}
-                            />
-
-                            <Typography
-                                sx={{
-                                    color: "#8F8F8F",
-                                    fontSize: "14px",
-                                    fontWeight: 500,
-                                }}
-                            >
+                            <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
+                            <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
                                 @{user.userName}
                             </Typography>
-
                             <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
                         </Box>
                     )}
@@ -377,7 +417,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
                 </Box>
 
-                {/* ✅ Scrolling Box with Fixed Width & Preventing Expansion */}
+                {/* Main Content Area */}
                 <Box
                     sx={{
                         textAlign: "justify",
@@ -387,17 +427,11 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         flexGrow: 1,
                         maxHeight: isMobile ? "400px" : "400px",
                         overflowY: "auto",
-                        // scrollbarWidth: "thin",
-                        // scrollbarColor: "#FFB300 #333",
-                        "&::-webkit-scrollbar": {
-                            width: "4px", // smaller scrollbar width
-                        },
+                        "&::-webkit-scrollbar": { width: "4px" },
                         "&::-webkit-scrollbar-thumb": {
-                            backgroundColor: "#FFB300", // gold scrollbar thumb
+                            backgroundColor: "#FFB300",
                             borderRadius: "3px",
                         },
-
-
                     }}
                 >
                     {isEditing ? (
@@ -440,7 +474,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                             <Popover
                                 open={Boolean(anchorPosition)}
                                 anchorReference="anchorPosition"
-                                anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
+                                anchorPosition={
+                                    anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined
+                                }
                                 onClose={() => setAnchorPosition(null)}
                                 anchorOrigin={{ vertical: "top", horizontal: "left" }}
                             >
@@ -472,43 +508,27 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                             </Popover>
                         </Box>
                     ) : (
-                        // The non-editing view (existing code)
                         <>
-                            {/* {selectedAnnouncement && selectedAnnouncement.length > 0 &&
-                                selectedAnnouncement[0]?.image_discord && (
-                                    <img
-                                        src={selectedAnnouncement[0].image_discord}
-                                        alt="Preview"
-                                        style={{ maxWidth: "100%", marginBottom: "10px" }}
-                                    />
-                                )}
-
-                            <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                                {(selectedAnnouncement && selectedAnnouncement.length > 0)
-                                    ? selectedAnnouncement[0].discord
-                                    : (displayText || "No announcement yet...")}
-                            </Typography> */}
-                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_discord && (
+                            {announcement?.image_discord && (
                                 <img
-                                    src={selectedAnnouncement[0].image_discord}
+                                    src={announcement.image_discord}
                                     alt="Preview"
                                     style={{ maxWidth: "100%", marginBottom: "10px" }}
                                 />
                             )}
                             <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                                 <ReactMarkdown>
-                                    {(selectedAnnouncement && selectedAnnouncement.length > 0)
-                                        ? selectedAnnouncement[0].discord
-                                        : (displayText || "No announcement yet...")}
+                                    {announcement?.discord || displayText || "No announcement yet..."}
                                 </ReactMarkdown>
                             </Box>
                         </>
                     )}
                 </Box>
+
+                {/* Toolbar and Scheduling Section */}
                 {user && (
                     <>
                         <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
-                            {/* Toolbar Section */}
                             <Box
                                 sx={{
                                     display: "flex",
@@ -524,56 +544,57 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     sx={{ color: "#8F8F8F" }}
                                     onClick={() => {
                                         if (!isEditing) {
-                                            // Enter edit mode: load current twitter text
-                                            const currentText =
-                                                selectedAnnouncement && selectedAnnouncement.length > 0
-                                                    ? selectedAnnouncement[0].discord
-                                                    : displayText;
+                                            const currentText = announcement?.discord || displayText;
                                             setEditableText(currentText);
                                             setIsEditing(true);
                                         } else {
-                                            // When done is clicked, dispatch updatePost from slice
                                             handleUpdate();
                                         }
                                     }}
                                 >
-                                    {isEditing ? <Done fontSize="small" /> : <Edit fontSize="small" />}
+                                    {isEditing ? (
+                                        isLoading ? (
+                                            <AutorenewIcon fontSize="small" sx={{ animation: `${spin} 1s linear infinite` }} />
+                                        ) : (
+                                            <Done fontSize="small" />
+                                        )
+                                    ) : (
+                                        <Edit fontSize="small" />
+                                    )}
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <Mood fontSize="small" />
                                 </IconButton>
                                 <IconButton component="label" sx={{ color: "#8F8F8F" }}>
-                                    <InsertPhoto fontSize="small" />
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        hidden
-                                        onChange={(e) => {
-                                            if (e.target.files && e.target.files.length > 0) {
-                                                setSelectedImage(e.target.files[0]);
-                                            }
-                                        }}
-                                    />
+                                    {!isEditing && isLoading ? (
+                                        <CircularProgress size={24} />
+                                    ) : (
+                                        <InsertPhoto fontSize="small" />
+                                    )}
+                                    <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }}>
                                     <AutoAwesome fontSize="small" />
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
                                 <IconButton
-                                    sx={{ color: "red" }}
+                                    sx={{
+                                        color: "red",
+                                        animation: isRegenerating ? "spin 1s linear infinite" : "none",
+                                        "@keyframes spin": {
+                                            "0%": { transform: "rotate(360deg)" },
+                                            "100%": { transform: "rotate(0deg)" },
+                                        },
+                                    }}
                                     onClick={handleRegenerate}
+                                    disabled={isRegenerating}
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>
                             </Box>
-
-
-
                         </Box>
-                        {/* Bottom Button Section */}
-                        {!isMobile &&
+                        {!isMobile && (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-                                {/* Yellow Calendar Button */}
                                 <Button
                                     sx={{
                                         backgroundColor: "#FFB300",
@@ -584,24 +605,17 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         alignItems: "center",
                                         justifyContent: "center",
                                         minWidth: "auto",
-                                        "&:hover": {
-                                            backgroundColor: "#FFA500",
-                                        },
+                                        "&:hover": { backgroundColor: "#FFA500" },
                                     }}
                                     onClick={handleClick}
                                 >
                                     <img src="/calendar_month.png" alt="Calendar" />
                                 </Button>
-
-                                {/* Calendar & Time Picker Popover */}
                                 <Popover
                                     open={Boolean(anchorEl)}
                                     anchorEl={anchorEl}
                                     onClose={handleClose}
-                                    anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "left",
-                                    }}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
                                 >
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                                         <Box sx={{ p: 2 }}>
@@ -610,10 +624,14 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         </Box>
                                     </LocalizationProvider>
                                 </Popover>
-
-                                {/* Display Selected Date & Time on Button */}
                                 <Button
-                                    onClick={handleSchedulePost}
+                                    onClick={
+                                        // announcement?.publishedAtDiscord || announcement?.scheduledAtDiscord
+                                        //     ? handleDelete
+                                        //     : 
+                                        handleSchedulePost
+                                    }
+                                    disabled={isPosting}
                                     sx={{
                                         backgroundColor: "#191919",
                                         color: "#666",
@@ -622,32 +640,42 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         flex: 1,
                                         width: "150px",
                                         "&:hover": {
-                                            backgroundColor: "#FFA500",
-                                            color: "black",
+                                            backgroundColor:
+                                                announcement?.publishedAtDiscord || announcement?.scheduledAtDiscord
+                                                    ? "#191919"
+                                                    : "#FFA500",
+                                            color:
+                                                announcement?.publishedAtDiscord || announcement?.scheduledAtDiscord
+                                                    ? "#666"
+                                                    : "black",
                                         },
                                     }}
                                 >
-                                    {(selectedAnnouncement && selectedAnnouncement.length > 0)
-                                        ? (
-                                            selectedAnnouncement[0].publishedAtDiscord
-                                                ? `Published at: ${dayjs(selectedAnnouncement[0].publishedAtDiscord).format("MMM DD, YYYY")} - ${dayjs(selectedAnnouncement[0].publishedAtDiscord).format("HH:mm")}`
-                                                : selectedAnnouncement[0].scheduledAtDiscord
-                                                    ? `Scheduled at: ${dayjs(selectedAnnouncement[0].scheduledAtDiscord).format("MMM DD, YYYY")} - ${dayjs(selectedAnnouncement[0].scheduledAtDiscord).format("HH:mm")}`
-                                                    : (selectedDate && selectedTime
-                                                        ? `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
-                                                        : "Post Now")
-                                        )
-                                        : (selectedDate && selectedTime
-                                            ? `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
-                                            : "Post Now")}
+                                    {isPosting ? (
+                                        <CircularProgress size={24} color="inherit" />
+                                    ) : announcement?.publishedAtDiscord ? (
+                                        <>
+                                            {dayjs(announcement.publishedAtDiscord).format("MMM DD, YYYY")} -{" "}
+                                            {dayjs(announcement.publishedAtDiscord).format("HH:mm")}{" "}
+                                            <span style={{ marginLeft: 8, fontWeight: "bold", color: "red" }}>X</span>
+                                        </>
+                                    ) : announcement?.scheduledAtDiscord ? (
+                                        <>
+                                            {dayjs(announcement.scheduledAtDiscord).format("MMM DD, YYYY")} -{" "}
+                                            {dayjs(announcement.scheduledAtDiscord).format("HH:mm")}{" "}
+                                            <span style={{ marginLeft: 8, fontWeight: "bold", color: "red" }}>X</span>
+                                        </>
+                                    ) : selectedDate && selectedTime ? (
+                                        `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
+                                    ) : (
+                                        "Post Now"
+                                    )}
                                 </Button>
-
                             </Box>
-                        }
+                        )}
                     </>
                 )}
             </Box>
-
         </>
     );
 };

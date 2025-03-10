@@ -16,7 +16,7 @@ interface Post {
     scheduledAtDiscord: string;
     publishedAtTwitter: string;
     scheduledAtTwitter: string;
-
+    scheduledAtTelegram: string;
     publishedAtTelegram: string;
     // Add other properties as needed
 }

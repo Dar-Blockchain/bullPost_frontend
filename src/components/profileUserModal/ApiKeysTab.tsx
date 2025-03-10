@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Typography,
@@ -11,27 +11,19 @@ import {
 import { toast } from "react-toastify";
 
 const ApiKeysTab: React.FC = () => {
-    // Retrieve the stored preference from its own key (fallback to "Gemini" if not available)
+    // Retrieve stored provider preference (defaults to "Gemini")
     const storedPreference = localStorage.getItem("userPreference");
-    const initialProvider = storedPreference
-        ? JSON.parse(storedPreference).OpenIA
-            ? "OpenAI"
-            : "Gemini"
-        : "Gemini";
+    const initialProvider =
+        storedPreference && JSON.parse(storedPreference).OpenIA ? "OpenAI" : "Gemini";
 
     const [preferredProvider, setPreferredProvider] = useState(initialProvider);
-
-    // States for additional keys (with default values)
+    // States for additional API keys
     const [openIaKey, setOpenIaKey] = useState("");
     const [geminiKey, setGeminiKey] = useState("");
     const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
     const [telegramChatId, setTelegramChatId] = useState("");
-    // For simplicity, assume these booleans are fixed
-    const twitterEnabled = true;
-    const telegramEnabled = true;
-    const discordEnabled = true;
 
-    // Common Input styles
+    // Input style shared among API key inputs
     const inputStyles = {
         width: '710px',
         height: '40px',
@@ -42,7 +34,7 @@ const ApiKeysTab: React.FC = () => {
         '& input': { color: '#fff' }
     };
 
-    // When the provider changes, save it to its own localStorage key.
+    // When the provider selection changes, update localStorage
     useEffect(() => {
         const preference = {
             OpenIA: preferredProvider === "OpenAI",
@@ -51,7 +43,7 @@ const ApiKeysTab: React.FC = () => {
         localStorage.setItem("userPreference", JSON.stringify(preference));
     }, [preferredProvider]);
 
-    // On component mount, fetch the saved preferences from the backend API
+    // On component mount, fetch saved preferences from the backend
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -65,7 +57,6 @@ const ApiKeysTab: React.FC = () => {
             .then((res) => res.json())
             .then((data) => {
                 if (data) {
-                    // Update provider based on the returned data
                     setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
                     setOpenIaKey(data.OpenIaKey || "");
                     setGeminiKey(data.GeminiKey || "");
@@ -77,63 +68,60 @@ const ApiKeysTab: React.FC = () => {
     }, []);
 
     const handleSave = async () => {
-        // Build the provider preference based on the dropdown selection.
+        // Build provider preference based on dropdown selection
         const preference = {
             OpenIA: preferredProvider === "OpenAI",
             Gemini: preferredProvider === "Gemini"
         };
         const token = localStorage.getItem("token");
+        if (!token) return;
 
-        // Optionally merge this with your user object.
+        // Merge the preference with user settings in localStorage
         const userStr = localStorage.getItem("user");
         const userSettings = userStr ? JSON.parse(userStr) : {};
         userSettings.Preference = preference;
         localStorage.setItem("user", JSON.stringify(userSettings));
         console.log("Local preferences saved:", userSettings);
 
-        // Build the request body and only include keys if they have non-empty values.
+        // Build the request body by including non-empty keys only
         const requestBody: any = {
             OpenIA: preference.OpenIA,
             Gemini: preference.Gemini
         };
-        if (openIaKey.trim() !== "") {
-            requestBody.OpenIaKey = openIaKey;
-        }
-        if (geminiKey.trim() !== "") {
-            requestBody.GeminiKey = geminiKey;
-        }
-        if (discordWebhookUrl.trim() !== "") {
-            requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
-        }
-        if (telegramChatId.trim() !== "") {
-            requestBody.TELEGRAM_CHAT_ID = telegramChatId;
-        }
+        if (openIaKey.trim() !== "") requestBody.OpenIaKey = openIaKey;
+        if (geminiKey.trim() !== "") requestBody.GeminiKey = geminiKey;
+        if (discordWebhookUrl.trim() !== "") requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
+        if (telegramChatId.trim() !== "") requestBody.TELEGRAM_CHAT_ID = telegramChatId;
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(requestBody)
-            });
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(requestBody)
+                }
+            );
             if (!response.ok) {
                 console.error("Failed to save preferences to backend");
+                toast.error("❌ Failed to save preferences!", { position: "top-right" });
                 return;
             }
             const data = await response.json();
-            toast.success("Data Saved", { position: "top-right" });
-
+            toast.success("Preferences saved successfully!", { position: "top-right" });
             console.log("Preferences saved to backend:", data);
         } catch (error) {
             console.error("Error saving preferences:", error);
+            toast.error("❌ Error saving preferences!", { position: "top-right" });
         }
     };
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {/* Dropdown for Preferred Provider */}
+            {/* Preferred Provider Dropdown */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
                     Preferred Provider
@@ -203,58 +191,9 @@ const ApiKeysTab: React.FC = () => {
                     <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
                         Sonnet
                     </Typography>
-                    <Input
-                        sx={inputStyles}
-                    />
+                    <Input sx={inputStyles} />
                 </Box>
             </Box>
-
-            {/* Deepseek Section */}
-            {/* <Box>
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                    Deepseek
-                </Typography>
-                <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body2" sx={{ color: '#aaa', mb: 1 }}>
-                        V3
-                    </Typography>
-                    <Input
-                        sx={inputStyles}
-                    />
-                </Box>
-            </Box> */}
-
-            {/* Discord & Telegram Section (if needed) */}
-            {/* <Box>
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                    DISCORD_WEBHOOK_URL 👍 😂 ❤️
-                </Typography>
-                <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Input
-                        value={discordWebhookUrl}
-                        onChange={(e) => setDiscordWebhookUrl(e.target.value)}
-                        placeholder="Enter Discord Webhook URL"
-                        sx={inputStyles}
-                    />
-                </Box>
-            </Box> */}
-
-            {/* <Box>
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                    TELEGRAM_CHAT_ID
-                </Typography>
-                <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Input
-                        value={telegramChatId}
-                        onChange={(e) => setTelegramChatId(e.target.value)}
-                        placeholder="Enter Telegram Chat ID"
-                        sx={inputStyles}
-                    />
-                </Box>
-            </Box> */}
 
             {/* Save Data Button */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

@@ -9,8 +9,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { toast } from "react-toastify";
 import Tooltip from "@mui/material/Tooltip";
-
 import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
+import { keyframes } from "@mui/system";
+
 interface ToolbarProps {
   text: string;
   setText: (value: string) => void;
@@ -27,29 +28,46 @@ interface ToolbarProps {
   _id: string;
   setId: (value: string) => void;
   setAi: (value: boolean) => void;
-
+  isLoading: boolean;
 }
 
+// Define spin keyframes for animation
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
 
-const Toolbar: React.FC<ToolbarProps> = ({ text,
-  setText, submittedText, onSubmit, onEmojiSelect, setSubmittedText,
+const Toolbar: React.FC<ToolbarProps> = ({
+  text,
+  setText,
+  submittedText,
+  onSubmit,
+  onEmojiSelect,
+  setSubmittedText,
   setDiscordText,
   setTwitterText,
   setTelegramText,
-  setId, setAi }) => {
+  setId,
+  setAi,
+  isLoading
+}) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const dispatch = useDispatch<AppDispatch>();
 
   const handleOpenEmojiPicker = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
+
+  const selectedAnnouncement = useSelector(
+    (state: RootState) => state.posts.selectedAnnouncement
+  );
 
   useEffect(() => {
     if (selectedAnnouncement && selectedAnnouncement.length > 0) {
       setText(selectedAnnouncement[0].prompt);
     }
   }, [selectedAnnouncement, setText]);
+
   const handleCloseEmojiPicker = () => {
     setAnchorEl(null);
   };
@@ -58,8 +76,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ text,
     onEmojiSelect(emojiData.emoji);
     handleCloseEmojiPicker();
   };
+
   const onManualGenerate = async () => {
-    setAi(false)
+    setAi(false);
     console.log("Input lost focus. Current announcement:", submittedText);
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -70,16 +89,13 @@ const Toolbar: React.FC<ToolbarProps> = ({ text,
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
-
             prompt: text,
             twitter: text,
             telegram: text,
             discord: text,
-
           }),
         }
       );
@@ -105,10 +121,11 @@ const Toolbar: React.FC<ToolbarProps> = ({ text,
       toast.error("Error adding post!", { position: "top-right" });
     }
   };
+
   const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
   const preference = storedPreference ? JSON.parse(storedPreference) : {};
-  // Determine provider name: if OpenIA is true, then use "OpenAI", otherwise "Gemini"
   const provider = preference?.OpenIA ? "OpenAI" : "Gemini";
+
   return (
     <Box sx={{ display: "flex", mt: 2, gap: 2, backgroundColor: "#181818", p: 1, borderRadius: "30px", border: "1px solid #555" }}>
       <IconButton sx={{ color: "#aaa" }} onClick={handleOpenEmojiPicker}>
@@ -127,14 +144,12 @@ const Toolbar: React.FC<ToolbarProps> = ({ text,
       </IconButton>
 
       <IconButton sx={{ color: "#aaa" }} onClick={onSubmit}>
-        <AutoAwesomeOutlinedIcon fontSize="small" />
+        <AutoAwesomeOutlinedIcon
+          fontSize="small"
+          sx={{ animation: isLoading ? `${spin} 1s linear infinite` : "none" }}
+        />
       </IconButton>
-      <Box
-        sx={{
-          width: "1px",
-          backgroundColor: "#555",
-        }}
-      />
+      <Box sx={{ width: "1px", backgroundColor: "#555" }} />
       <Tooltip title="Generate post manually (without AI assistance)" arrow>
         <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
           <SaveIcon fontSize="small" />

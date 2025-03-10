@@ -46,7 +46,7 @@ interface Post {
   scheduledAtDiscord: string;
   publishedAtTwitter: string;
   scheduledAtTwitter: string;
-
+  scheduledAtTelegram: string;
   publishedAtTelegram: string;
 }
 
@@ -132,7 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         flexDirection: "column",
         alignItems: "center",
         py: 3,
-        height: "100vh",
+        height: "100%",
         justifyContent: "flex-start",
         px: 2,
       }}
