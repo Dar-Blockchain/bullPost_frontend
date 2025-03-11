@@ -434,32 +434,34 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
-                    {preference.DISCORD_WEBHOOK_URL && preference.DISCORD_WEBHOOK_URL.trim().length > 0 ? (
-                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
-                    ) : (
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            onClick={handleOpenModal} // Open modal on button click
-                            sx={{
-                                width: 83,
-                                height: 34,
-                                borderWidth: 2,
-                                borderRadius: "10px",
-                                borderColor: "#FFB300",
-                                padding: "10px",
-                                backgroundColor: "transparent",
-                                color: "#FFB300",
-                                fontWeight: "bold",
-                                fontSize: "12px",
-                                textTransform: "none",
-                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
-                            }}
-                        >
-                            Connect
-                        </Button>
-                    )}
-                    <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="discord" />
+                    {user && <>
+                        {preference.DISCORD_WEBHOOK_URL && preference.DISCORD_WEBHOOK_URL.trim().length > 0 ? (
+                            <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                        ) : (
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={handleOpenModal} // Open modal on button click
+                                sx={{
+                                    width: 83,
+                                    height: 34,
+                                    borderWidth: 2,
+                                    borderRadius: "10px",
+                                    borderColor: "#FFB300",
+                                    padding: "10px",
+                                    backgroundColor: "transparent",
+                                    color: "#FFB300",
+                                    fontWeight: "bold",
+                                    fontSize: "12px",
+                                    textTransform: "none",
+                                    "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
+                                }}
+                            >
+                                Connect
+                            </Button>
+                        )}
+                        <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="discord" />
+                    </>}
                 </Box>
 
                 {/* Main Content Area */}

@@ -483,38 +483,40 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                     </Box>
                 )}
                 <Box sx={{ flexGrow: 1 }} />
-                {preference.TELEGRAM_CHAT_ID && preference.TELEGRAM_CHAT_ID.trim().length > 0 ? (
+                {user && <>
 
-                    // {preference.TELEGRAM_CHAT_ID !== "" ? (
-                    <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
-                ) : (
-                    <Button
-                        fullWidth
-                        variant="outlined"
-                        onClick={handleOpenModal} // Open modal on button click
+                    {preference.TELEGRAM_CHAT_ID && preference.TELEGRAM_CHAT_ID.trim().length > 0 ? (
 
-                        sx={{
-                            width: 83,
-                            height: 34,
-                            borderWidth: 2,
-                            borderRadius: "10px",
-                            borderColor: "#FFB300",
-                            padding: "10px",
-                            backgroundColor: "transparent",
-                            color: "#FFB300",
-                            fontWeight: "bold",
-                            fontSize: "12px",
-                            textTransform: "none",
-                            "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
-                        }}
-                    // onClick={() => setStep(3)} // Move to next step
-                    // disabled={!selectedOption} // Disable if nothing is selected
-                    >
-                        Connect
-                    </Button>
-                )}
-                <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="telegram" />
+                        // {preference.TELEGRAM_CHAT_ID !== "" ? (
+                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                    ) : (
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={handleOpenModal} // Open modal on button click
 
+                            sx={{
+                                width: 83,
+                                height: 34,
+                                borderWidth: 2,
+                                borderRadius: "10px",
+                                borderColor: "#FFB300",
+                                padding: "10px",
+                                backgroundColor: "transparent",
+                                color: "#FFB300",
+                                fontWeight: "bold",
+                                fontSize: "12px",
+                                textTransform: "none",
+                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
+                            }}
+                        // onClick={() => setStep(3)} // Move to next step
+                        // disabled={!selectedOption} // Disable if nothing is selected
+                        >
+                            Connect
+                        </Button>
+                    )}
+                    <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="telegram" />
+                </>}
             </Box>
 
             {/* Main Content Area */}
