@@ -46,6 +46,7 @@ import {
 import dayjs from "dayjs";
 import ReactMarkdown from "react-markdown";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
+import ConnectModal from "./ConnectModal";
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -58,13 +59,26 @@ interface DiscordBlockProps {
     _id: string;
     ai: boolean;
 }
-
+interface UserPreference {
+    OpenIA?: boolean;
+    Gemini?: boolean;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+}
 const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useAuth();
+    const [modalOpen, setModalOpen] = useState(false);
 
+    const handleOpenModal = () => {
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+    };
     // Redux state
     const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
     const announcement = selectedAnnouncement?.[0];
@@ -349,9 +363,15 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         setTimeout(() => field.focus(), 0);
     };
 
-    const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
-    const preference = storedPreference ? JSON.parse(storedPreference) : {};
+    const [preference, setPreference] = useState<UserPreference>({});
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedPreference = localStorage.getItem("userPreference");
+            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
+            setPreference(parsedPreference);
+        }
+    }, [preference]);
     const handleRegenerate = async () => {
         setIsRegenerating(true);
         try {
@@ -414,7 +434,32 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
-                    <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                    {preference.DISCORD_WEBHOOK_URL && preference.DISCORD_WEBHOOK_URL.trim().length > 0 ? (
+                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                    ) : (
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={handleOpenModal} // Open modal on button click
+                            sx={{
+                                width: 83,
+                                height: 34,
+                                borderWidth: 2,
+                                borderRadius: "10px",
+                                borderColor: "#FFB300",
+                                padding: "10px",
+                                backgroundColor: "transparent",
+                                color: "#FFB300",
+                                fontWeight: "bold",
+                                fontSize: "12px",
+                                textTransform: "none",
+                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
+                            }}
+                        >
+                            Connect
+                        </Button>
+                    )}
+                    <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="discord" />
                 </Box>
 
                 {/* Main Content Area */}

@@ -43,12 +43,12 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
       <CssBaseline />
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <Box sx={{ display: "flex", width: '100%'  }}> {/* ✅ Ensure full width */}
+      <Box sx={{ display: "flex", width: '100%', height: "100vh" }}> {/* ✅ Ensure full width */}
         {/* Sidebar */}
         <Sidebar handleOpen={handleOpenLogin} isLoggedIn={isLoggedIn} />
 
         {/* Main Content */}
-          <Component {...pageProps} router={router} /> {/* ✅ Pass Router Here */}
+        <Component {...pageProps} router={router} /> {/* ✅ Pass Router Here */}
       </Box>
 
       {/* Login Modal */}
@@ -60,7 +60,7 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
 // ✅ Fix by correctly typing the `_app.tsx` function
 export default function MyApp({ Component, pageProps, router }: AppProps) {
   return (
-    <SessionProvider session={pageProps.session}> 
+    <SessionProvider session={pageProps.session}>
       <Provider store={store}>
         <MyAppComponent Component={Component} pageProps={pageProps} router={router} /> {/* ✅ Pass Router Here */}
       </Provider>

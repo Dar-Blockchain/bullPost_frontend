@@ -57,11 +57,12 @@ export default function BullPostPage() {
     const preference = {
       OpenIA: preferredProvider === "OpenAI",
       Gemini: preferredProvider === "Gemini",
+      DISCORD_WEBHOOK_URL: discordWebhookUrl,
+      TELEGRAM_CHAT_ID: telegramChatId,
     };
     localStorage.setItem("userPreference", JSON.stringify(preference));
-  }, [preferredProvider]);
+  }, [preferredProvider, discordWebhookUrl, telegramChatId]);
 
-  // Fetch saved preferences from the backend
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -75,15 +76,17 @@ export default function BullPostPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data) {
+          console.log(data, "data");
           setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
           setOpenIaKey(data.OpenIaKey || "");
           setGeminiKey(data.GeminiKey || "");
-          setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
-          setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+          // If no Discord/Telegram data, set as an empty string
+          setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL ? data.DISCORD_WEBHOOK_URL : "");
+          setTelegramChatId(data.TELEGRAM_CHAT_ID ? data.TELEGRAM_CHAT_ID : "");
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));
-  }, []);
+  }, [user]); // re-run when 'user' changes (i.e. when logged in)
 
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
@@ -215,7 +218,7 @@ export default function BullPostPage() {
 
       {/* Sticky Alert */}
       {user && profileIncomplete && (
-        <Box sx={{ position: "sticky", top: 0, zIndex: 1100 }}>
+        <Box sx={{ position: "sticky", top: isMobile ? "60px" : 0, zIndex: 1100 }}>
           <Alert severity="error">
             Please complete your profile by adding your{" "}
             {preferredProvider === "OpenAI" ? "OpenAI" : "Gemini"} API key, Discord

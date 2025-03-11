@@ -16,23 +16,16 @@ const AppSettingsTab: React.FC = () => {
   const initialProvider =
     storedPreference && JSON.parse(storedPreference).OpenIA ? "OpenAI" : "Gemini";
 
-  const [preferredProvider, setPreferredProvider] = useState(initialProvider);
-  const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
 
-  // Update provider preference in localStorage whenever it changes
-  useEffect(() => {
-    const preference = {
-      OpenIA: preferredProvider === "OpenAI",
-      Gemini: preferredProvider === "Gemini"
-    };
-    localStorage.setItem("userPreference", JSON.stringify(preference));
-  }, [preferredProvider]);
 
   // Fetch saved preferences from the backend on mount
   useEffect(() => {
+    const storedPreference = localStorage.getItem("userPreference");
+    if (storedPreference) return; // Already set, so do not fetch again
+
     const token = localStorage.getItem("token");
     if (!token) return;
+
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
       method: "GET",
       headers: {
@@ -43,34 +36,52 @@ const AppSettingsTab: React.FC = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data) {
-          setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
-          setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+          // Save only the Discord and Telegram data if available,
+          // otherwise leave them as empty strings.
+          const backendPref = {
+            OpenIA: data.OpenIA,
+            Gemini: !data.OpenIA,
+            DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL || "",
+            TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID || ""
+          };
+          localStorage.setItem("userPreference", JSON.stringify(backendPref));
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));
   }, []);
 
-  // Handler to save preferences to the backend and locally
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  useEffect(() => {
+    const storedPref = localStorage.getItem("userPreference");
+    if (storedPref) {
+      const pref = JSON.parse(storedPref);
+      setDiscordWebhookUrl(pref.DISCORD_WEBHOOK_URL || "");
+      setTelegramChatId(pref.TELEGRAM_CHAT_ID || "");
+    }
+  }, []);
+
   const handleSave = async () => {
-    const preference = {
-      OpenIA: preferredProvider === "OpenAI",
-      Gemini: preferredProvider === "Gemini"
-    };
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Merge preferences with local user settings
-    const userStr = localStorage.getItem("user");
-    const userSettings = userStr ? JSON.parse(userStr) : {};
-    userSettings.Preference = preference;
-    localStorage.setItem("user", JSON.stringify(userSettings));
-    console.log("Local preferences saved:", userSettings);
+    // Retrieve existing preferences from "userPreference"
+    const storedPref = localStorage.getItem("userPreference");
+    const pref = storedPref ? JSON.parse(storedPref) : {};
+
+    // Update the preference object with Discord and Telegram data directly
+    const updatedPref = {
+      ...pref,
+      DISCORD_WEBHOOK_URL: discordWebhookUrl ? discordWebhookUrl : pref.DISCORD_WEBHOOK_URL,
+      TELEGRAM_CHAT_ID: telegramChatId ? telegramChatId : pref.TELEGRAM_CHAT_ID,
+    };
+
+    // Save updated preferences back to "userPreference"
+    localStorage.setItem("userPreference", JSON.stringify(updatedPref));
+    console.log("Local preferences saved:", updatedPref);
 
     // Build request body with non-empty keys only
-    const requestBody: any = {
-      OpenIA: preference.OpenIA,
-      Gemini: preference.Gemini
-    };
+    let requestBody: any = {};
     if (discordWebhookUrl.trim() !== "") {
       requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
     }
@@ -85,9 +96,9 @@ const AppSettingsTab: React.FC = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
         }
       );
       if (!response.ok) {
@@ -98,6 +109,7 @@ const AppSettingsTab: React.FC = () => {
       const data = await response.json();
       console.log("Preferences saved to backend:", data);
       toast.success("Preferences saved successfully!", { position: "top-right" });
+      // onClose();
     } catch (error) {
       console.error("Error saving preferences:", error);
       toast.error("❌ Error saving preferences!", { position: "top-right" });

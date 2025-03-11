@@ -47,6 +47,7 @@ import {
     setSelectedAnnouncement,
     updatePost,
 } from "@/store/slices/postsSlice";
+import ConnectModal from "./ConnectModal";
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -59,13 +60,26 @@ interface TelegramBlockProps {
     _id: string;
     ai: boolean;
 }
-
+interface UserPreference {
+    OpenIA?: boolean;
+    Gemini?: boolean;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+}
 const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useAuth();
+    const [modalOpen, setModalOpen] = useState(false);
 
+    const handleOpenModal = () => {
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+    };
     // Redux: extract announcement if available
     const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
     const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
@@ -104,7 +118,15 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
     useEffect(() => {
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
+    const [preference, setPreference] = useState<UserPreference>({});
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedPreference = localStorage.getItem("userPreference");
+            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
+            setPreference(parsedPreference);
+        }
+    }, [preference]);
     // Typewriter effect for submitted text
     useEffect(() => {
         if (!submittedText) {
@@ -391,9 +413,6 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         setTimeout(() => field.focus(), 0);
     };
 
-    // Handle regenerate action based on stored preference
-    const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
-    const preference = storedPreference ? JSON.parse(storedPreference) : {};
 
     const handleRegenerate = async () => {
         setIsRegenerating(true);
@@ -464,7 +483,38 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                     </Box>
                 )}
                 <Box sx={{ flexGrow: 1 }} />
-                <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                {preference.TELEGRAM_CHAT_ID && preference.TELEGRAM_CHAT_ID.trim().length > 0 ? (
+
+                    // {preference.TELEGRAM_CHAT_ID !== "" ? (
+                    <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                ) : (
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={handleOpenModal} // Open modal on button click
+
+                        sx={{
+                            width: 83,
+                            height: 34,
+                            borderWidth: 2,
+                            borderRadius: "10px",
+                            borderColor: "#FFB300",
+                            padding: "10px",
+                            backgroundColor: "transparent",
+                            color: "#FFB300",
+                            fontWeight: "bold",
+                            fontSize: "12px",
+                            textTransform: "none",
+                            "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
+                        }}
+                    // onClick={() => setStep(3)} // Move to next step
+                    // disabled={!selectedOption} // Disable if nothing is selected
+                    >
+                        Connect
+                    </Button>
+                )}
+                <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="telegram" />
+
             </Box>
 
             {/* Main Content Area */}
