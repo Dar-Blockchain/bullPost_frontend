@@ -292,32 +292,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
-                    {user?.Preference.twitterAccessToken ? (
-                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
-                    ) : (
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            sx={{
-                                width: 83,
-                                height: 34,
-                                borderWidth: 2,
-                                borderRadius: "10px",
-                                borderColor: "#FFB300",
-                                padding: "10px",
-                                backgroundColor: "transparent",
-                                color: "#FFB300",
-                                fontWeight: "bold",
-                                fontSize: "12px",
-                                textTransform: "none",
-                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
-                            }}
-                        // onClick={() => setStep(3)} // Move to next step
-                        // disabled={!selectedOption} // Disable if nothing is selected
-                        >
-                            Connect
-                        </Button>
-                    )}
+                    <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+
+
                 </Box>
 
                 <Box
