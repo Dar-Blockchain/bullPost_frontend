@@ -656,13 +656,13 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 >
                                     {isPosting ? (
                                         <CircularProgress size={24} color="inherit" />
-                                    ) : announcement?.publishedAtTelegram ? (
-                                        `Published at: ${dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
-                                            announcement.publishedAtTelegram
+                                    ) : announcement?.publishedAtTwitter ? (
+                                        `Published at: ${dayjs(announcement.publishedAtTwitter).format("MMM DD, YYYY")} - ${dayjs(
+                                            announcement.publishedAtTwitter
                                         ).format("HH:mm")}`
-                                    ) : announcement?.scheduledAtTelegram ? (
-                                        `Scheduled at: ${dayjs(announcement.scheduledAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
-                                            announcement.scheduledAtTelegram
+                                    ) : announcement?.publishedAtTwitter ? (
+                                        `Scheduled at: ${dayjs(announcement.scheduledAtTwitter).format("MMM DD, YYYY")} - ${dayjs(
+                                            announcement.scheduledAtTwitter
                                         ).format("HH:mm")}`
                                     ) : selectedDate && selectedTime ? (
                                         `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`

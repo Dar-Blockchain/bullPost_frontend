@@ -18,6 +18,7 @@ interface Post {
     scheduledAtTwitter: string;
     scheduledAtTelegram: string;
     publishedAtTelegram: string;
+    
     // Add other properties as needed
 }
 
