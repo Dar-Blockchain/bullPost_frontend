@@ -150,7 +150,7 @@ export default function BullPostPage() {
         setTwitterText(data.newPost.twitter);
         setTelegramText(data.newPost.telegram);
         setId(data.newPost._id);
-        dispatch(fetchPostsByStatus("draft"));
+        dispatch(fetchPostsByStatus("drafts"));
         dispatch(setSelectedAnnouncement([data.newPost]));
         toast.success("✅ Post generated successfully!", { position: "top-right" });
       }
