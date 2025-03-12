@@ -176,7 +176,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         updateButtonText(selectedDate, newTime);
     };
 
-    // Handle immediate posting
     const handlePostNow = async () => {
         const textToPost = submittedText.trim() || announcement?.discord || "";
         if (!textToPost) {

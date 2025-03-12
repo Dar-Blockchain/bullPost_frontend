@@ -180,6 +180,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Button
           variant="contained"
           sx={{
+            zIndex: 10000,
+
             width: "100%",
             backgroundColor: "#FFB300",
             color: "#111",
@@ -191,7 +193,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             mb: 3,
             "&:hover": { backgroundColor: "#FFA500" },
           }}
-          onClick={() => dispatch(clearSelectedAnnouncement())}
+          onClick={() => {
+            console.log("New post clicked");
+            dispatch(clearSelectedAnnouncement());
+          }}
         >
           New post
         </Button>

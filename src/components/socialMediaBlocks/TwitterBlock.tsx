@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
     Box,
     Typography,
@@ -26,7 +26,7 @@ import Done from "@mui/icons-material/Done";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { fetchPostsByStatus, regeneratePost, regeneratePostOpenAi, updatePost } from "@/store/slices/postsSlice";
+import { fetchPostsByStatus, regeneratePost, regeneratePostOpenAi, setSelectedAnnouncement, updatePost } from "@/store/slices/postsSlice";
 import {
     FormatBold as FormatBoldIcon,
     FormatItalic as FormatItalicIcon,
@@ -56,9 +56,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
     const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
     const postId = announcement?._id || _id;
-    // const selectedAnnouncement = useSelector(
-    //     (state: RootState) => state.posts.selectedAnnouncement
-    // );
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
     const dispatch = useDispatch<AppDispatch>();
     // const postId = selectedAnnouncement && selectedAnnouncement.length > 0
     //     ? selectedAnnouncement[0]._id
@@ -107,25 +106,40 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
 
     const handleUpdate = async () => {
         try {
+            setIsLoading(true);
+            const textToSend = editableText.trim() || displayText;
+            console.log("Updating post...");
+            console.log("Text:", textToSend);
+            console.log("Image:", selectedImage ? selectedImage.name : "No image selected");
             const formData = new FormData();
-            formData.append("twitter", editableText);
+            formData.append("twitter", textToSend);
             if (selectedImage) {
-                formData.append("image_twitter", selectedImage); // "image" is the key expected by your API
+                formData.append("image_twitter", selectedImage);
+            } else {
+                console.warn("No image found in selectedImage state.");
             }
-            const updatedPost = await dispatch(
-                updatePost({
-                    id: postId,
-                    body: formData,
-                })
-            ).unwrap();
-            // Use the updated post's twitter field if available, otherwise fall back to editableText
-            setDisplayText(updatedPost?.twitter || editableText);
+            // Debug: Log form data entries
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ": " + pair[1]);
+            }
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            setDisplayText(updatedPost?.discord || textToSend);
+            setSelectedImage(null);
         } catch (error) {
             console.error("Error updating post:", error);
         } finally {
+            setIsLoading(false);
             setIsEditing(false);
         }
     };
+    useEffect(() => {
+        if (selectedImage) {
+            handleUpdate();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedImage]);
+
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
 
@@ -203,6 +217,16 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         // Hide the formatting popover and re-focus the input field
         setAnchorPosition(null);
         setTimeout(() => field.focus(), 0);
+    };
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            console.log("Selected file:", file.name);
+            const currentText = announcement?.twitter || displayText;
+            console.log("Setting editableText:", currentText);
+            setEditableText(currentText);
+            setSelectedImage(file);
+        }
     };
     const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
     const preference = storedPreference ? JSON.parse(storedPreference) : {};
@@ -521,7 +545,21 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     ? selectedAnnouncement[0].twitter
                                     : (displayText || "No announcement yet...")}
                             </Typography> */}
-                            {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter && (
+                            <>
+                                {announcement?.image_twitter && (
+                                    <img
+                                        src={announcement.image_twitter}
+                                        alt="Preview"
+                                        style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                    />
+                                )}
+                                <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                    <ReactMarkdown>
+                                        {announcement?.discord || displayText || "No announcement yet..."}
+                                    </ReactMarkdown>
+                                </Box>
+                            </>
+                            {/* {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter && (
                                 <img
                                     src={selectedAnnouncement[0].image_twitter}
                                     alt="Preview"
@@ -534,7 +572,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         ? selectedAnnouncement[0].twitter
                                         : (displayText || "No announcement yet...")}
                                 </ReactMarkdown>
-                            </Box>
+                            </Box> */}
                         </>
                     )}
                 </Box>
@@ -577,17 +615,12 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     <Mood fontSize="small" />
                                 </IconButton>
                                 <IconButton component="label" sx={{ color: "#8F8F8F" }}>
-                                    <InsertPhoto fontSize="small" />
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        hidden
-                                        onChange={(e) => {
-                                            if (e.target.files && e.target.files.length > 0) {
-                                                setSelectedImage(e.target.files[0]);
-                                            }
-                                        }}
-                                    />
+                                    {!isEditing && isLoading ? (
+                                        <CircularProgress size={24} />
+                                    ) : (
+                                        <InsertPhoto fontSize="small" />
+                                    )}
+                                    <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                                 </IconButton>
                                 <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
                                     <AutoAwesome fontSize="small" />
