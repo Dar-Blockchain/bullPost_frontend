@@ -38,10 +38,12 @@ const ApiKeysTab: React.FC = () => {
     useEffect(() => {
         const preference = {
             OpenIA: preferredProvider === "OpenAI",
-            Gemini: preferredProvider === "Gemini"
+            Gemini: preferredProvider === "Gemini",
+            DISCORD_WEBHOOK_URL: discordWebhookUrl,
+            TELEGRAM_CHAT_ID: telegramChatId,
         };
         localStorage.setItem("userPreference", JSON.stringify(preference));
-    }, [preferredProvider]);
+    }, [preferredProvider, discordWebhookUrl, telegramChatId]);
 
     // On component mount, fetch saved preferences from the backend
     useEffect(() => {

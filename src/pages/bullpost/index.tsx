@@ -3,7 +3,6 @@ import {
   Box,
   useTheme,
   useMediaQuery,
-  Typography,
   Alert,
 } from "@mui/material";
 import Announcement from "./components/Announcement";
@@ -35,8 +34,7 @@ export default function BullPostPage() {
 
   const handleClose = () => setOpen(false);
   const [text, setText] = useState(
-    "We have now moved from our private Beta phase into public, onboarding new users and taking wider feedback.\n\nPlease continue to share bugs you find with the team!"
-  );
+    "No announcement yet...");
 
   // Preference settings and keys state (declared once)
   const storedPreference =
