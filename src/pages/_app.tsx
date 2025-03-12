@@ -9,7 +9,6 @@ import store from "../store/store";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css"; // Ensure global styles are imported
-import { useDispatch } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
 import { SessionProvider } from "next-auth/react"; // ✅ Import SessionProvider
 

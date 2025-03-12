@@ -204,6 +204,8 @@ export default function BullPostPage() {
         flexGrow: 1,
         "&::-webkit-scrollbar": {
           width: "1px",
+          height: "1px",  // horizontal scrollbar height
+
         },
         "&::-webkit-scrollbar-thumb": {
           backgroundColor: "#FFB300",

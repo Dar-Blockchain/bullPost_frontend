@@ -372,8 +372,12 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             setPreference(parsedPreference);
         }
     }, [preference]);
-    const handleRegenerate = async () => {
-        setIsRegenerating(true);
+    const handleRegenerate = async (icon: boolean) => {
+
+        if (icon) {
+            setIsRegenerating(true);
+
+        }
         try {
             if (preference?.Gemini) {
                 await dispatch(regeneratePost({ platform: "discord", postId })).unwrap();
@@ -385,7 +389,10 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             console.error("Regenerate failed:", error);
             toast.error("Regenerate failed. Please try again.");
         } finally {
-            setIsRegenerating(false);
+            if (icon) {
+                setIsRegenerating(false);
+            }
+            // setIsRegenerating(false);
         }
     };
 
@@ -620,7 +627,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     )}
                                     <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }}>
+                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}
+                                >
                                     <AutoAwesome fontSize="small" />
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
@@ -633,8 +641,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                             "100%": { transform: "rotate(0deg)" },
                                         },
                                     }}
-                                    onClick={handleRegenerate}
-                                    disabled={isRegenerating}
+                                    onClick={() => handleRegenerate(true)} disabled={isRegenerating}
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>

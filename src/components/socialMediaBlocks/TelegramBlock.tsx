@@ -232,7 +232,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             );
             const data = await response.json();
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+                dispatch(fetchPostsByStatus("drafts"));
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -414,8 +414,10 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
     };
 
 
-    const handleRegenerate = async () => {
-        setIsRegenerating(true);
+    const handleRegenerate = async (icon: boolean) => {
+        if (icon) {
+            setIsRegenerating(true);
+        }
         try {
             if (preference?.Gemini === true) {
                 await dispatch(regeneratePost({ platform: "telegram", postId })).unwrap();
@@ -427,7 +429,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
             console.error("Regenerate failed:", error);
             toast.error("Regenerate failed. Please try again.");
         } finally {
-            setIsRegenerating(false);
+            if (icon) {
+                setIsRegenerating(false);
+            }
         }
     };
 
@@ -667,7 +671,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                 )}
                                 <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                             </IconButton>
-                            <IconButton sx={{ color: "#8F8F8F" }}>
+                            <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
                                 <AutoAwesome fontSize="small" />
                             </IconButton>
                             <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
@@ -680,8 +684,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                         "100%": { transform: "rotate(0deg)" },
                                     },
                                 }}
-                                onClick={handleRegenerate}
-                                disabled={isRegenerating}
+                                onClick={() => handleRegenerate(true)} disabled={isRegenerating}
                             >
                                 <Replay fontSize="small" />
                             </IconButton>

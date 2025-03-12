@@ -8,6 +8,7 @@ import {
     IconButton,
     TextField,
     Popover,
+    CircularProgress,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -34,6 +35,9 @@ import {
     Code as CodeIcon
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
+import dayjs, { Dayjs } from "dayjs";
+import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 interface TwitterBlockProps {
     submittedText: string; // Accept submitted text as a prop
@@ -49,13 +53,16 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const indexRef = useRef(0);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
     const { user } = useAuth();
-    const selectedAnnouncement = useSelector(
-        (state: RootState) => state.posts.selectedAnnouncement
-    );
+    const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
+    const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
+    const postId = announcement?._id || _id;
+    // const selectedAnnouncement = useSelector(
+    //     (state: RootState) => state.posts.selectedAnnouncement
+    // );
     const dispatch = useDispatch<AppDispatch>();
-    const postId = selectedAnnouncement && selectedAnnouncement.length > 0
-        ? selectedAnnouncement[0]._id
-        : _id;
+    // const postId = selectedAnnouncement && selectedAnnouncement.length > 0
+    //     ? selectedAnnouncement[0]._id
+    //     : _id;
     // State for editing mode and editable text
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
@@ -199,37 +206,51 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     };
     const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
     const preference = storedPreference ? JSON.parse(storedPreference) : {};
+    const [isRegenerating, setIsRegenerating] = useState(false);
+    const [isPosting, setIsPosting] = useState<boolean>(false);
 
-    const handleRegenerate = () => {
-        if (preference?.Gemini === true) {
-            dispatch(regeneratePost({ platform: "twitter", postId }));
-        } else {
-            dispatch(regeneratePostOpenAi({ platform: "twitter", postId }));
+    const handleRegenerate = async (icon: boolean) => {
+        if (icon) {
+            setIsRegenerating(true);
+        }
+        try {
+            if (preference?.Gemini === true) {
+                await dispatch(regeneratePost({ platform: "twitter", postId })).unwrap();
+            } else {
+                await dispatch(regeneratePostOpenAi({ platform: "twitter", postId })).unwrap();
+            }
+            toast.success("Regenerate successful! 🎉");
+        } catch (error) {
+            console.error("Regenerate failed:", error);
+            toast.error("Regenerate failed. Please try again.");
+        } finally {
+            if (icon) {
+                setIsRegenerating(false);
+            }
         }
     };
     const handlePostNow = async () => {
-        if (!submittedText.trim() && (!selectedAnnouncement || selectedAnnouncement.length === 0)) {
+        const textToPost = submittedText.trim() || (announcement ? announcement.twitter : "");
+        if (!textToPost) {
             toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
             return;
         }
         const token = localStorage.getItem("token");
-        if (!token) {
-            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
-            return
-        }
+        if (!token) return;
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/postNow/` + postId, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json", "Authorization": `Bearer ${token}`
-                },
-            });
-
+            setIsPosting(true);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/postNow/` + postId,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
             const data = await response.json();
-
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
-
+                dispatch(fetchPostsByStatus("drafts"));
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -237,8 +258,107 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         } catch (error) {
             console.error("Error sending message to Discord:", error);
             toast.error("❌ Failed to send message!", { position: "top-right" });
+        } finally {
+            setIsPosting(false);
         }
     };
+    // const handlePostNow = async () => {
+    //     if (!submittedText.trim() && (!selectedAnnouncement || selectedAnnouncement.length === 0)) {
+    //         toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
+    //         return;
+    //     }
+    //     const token = localStorage.getItem("token");
+    //     if (!token) {
+    //         toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+    //         return
+    //     }
+    //     try {
+    //         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/postNow/` + postId, {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json", "Authorization": `Bearer ${token}`
+    //             },
+    //         });
+
+    //         const data = await response.json();
+
+    //         if (response.ok) {
+    //             dispatch(fetchPostsByStatus("draft"));
+
+    //             toast.success("Post sent successfully!", { position: "top-right" });
+    //         } else {
+    //             toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
+    //         }
+    //     } catch (error) {
+    //         console.error("Error sending message to Discord:", error);
+    //         toast.error("❌ Failed to send message!", { position: "top-right" });
+    //     }
+    // };
+
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+    const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
+    const [timeZone, setTimeZone] = useState<string>("");
+
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDateChange = (newDate: Dayjs | null) => {
+        setSelectedDate(newDate);
+        // updateButtonText(newDate, selectedTime);
+    };
+    const handleTimeChange = (newTime: Dayjs | null) => {
+        setSelectedTime(newTime);
+        // updateButtonText(selectedDate, newTime);
+    };
+
+    const handleSchedulePost = async () => {
+        if (!selectedDate || !selectedTime) {
+            return handlePostNow();
+        }
+        const combinedDateTime = selectedDate
+            .set("hour", selectedTime.hour())
+            .set("minute", selectedTime.minute())
+            .set("second", 0);
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return;
+        }
+        const requestBody = {
+            dateTime: combinedDateTime.toISOString(),
+            timeZone,
+        };
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/schedulePostTweet/${postId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
+            if (response.ok) {
+                dispatch(fetchPostsByStatus("draft"));
+                toast.success("Post scheduled successfully!");
+            } else {
+                toast.error("Failed to schedule post.");
+            }
+        } catch (error) {
+            console.error("Error scheduling post:", error);
+            alert("Error scheduling post.");
+        }
+    };
+
     return (
         <>
             <Box
@@ -469,15 +589,22 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         }}
                                     />
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }}>
+                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
                                     <AutoAwesome fontSize="small" />
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
-                                <IconButton sx={{ color: "red" }}>
-                                    <Replay
-                                        onClick={handleRegenerate}
-
-                                        fontSize="small" />
+                                <IconButton
+                                    sx={{
+                                        color: "red",
+                                        animation: isRegenerating ? "spin 1s linear infinite" : "none",
+                                        "@keyframes spin": {
+                                            "0%": { transform: "rotate(360deg)" },
+                                            "100%": { transform: "rotate(0deg)" },
+                                        },
+                                    }}
+                                    onClick={() => handleRegenerate(true)} disabled={isRegenerating}
+                                >
+                                    <Replay fontSize="small" />
                                 </IconButton>
                             </Box>
                         </Box>
@@ -497,11 +624,26 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         minWidth: "auto",
                                         "&:hover": { backgroundColor: "#FFA500" },
                                     }}
+                                    onClick={handleClick}
                                 >
                                     <img src="/calendar_month.png" alt="Calendar" />
                                 </Button>
+                                <Popover
+                                    open={Boolean(anchorEl)}
+                                    anchorEl={anchorEl}
+                                    onClose={handleClose}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                >
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <Box sx={{ p: 2 }}>
+                                            <DateCalendar value={selectedDate} onChange={handleDateChange} />
+                                            <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
+                                        </Box>
+                                    </LocalizationProvider>
+                                </Popover>
                                 <Button
-                                    onClick={handlePostNow}
+                                    onClick={handleSchedulePost}
+                                    disabled={isPosting}
                                     sx={{
                                         backgroundColor: "#191919",
                                         color: "#666",
@@ -509,10 +651,24 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         height: 50,
                                         flex: 1,
                                         width: "150px",
-                                        "&:hover": { backgroundColor: "#222" },
+                                        "&:hover": { backgroundColor: "#FFA500", color: "black" },
                                     }}
                                 >
-                                    Post Now
+                                    {isPosting ? (
+                                        <CircularProgress size={24} color="inherit" />
+                                    ) : announcement?.publishedAtTelegram ? (
+                                        `Published at: ${dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
+                                            announcement.publishedAtTelegram
+                                        ).format("HH:mm")}`
+                                    ) : announcement?.scheduledAtTelegram ? (
+                                        `Scheduled at: ${dayjs(announcement.scheduledAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
+                                            announcement.scheduledAtTelegram
+                                        ).format("HH:mm")}`
+                                    ) : selectedDate && selectedTime ? (
+                                        `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
+                                    ) : (
+                                        "Post Now"
+                                    )}
                                 </Button>
                             </Box>
                         )}
