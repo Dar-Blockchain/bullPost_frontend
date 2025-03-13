@@ -62,39 +62,50 @@ const authOptions: NextAuthOptions = {
           return false;
         }
       }
-      // Standalone Twitter sign in flow
+      // Twitter sign in flow
       else if (account?.provider === "twitter") {
-        try {
-          const provider = account.provider; // "twitter"
-          const providerAccountId = account.providerAccountId;
-          const twitterAccessToken = account.access_token;
-          const username = user.name;
-          const refresh_token = account.refresh_token;
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/auth_ApiTwitter`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                provider,
-                providerAccountId,
-                twitterAccessToken,
-                username,
-                refresh_token,
-              }),
+        // If user already exists (for example, from Gmail or Discord), assume linking.
+        // In this case, the linkAccount event will handle updating your database.
+        if (user?.id) {
+          console.log("User already exists, proceeding with Twitter linking...");
+          return true;
+        } else {
+          // Standalone Twitter sign in: call the Twitter endpoint to sync data.
+          try {
+            const provider = account.provider; // "twitter"
+            const providerAccountId = account.providerAccountId;
+            const twitterAccessToken = account.access_token;
+            const username = user.name;
+            const refresh_token = account.refresh_token;
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/auth_ApiTwitter`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  provider,
+                  providerAccountId,
+                  twitterAccessToken,
+                  username,
+                  refresh_token,
+                }),
+              }
+            );
+            const data = await response.json();
+            console.log(
+              data,
+              "-------------------------Twitter response---------------------------"
+            );
+            if (!response.ok) {
+              console.error("Failed to sync Twitter login with backend");
+              return false;
             }
-          );
-          const data = await response.json();
-          console.log(data, "-------------------------Twitter response---------------------------");
-          if (!response.ok) {
-            console.error("Failed to sync Twitter login with backend");
+            account.access_token = data.token;
+            account.user_data = data.user;
+          } catch (error) {
+            console.error("Error sending Twitter login to backend:", error);
             return false;
           }
-          account.access_token = data.token;
-          account.user_data = data.user;
-        } catch (error) {
-          console.error("Error sending Twitter login to backend:", error);
-          return false;
         }
       } else {
         console.error("Unsupported provider:", account?.provider);
@@ -117,15 +128,18 @@ const authOptions: NextAuthOptions = {
       };
     },
     async redirect({ baseUrl }) {
-      return `/bullpost`;
+      return `${baseUrl}/bullpost`;
     },
   },
-  // The linkAccount event is fired when an OAuth account is linked to an existing user.
+  // linkAccount event fires when an OAuth provider is linked to an existing user.
   events: {
     async linkAccount({ user, account }) {
       if (account.provider === "twitter") {
         try {
-          const idUser = user.id; // existing user ID from your database
+          // Since the user is already in your DB, we assume user.id exists.
+          const idUser = user.id;
+          console.log(idUser, "-------------------------idUser---------------------------");
+          console.log("Linking Twitter account for user ID:", idUser);
           const refresh_token = account.refresh_token;
           const provider = account.provider; // "twitter"
           const providerAccountId = account.providerAccountId;
@@ -134,7 +148,12 @@ const authOptions: NextAuthOptions = {
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ idUser, refresh_token, provider, providerAccountId }),
+              body: JSON.stringify({
+                idUser,
+                refresh_token,
+                provider,
+                providerAccountId,
+              }),
             }
           );
           const data = await response.json();
