@@ -383,11 +383,24 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             alert("Error scheduling post.");
         }
     };
-    // const handleConnectTwitter = () => {
-    //     const token = localStorage.getItem("token"); // or read from Redux slice
-    //     // Append token as a query parameter (note: this is less secure)
-    //     signIn("twitter", { callbackUrl: `/bullpost?clientToken=${token}` });
-    // };
+    const handleRedirect = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/oauth-url`); // Replace with your actual API endpoint
+            if (!response.ok) throw new Error('Failed to fetch the redirect URL');
+
+            const data = await response.json(); // Assuming API returns { url: "https://example.com" }
+            const redirectUrl = data.url;
+
+            if (redirectUrl) {
+                window.location.href = redirectUrl; // Redirect to the returned URL
+            } else {
+                console.error('Invalid URL received');
+            }
+        } catch (error) {
+            console.error('Error during redirection:', error);
+            // Handle error feedback (e.g., display error message)
+        }
+    };
     return (
         <>
             <Box
@@ -453,7 +466,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                             <Button
                                 fullWidth
                                 variant="outlined"
-                                // onClick={handleConnectTwitter} // Open modal on button click
+                                onClick={handleRedirect} // Open modal on button click
 
                                 sx={{
                                     width: 83,
