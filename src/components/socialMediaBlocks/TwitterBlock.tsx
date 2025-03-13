@@ -38,6 +38,7 @@ import ReactMarkdown from "react-markdown";
 import dayjs, { Dayjs } from "dayjs";
 import { DateCalendar, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { signIn } from "next-auth/react";
 
 interface TwitterBlockProps {
     submittedText: string; // Accept submitted text as a prop
@@ -436,8 +437,39 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
-                    <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                    {/* <Switch color="warning" sx={{ transform: "scale(0.9)" }} /> */}
+                    {preference.twitterConnect
+                        && preference.twitterConnect
+                            .trim().length > 0 ? (
 
+                        // {preference.TELEGRAM_CHAT_ID !== "" ? (
+                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                    ) : (
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => signIn("twitter")} // Open modal on button click
+
+                            sx={{
+                                width: 83,
+                                height: 34,
+                                borderWidth: 2,
+                                borderRadius: "10px",
+                                borderColor: "#FFB300",
+                                padding: "10px",
+                                backgroundColor: "transparent",
+                                color: "#FFB300",
+                                fontWeight: "bold",
+                                fontSize: "12px",
+                                textTransform: "none",
+                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
+                            }}
+                        // onClick={() => setStep(3)} // Move to next step
+                        // disabled={!selectedOption} // Disable if nothing is selected
+                        >
+                            Connect
+                        </Button>
+                    )}
 
                 </Box>
 
@@ -533,18 +565,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     ) : (
                         <>
-                            {/* {selectedAnnouncement && selectedAnnouncement.length > 0 && selectedAnnouncement[0]?.image_twitter &&
-                                <img
-                                    src={selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0]?.image_twitter : "/mnt/data/image.png"}
-                                    alt="Preview"
-                                    style={{ maxWidth: "100%", display: "block", margin: "0 auto", marginBottom: "10px" }}
-                                />
-                            }
-                            <Typography sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                                {selectedAnnouncement && selectedAnnouncement.length > 0
-                                    ? selectedAnnouncement[0].twitter
-                                    : (displayText || "No announcement yet...")}
-                            </Typography> */}
+
                             <>
                                 {announcement?.image_twitter && (
                                     <img

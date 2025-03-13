@@ -49,6 +49,7 @@ export default function BullPostPage() {
   const [geminiKey, setGeminiKey] = useState("");
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
+  const [twitterConnect, setTwitterConnect] = useState("");
 
   // Save provider preference to localStorage on change
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function BullPostPage() {
       Gemini: preferredProvider === "Gemini",
       DISCORD_WEBHOOK_URL: discordWebhookUrl,
       TELEGRAM_CHAT_ID: telegramChatId,
+      twitterConnect: twitterConnect,
     };
     localStorage.setItem("userPreference", JSON.stringify(preference));
   }, [preferredProvider, discordWebhookUrl, telegramChatId]);
@@ -78,9 +80,9 @@ export default function BullPostPage() {
           setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
           setOpenIaKey(data.OpenIaKey || "");
           setGeminiKey(data.GeminiKey || "");
-          // If no Discord/Telegram data, set as an empty string
           setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL ? data.DISCORD_WEBHOOK_URL : "");
           setTelegramChatId(data.TELEGRAM_CHAT_ID ? data.TELEGRAM_CHAT_ID : "");
+          setTwitterConnect(data.refresh_token ? data.refresh_token : "");
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));

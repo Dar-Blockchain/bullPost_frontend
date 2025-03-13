@@ -181,7 +181,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           variant="contained"
           sx={{
             zIndex: 10000,
-
             width: "100%",
             backgroundColor: "#FFB300",
             color: "#111",
