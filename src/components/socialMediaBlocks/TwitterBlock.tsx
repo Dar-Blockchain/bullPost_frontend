@@ -384,11 +384,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         }
     };
 
-    const handleConnectTwitter = () => {
-        const token = localStorage.getItem("token"); // or read from Redux slice
-        // Append token as a query parameter (note: this is less secure)
-        signIn("twitter", { callbackUrl: `/bullpost?clientToken=${token}` });
-    };
     return (
         <>
             <Box
@@ -454,7 +449,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                             <Button
                                 fullWidth
                                 variant="outlined"
-                                onClick={handleConnectTwitter} // Open modal on button click
+                                onClick={() => signIn("twitter")} // Open modal on button click
 
                                 sx={{
                                     width: 83,

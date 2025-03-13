@@ -19,8 +19,6 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import Toolbar from "./components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/router";
-import { linkTwitterWithToken } from "@/store/slices/authSlice";
 
 export default function BullPostPage() {
   const { user } = useAuth();
@@ -194,16 +192,7 @@ export default function BullPostPage() {
       setText((prev) => prev + emoji);
     }
   };
-  const router = useRouter();
 
-  // useEffect(() => {
-  //   const clientToken = router.query.clientToken;
-  //   if (clientToken && typeof clientToken === "string") {
-  //     dispatch(linkTwitterWithToken(clientToken));
-  //     // Optionally remove the query parameter
-  //     router.replace("/bullpost", undefined, { shallow: true });
-  //   }
-  // }, [router, dispatch]);
   return (
     <Box
       sx={{

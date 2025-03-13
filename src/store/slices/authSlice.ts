@@ -92,29 +92,7 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
-export const linkTwitterWithToken = createAsyncThunk(
-  "auth/linkTwitterWithToken",
-  async (token: string, thunkAPI) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          // Send only the token from localStorage (or from your slice)
-          body: JSON.stringify({ token }),
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        return thunkAPI.rejectWithValue(data.message);
-      }
-      return data;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.message);
-    }
-  }
-);
+
 // ✅ Logout thunk that removes token/user from localStorage and clears cookies
 export const logoutUser = (): ThunkAction<void, RootState, unknown, any> => (dispatch) => {
   if (typeof window !== "undefined") {
