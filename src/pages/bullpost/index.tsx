@@ -196,14 +196,14 @@ export default function BullPostPage() {
   };
   const router = useRouter();
 
-  useEffect(() => {
-    const clientToken = router.query.clientToken;
-    if (clientToken && typeof clientToken === "string") {
-      dispatch(linkTwitterWithToken(clientToken));
-      // Optionally remove the query parameter
-      router.replace("/bullpost", undefined, { shallow: true });
-    }
-  }, [router, dispatch]);
+  // useEffect(() => {
+  //   const clientToken = router.query.clientToken;
+  //   if (clientToken && typeof clientToken === "string") {
+  //     dispatch(linkTwitterWithToken(clientToken));
+  //     // Optionally remove the query parameter
+  //     router.replace("/bullpost", undefined, { shallow: true });
+  //   }
+  // }, [router, dispatch]);
   return (
     <Box
       sx={{
