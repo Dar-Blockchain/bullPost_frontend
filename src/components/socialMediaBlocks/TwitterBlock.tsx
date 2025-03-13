@@ -389,7 +389,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             if (!response.ok) throw new Error('Failed to fetch the redirect URL');
 
             const data = await response.json(); // Assuming API returns { url: "https://example.com" }
-            const redirectUrl = data.url;
+            const redirectUrl = data;
 
             if (redirectUrl) {
                 window.location.href = redirectUrl; // Redirect to the returned URL
