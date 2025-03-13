@@ -438,39 +438,40 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     )}
                     <Box sx={{ flexGrow: 1 }} />
                     {/* <Switch color="warning" sx={{ transform: "scale(0.9)" }} /> */}
-                    {preference.twitterConnect
-                        && preference.twitterConnect
-                            .trim().length > 0 ? (
+                    {user && <>
+                        {preference.twitterConnect
+                            && preference.twitterConnect
+                                .trim().length > 0 ? (
 
-                        // {preference.TELEGRAM_CHAT_ID !== "" ? (
-                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
-                    ) : (
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            onClick={() => signIn("twitter")} // Open modal on button click
+                            // {preference.TELEGRAM_CHAT_ID !== "" ? (
+                            <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                        ) : (
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={() => signIn("twitter")} // Open modal on button click
 
-                            sx={{
-                                width: 83,
-                                height: 34,
-                                borderWidth: 2,
-                                borderRadius: "10px",
-                                borderColor: "#FFB300",
-                                padding: "10px",
-                                backgroundColor: "transparent",
-                                color: "#FFB300",
-                                fontWeight: "bold",
-                                fontSize: "12px",
-                                textTransform: "none",
-                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
-                            }}
-                        // onClick={() => setStep(3)} // Move to next step
-                        // disabled={!selectedOption} // Disable if nothing is selected
-                        >
-                            Connect
-                        </Button>
-                    )}
-
+                                sx={{
+                                    width: 83,
+                                    height: 34,
+                                    borderWidth: 2,
+                                    borderRadius: "10px",
+                                    borderColor: "#FFB300",
+                                    padding: "10px",
+                                    backgroundColor: "transparent",
+                                    color: "#FFB300",
+                                    fontWeight: "bold",
+                                    fontSize: "12px",
+                                    textTransform: "none",
+                                    "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
+                                }}
+                            // onClick={() => setStep(3)} // Move to next step
+                            // disabled={!selectedOption} // Disable if nothing is selected
+                            >
+                                Connect
+                            </Button>
+                        )}
+                    </>}
                 </Box>
 
                 <Box
