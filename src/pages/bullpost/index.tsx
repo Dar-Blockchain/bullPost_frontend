@@ -206,7 +206,6 @@ export default function BullPostPage() {
   // }, [router, dispatch]);
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!router.isReady) return;
 
     const { access_token, refresh_token } = router.query;
@@ -215,15 +214,16 @@ export default function BullPostPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${token}`
-
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ refresh_token })
       })
         .then((response) => response.json())
         .then((data) => {
-          toast.success("Twitter Linked successfully")
+          toast.success("Twitter Linked successfully");
           console.log('Token updated successfully:', data);
+          // Redirect to /bullpost after successful update
+          router.push('/bullpost');
         })
         .catch((error) => {
           console.error('Error updating token:', error);
