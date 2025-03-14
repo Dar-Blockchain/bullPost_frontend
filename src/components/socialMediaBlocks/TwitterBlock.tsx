@@ -46,7 +46,13 @@ interface TwitterBlockProps {
     onSubmit: () => void; // ✅ Accept API submit function
     ai: boolean;
 }
-
+interface UserPreference {
+    OpenIA?: boolean;
+    Gemini?: boolean;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+    twitterConnect?: string
+}
 const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -66,9 +72,15 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     // State for editing mode and editable text
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
+    const [preference, setPreference] = useState<UserPreference>({});
+
     useEffect(() => {
-        console.log(user, 'here my user')
-    }, [user]);
+        if (typeof window !== 'undefined') {
+            const storedPreference = localStorage.getItem("userPreference");
+            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
+            setPreference(parsedPreference);
+        }
+    }, [preference]);
     useEffect(() => {
         if (!submittedText) {
             setDisplayText("");
@@ -230,7 +242,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         }
     };
     const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
-    const preference = storedPreference ? JSON.parse(storedPreference) : {};
     const [isRegenerating, setIsRegenerating] = useState(false);
     const [isPosting, setIsPosting] = useState<boolean>(false);
 
@@ -456,6 +467,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     <Box sx={{ flexGrow: 1 }} />
                     {/* <Switch color="warning" sx={{ transform: "scale(0.9)" }} /> */}
                     {user && <>
+
                         {preference.twitterConnect
                             && preference.twitterConnect
                                 .trim().length > 0 ? (

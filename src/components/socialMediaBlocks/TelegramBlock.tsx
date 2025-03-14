@@ -65,6 +65,7 @@ interface UserPreference {
     Gemini?: boolean;
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
+    twitterConnect?: string
 }
 const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
