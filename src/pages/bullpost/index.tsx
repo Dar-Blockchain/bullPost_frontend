@@ -205,6 +205,7 @@ export default function BullPostPage() {
   //   }
   // }, [router, dispatch]);
   useEffect(() => {
+    console.log("hiii here")
     const token = localStorage.getItem("token");
     if (!router.isReady) return;
 

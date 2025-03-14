@@ -22,7 +22,6 @@ const ApiKeysTab: React.FC = () => {
     const [geminiKey, setGeminiKey] = useState("");
     const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
     const [telegramChatId, setTelegramChatId] = useState("");
-    const [refresh_tokenLinked, setRefresh_tokenLinked] = useState("");
 
     // Input style shared among API key inputs
     const inputStyles = {
@@ -42,7 +41,6 @@ const ApiKeysTab: React.FC = () => {
             Gemini: preferredProvider === "Gemini",
             DISCORD_WEBHOOK_URL: discordWebhookUrl,
             TELEGRAM_CHAT_ID: telegramChatId,
-            refresh_Token: refresh_tokenLinked
         };
         localStorage.setItem("userPreference", JSON.stringify(preference));
     }, [preferredProvider, discordWebhookUrl, telegramChatId]);
@@ -66,7 +64,6 @@ const ApiKeysTab: React.FC = () => {
                     setGeminiKey(data.GeminiKey || "");
                     setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
                     setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
-                    setRefresh_tokenLinked(data.refresh_token || "")
                 }
             })
             .catch((err) => console.error("Error fetching preferences:", err));
