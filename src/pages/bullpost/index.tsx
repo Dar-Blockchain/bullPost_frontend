@@ -211,7 +211,7 @@ export default function BullPostPage() {
 
     const { access_token, refresh_token } = router.query;
     if (access_token && refresh_token) {
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/LinkTwitter`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
