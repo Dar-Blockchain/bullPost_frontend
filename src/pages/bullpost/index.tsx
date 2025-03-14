@@ -194,7 +194,7 @@ export default function BullPostPage() {
       setText((prev) => prev + emoji);
     }
   };
-  // const router = useRouter();
+  const router = useRouter();
 
   // useEffect(() => {
   //   const clientToken = router.query.clientToken;
@@ -204,6 +204,35 @@ export default function BullPostPage() {
   //     router.replace("/bullpost", undefined, { shallow: true });
   //   }
   // }, [router, dispatch]);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!router.isReady) return;
+
+    const { access_token, refresh_token } = router.query;
+    if (access_token && refresh_token) {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/LinkTwitter`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+
+        },
+        body: JSON.stringify({ refresh_token })
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          toast.success("Twitter Linked successfully")
+          console.log('Token updated successfully:', data);
+        })
+        .catch((error) => {
+          console.error('Error updating token:', error);
+        });
+    } else {
+      console.warn("Missing tokens. Access token:", access_token, "Refresh token:", refresh_token);
+    }
+  }, [router.isReady, router.query]);
+
   return (
     <Box
       sx={{
