@@ -20,8 +20,13 @@ import { AppDispatch } from "@/store/store";
 import Toolbar from "./components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/router";
-import { linkTwitterWithToken } from "@/store/slices/authSlice";
-
+interface UserPreference {
+  OpenIA?: boolean;
+  Gemini?: boolean;
+  DISCORD_WEBHOOK_URL?: string;
+  TELEGRAM_CHAT_ID?: string;
+  twitterConnect?: string
+}
 export default function BullPostPage() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -204,6 +209,15 @@ export default function BullPostPage() {
   //     router.replace("/bullpost", undefined, { shallow: true });
   //   }
   // }, [router, dispatch]);
+  const [preference, setPreference] = useState<UserPreference>({});
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedPreference = localStorage.getItem("userPreference");
+      const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
+      setPreference(parsedPreference);
+    }
+  }, [preference]);
   useEffect(() => {
     console.log("hiii here")
     const token = localStorage.getItem("token");
@@ -232,7 +246,7 @@ export default function BullPostPage() {
     } else {
       console.warn("Missing tokens. Access token:", access_token, "Refresh token:", refresh_token);
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, preference]);
 
   return (
     <Box
