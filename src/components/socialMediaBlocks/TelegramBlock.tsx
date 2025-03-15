@@ -443,7 +443,74 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedImage]);
+    const [telegramEnabled, setTelegramEnabled] = useState(false);
 
+    useEffect(() => {
+        // Ensure this code runs only on the client
+        const storedPref = localStorage.getItem("userPreference");
+        if (storedPref) {
+            try {
+                const parsedPref = JSON.parse(storedPref);
+                setTelegramEnabled(parsedPref.Telegram || false);
+            } catch (error) {
+                console.error("Error parsing localStorage preference:", error);
+            }
+        }
+    }, []);
+
+    const handleSave = async (telegramValue: boolean) => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Retrieve existing preferences from localStorage
+        const storedPref = localStorage.getItem("userPreference");
+        const pref = storedPref ? JSON.parse(storedPref) : {};
+
+        // Update the preference object with Twitter value only
+        const updatedPref = {
+            ...pref,
+            Telegram: telegramValue, // update with true or false from the switch
+        };
+
+        // Save updated preferences back to localStorage
+        localStorage.setItem("userPreference", JSON.stringify(updatedPref));
+        console.log("Local preferences saved:", updatedPref);
+
+        // Build request body with only the Twitter variable
+        const requestBody = {
+            telegram: telegramValue,
+        };
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
+            if (!response.ok) {
+                console.error("Failed to save preferences to backend");
+                toast.error("❌ Failed to save preferences!", { position: "top-right" });
+                return;
+            }
+            const data = await response.json();
+            console.log("Preferences saved to backend:", data);
+            toast.success("Preferences saved successfully!", { position: "top-right" });
+        } catch (error) {
+            console.error("Error saving preferences:", error);
+            toast.error("❌ Error saving preferences!", { position: "top-right" });
+        }
+    };
+    const handleSwitchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.checked;
+        setTelegramEnabled(newValue);
+        await handleSave(newValue);
+    };
     return (
         <Box
             sx={{
@@ -493,7 +560,8 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                     {preference.TELEGRAM_CHAT_ID && preference.TELEGRAM_CHAT_ID.trim().length > 0 ? (
 
                         // {preference.TELEGRAM_CHAT_ID !== "" ? (
-                        <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                        <Switch color="warning" checked={telegramEnabled}
+                            onChange={handleSwitchChange} sx={{ transform: "scale(0.9)" }} />
                     ) : (
                         <Button
                             fullWidth
@@ -607,21 +675,26 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                         </Popover>
                     </Box>
                 ) : (
-                    <>
-                        {announcement && announcement.image_telegram && (
-                            <img
-                                src={announcement.image_telegram}
-                                alt="Preview"
-                                style={{ maxWidth: "100%", marginBottom: "10px" }}
-                            />
-                        )}
+                    !telegramEnabled ? (
                         <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                            <ReactMarkdown>
-                                {announcement ? announcement.telegram : displayText || "No announcement yet..."}
-                            </ReactMarkdown>
+                            Change your parameter if you want to see result.
                         </Box>
-                    </>
-                )}
+                    ) : (
+                        <>
+                            {announcement && announcement.image_telegram && (
+                                <img
+                                    src={announcement.image_telegram}
+                                    alt="Preview"
+                                    style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                />
+                            )}
+                            <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                <ReactMarkdown>
+                                    {announcement ? announcement.telegram : displayText || "No announcement yet..."}
+                                </ReactMarkdown>
+                            </Box>
+                        </>
+                    ))}
             </Box>
 
             {/* Toolbar & Scheduling Section */}

@@ -25,7 +25,10 @@ interface UserPreference {
   Gemini?: boolean;
   DISCORD_WEBHOOK_URL?: string;
   TELEGRAM_CHAT_ID?: string;
-  twitterConnect?: string
+  twitterConnect?: string;
+  Discord?: boolean;
+  Twitter?: boolean;
+  Telegram?: boolean
 }
 export default function BullPostPage() {
   const { user } = useAuth();
@@ -57,6 +60,9 @@ export default function BullPostPage() {
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
   const [twitterConnect, setTwitterConnect] = useState("");
+  const [Twitter, setTwitter] = useState("");
+  const [Discord, setDiscord] = useState("");
+  const [Telegram, setTelegram] = useState("");
 
   // Save provider preference to localStorage on change
   useEffect(() => {
@@ -66,6 +72,9 @@ export default function BullPostPage() {
       DISCORD_WEBHOOK_URL: discordWebhookUrl,
       TELEGRAM_CHAT_ID: telegramChatId,
       twitterConnect: twitterConnect,
+      Twitter: Twitter,
+      Discord: Discord,
+      Telegram: Telegram
     };
     localStorage.setItem("userPreference", JSON.stringify(preference));
   }, [preferredProvider, discordWebhookUrl, telegramChatId]);
@@ -90,6 +99,10 @@ export default function BullPostPage() {
           setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL ? data.DISCORD_WEBHOOK_URL : "");
           setTelegramChatId(data.TELEGRAM_CHAT_ID ? data.TELEGRAM_CHAT_ID : "");
           setTwitterConnect(data.refresh_token ? data.refresh_token : "");
+          setTwitter(data.twitter ? data.twitter : "")
+          setDiscord(data.discord ? data.discord : "")
+          setTelegram(data.telegram ? data.telegram : "")
+
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));

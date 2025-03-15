@@ -47,6 +47,8 @@ import dayjs from "dayjs";
 import ReactMarkdown from "react-markdown";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ConnectModal from "./ConnectModal";
+import { BlobOptions } from "buffer";
+import Discord from "next-auth/providers/discord";
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -64,6 +66,7 @@ interface UserPreference {
     Gemini?: boolean;
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
+    discord?: Boolean
 }
 const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
@@ -394,7 +397,74 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             // setIsRegenerating(false);
         }
     };
+    const [twitterEnabled, setTwitterEnabled] = useState(false);
 
+    useEffect(() => {
+        // Ensure this code runs only on the client
+        const storedPref = localStorage.getItem("userPreference");
+        if (storedPref) {
+            try {
+                const parsedPref = JSON.parse(storedPref);
+                setTwitterEnabled(parsedPref.Discord || false);
+            } catch (error) {
+                console.error("Error parsing localStorage preference:", error);
+            }
+        }
+    }, []);
+
+    const handleSave = async (twitterValue: boolean) => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Retrieve existing preferences from localStorage
+        const storedPref = localStorage.getItem("userPreference");
+        const pref = storedPref ? JSON.parse(storedPref) : {};
+
+        // Update the preference object with Twitter value only
+        const updatedPref = {
+            ...pref,
+            Discord: twitterValue, // update with true or false from the switch
+        };
+
+        // Save updated preferences back to localStorage
+        localStorage.setItem("userPreference", JSON.stringify(updatedPref));
+        console.log("Local preferences saved:", updatedPref);
+
+        // Build request body with only the Twitter variable
+        const requestBody = {
+            discord: twitterValue,
+        };
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
+            if (!response.ok) {
+                console.error("Failed to save preferences to backend");
+                toast.error("❌ Failed to save preferences!", { position: "top-right" });
+                return;
+            }
+            const data = await response.json();
+            console.log("Preferences saved to backend:", data);
+            toast.success("Preferences saved successfully!", { position: "top-right" });
+        } catch (error) {
+            console.error("Error saving preferences:", error);
+            toast.error("❌ Error saving preferences!", { position: "top-right" });
+        }
+    };
+    const handleSwitchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.checked;
+        setTwitterEnabled(newValue);
+        await handleSave(newValue);
+    };
     return (
         <>
             <Box
@@ -442,7 +512,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     <Box sx={{ flexGrow: 1 }} />
                     {user && <>
                         {preference.DISCORD_WEBHOOK_URL && preference.DISCORD_WEBHOOK_URL.trim().length > 0 ? (
-                            <Switch color="warning" sx={{ transform: "scale(0.9)" }} />
+                            <Switch color="warning" checked={twitterEnabled}
+                                onChange={handleSwitchChange} sx={{ transform: "scale(0.9)" }} />
                         ) : (
                             <Button
                                 fullWidth
@@ -493,8 +564,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 fullWidth
                                 multiline
                                 variant="outlined"
-                                value={editableText}
-                                onChange={(e) => setEditableText(e.target.value)}
+                                value={displayText} // or use your editableText state here
+                                onChange={(e) => { }}
                                 inputRef={textFieldRef}
                                 inputProps={{
                                     onMouseUp: handleMouseUp,
@@ -525,12 +596,10 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 </Box>
                             )}
                             <Popover
-                                open={Boolean(anchorPosition)}
+                                open={Boolean(null)}
                                 anchorReference="anchorPosition"
-                                anchorPosition={
-                                    anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined
-                                }
-                                onClose={() => setAnchorPosition(null)}
+                                anchorPosition={undefined}
+                                onClose={() => { }}
                                 anchorOrigin={{ vertical: "top", horizontal: "left" }}
                             >
                                 <Box sx={{ display: "flex", gap: 1, p: 1 }}>
@@ -561,20 +630,27 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                             </Popover>
                         </Box>
                     ) : (
-                        <>
-                            {announcement?.image_discord && (
-                                <img
-                                    src={announcement.image_discord}
-                                    alt="Preview"
-                                    style={{ maxWidth: "100%", marginBottom: "10px" }}
-                                />
-                            )}
+                        // When not editing, conditionally show announcement content or a message
+                        !twitterEnabled ? (
                             <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                                <ReactMarkdown>
-                                    {announcement?.discord || displayText || "No announcement yet..."}
-                                </ReactMarkdown>
+                                Change your parameter if you want to see result.
                             </Box>
-                        </>
+                        ) : (
+                            <>
+                                {announcement?.image_discord && (
+                                    <img
+                                        src={announcement.image_discord}
+                                        alt="Preview"
+                                        style={{ maxWidth: "100%", marginBottom: "10px" }}
+                                    />
+                                )}
+                                <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                                    <ReactMarkdown>
+                                        {announcement?.discord || displayText || "No announcement yet..."}
+                                    </ReactMarkdown>
+                                </Box>
+                            </>
+                        )
                     )}
                 </Box>
 
