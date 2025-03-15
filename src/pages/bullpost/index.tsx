@@ -246,7 +246,7 @@ export default function BullPostPage() {
     } else {
       console.warn("Missing tokens. Access token:", access_token, "Refresh token:", refresh_token);
     }
-  }, [router.isReady, router.query, preference]);
+  }, [router.isReady, router.query]);
 
   return (
     <Box
