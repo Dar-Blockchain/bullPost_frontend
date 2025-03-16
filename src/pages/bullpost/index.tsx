@@ -232,12 +232,17 @@ export default function BullPostPage() {
     }
   }, [preference]);
   useEffect(() => {
-    console.log("hiii here")
-    const token = localStorage.getItem("token");
     if (!router.isReady) return;
 
+    console.log("Router is ready, query:", router.query);
     const { access_token, refresh_token } = router.query;
+
     if (access_token && refresh_token) {
+      // Optionally, store tokens in localStorage if you need to persist them
+      localStorage.setItem("twitterAccessToken", access_token as string);
+      localStorage.setItem("twitterRefreshToken", refresh_token as string);
+
+      const token = localStorage.getItem("token");
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
         method: 'PUT',
         headers: {
