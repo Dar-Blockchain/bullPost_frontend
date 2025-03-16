@@ -237,32 +237,40 @@ export default function BullPostPage() {
     console.log("Router is ready, query:", router.query);
     const { access_token, refresh_token } = router.query;
 
-    if (access_token && refresh_token) {
-      // Optionally, store tokens in localStorage if you need to persist them
-      localStorage.setItem("twitterAccessToken", access_token as string);
+    // If refresh_token is available, proceed even if access_token is missing
+    if (refresh_token) {
+      // Optionally, if you do have an access_token, store it
+      if (access_token) {
+        localStorage.setItem("twitterAccessToken", access_token as string);
+      }
       localStorage.setItem("twitterRefreshToken", refresh_token as string);
 
       const token = localStorage.getItem("token");
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ refresh_token })
       })
         .then((response) => response.json())
         .then((data) => {
           toast.success("Twitter Linked successfully");
-          console.log('Token updated successfully:', data);
+          console.log("Token updated successfully:", data);
           // Redirect to /bullpost after successful update
-          router.push('/bullpost');
+          router.push("/bullpost");
         })
         .catch((error) => {
-          console.error('Error updating token:', error);
+          console.error("Error updating token:", error);
         });
     } else {
-      console.warn("Missing tokens. Access token:", access_token, "Refresh token:", refresh_token);
+      console.warn(
+        "Missing tokens. Access token:",
+        access_token,
+        "Refresh token:",
+        refresh_token
+      );
     }
   }, [router.isReady, router.query]);
 
