@@ -232,47 +232,43 @@ export default function BullPostPage() {
     }
   }, [preference]);
   useEffect(() => {
-    if (!router.isReady) return;
+    // Ensure this runs only on the client side.
+    const params = new URLSearchParams(window.location.search);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
 
-    console.log("Router is ready, query:", router.query);
-    const { access_token, refresh_token } = router.query;
-
-    // If refresh_token is available, proceed even if access_token is missing
-    if (refresh_token) {
-      // Optionally, if you do have an access_token, store it
-      if (access_token) {
-        localStorage.setItem("twitterAccessToken", access_token as string);
-      }
-      localStorage.setItem("twitterRefreshToken", refresh_token as string);
-
-      const token = localStorage.getItem("token");
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ refresh_token })
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          toast.success("Twitter Linked successfully");
-          console.log("Token updated successfully:", data);
-          // Redirect to /bullpost after successful update
-          router.push("/bullpost");
-        })
-        .catch((error) => {
-          console.error("Error updating token:", error);
-        });
-    } else {
-      console.warn(
-        "Missing tokens. Access token:",
-        access_token,
-        "Refresh token:",
-        refresh_token
-      );
+    if (!refresh_token) {
+      console.warn("Refresh token not found in URL.");
+      return;
     }
-  }, [router.isReady, router.query]);
+
+    // Optionally store the access token if it exists.
+    if (access_token) {
+      localStorage.setItem("twitterAccessToken", access_token);
+    }
+    localStorage.setItem("twitterRefreshToken", refresh_token);
+
+    const token = localStorage.getItem("token");
+
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ refresh_token })
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        toast.success("Twitter Linked successfully");
+        console.log("Token updated successfully:", data);
+        // Redirect to /bullpost after successful update
+        router.push("/bullpost");
+      })
+      .catch((error) => {
+        console.error("Error updating token:", error);
+      });
+  }, []);
 
   return (
     <Box

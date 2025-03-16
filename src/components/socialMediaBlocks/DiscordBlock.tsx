@@ -631,7 +631,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     ) : (
                         // When not editing, conditionally show announcement content or a message
-                        !twitterEnabled ? (
+                        user && !twitterEnabled ? (
                             <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                                 Change your parameter if you want to see result.
                             </Box>

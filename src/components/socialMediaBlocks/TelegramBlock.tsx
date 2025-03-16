@@ -675,7 +675,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                         </Popover>
                     </Box>
                 ) : (
-                    !telegramEnabled ? (
+                    user && !telegramEnabled ? (
                         <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                             Change your parameter if you want to see result.
                         </Box>
