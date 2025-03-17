@@ -263,12 +263,14 @@ export default function BullPostPage() {
         toast.success("Twitter Linked successfully");
         console.log("Token updated successfully:", data);
         // Redirect to /bullpost after successful update
-        router.push("/bullpost");
+        router.push("/bullpost").then(() => {
+          window.location.reload();
+        });
       })
       .catch((error) => {
         console.error("Error updating token:", error);
       });
-  }, [preference]);
+  }, []);
 
   return (
     <Box
