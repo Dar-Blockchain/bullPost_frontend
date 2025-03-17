@@ -60,6 +60,7 @@ interface DiscordBlockProps {
     onSubmit: () => void;
     _id: string;
     ai: boolean;
+    
 }
 interface UserPreference {
     OpenIA?: boolean;
@@ -296,7 +297,26 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             setIsEditing(false);
         }
     };
+    const ChangeStatus = async () => {
+        try {
+            setIsLoading(true);
+            const formData = new FormData();
+            formData.append("status", "drafts");
 
+            // Debug: Log form data entries
+            formData.append("publishedAtDiscord", "")
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            dispatch(fetchPostsByStatus("drafts"));
+
+            setSelectedImage(null);
+        } catch (error) {
+            console.error("Error updating post:", error);
+        } finally {
+            setIsLoading(false);
+            setIsEditing(false);
+        }
+    };
     // Automatically update the post when an image is selected
     useEffect(() => {
         if (selectedImage) {
@@ -465,6 +485,13 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         setDiscrodEnabled(newValue);
         await handleSave(newValue);
     };
+    const handleInfoSend = () => {
+        // Replace with your own logic to send the info.
+        console.log("X clicked: sending info...");
+        // For example, send a fetch request or update state.
+    };
+    const isPublished = Boolean(announcement?.publishedAtDiscord);
+
     return (
         <>
             <Box
@@ -754,13 +781,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     </LocalizationProvider>
                                 </Popover>
                                 <Button
-                                    onClick={
-                                        // announcement?.publishedAtDiscord || announcement?.scheduledAtDiscord
-                                        //     ? handleDelete
-                                        //     : 
-                                        handleSchedulePost
-                                    }
-                                    disabled={isPosting}
+                                    onClick={isPublished ? undefined : handleSchedulePost}
+                                    disabled={!isPublished && isPosting}
                                     sx={{
                                         backgroundColor: "#191919",
                                         color: "#666",
@@ -769,30 +791,28 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         flex: 1,
                                         width: "150px",
                                         "&:hover": {
-                                            backgroundColor:
-                                                announcement?.publishedAtDiscord || announcement?.scheduledAtDiscord
-                                                    ? "#191919"
-                                                    : "#FFA500",
-                                            color:
-                                                announcement?.publishedAtDiscord || announcement?.scheduledAtDiscord
-                                                    ? "#666"
-                                                    : "black",
+                                            backgroundColor: isPublished ? "#191919" : "#FFA500",
+                                            color: isPublished ? "#666" : "black",
                                         },
                                     }}
                                 >
                                     {isPosting ? (
                                         <CircularProgress size={24} color="inherit" />
-                                    ) : announcement?.publishedAtDiscord ? (
+                                    ) : isPublished ? (
                                         <>
                                             {dayjs(announcement.publishedAtDiscord).format("MMM DD, YYYY")} -{" "}
                                             {dayjs(announcement.publishedAtDiscord).format("HH:mm")}{" "}
-                                            <span style={{ marginLeft: 8, fontWeight: "bold", color: "red" }}>X</span>
+                                            <span
+                                                onClick={ChangeStatus}
+                                                style={{ marginLeft: 8, fontWeight: "bold", color: "red", cursor: "pointer" }}
+                                            >
+                                                X
+                                            </span>
                                         </>
                                     ) : announcement?.scheduledAtDiscord ? (
                                         <>
                                             {dayjs(announcement.scheduledAtDiscord).format("MMM DD, YYYY")} -{" "}
-                                            {dayjs(announcement.scheduledAtDiscord).format("HH:mm")}{" "}
-                                            <span style={{ marginLeft: 8, fontWeight: "bold", color: "red" }}>X</span>
+                                            {dayjs(announcement.scheduledAtDiscord).format("HH:mm")}
                                         </>
                                     ) : selectedDate && selectedTime ? (
                                         `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`

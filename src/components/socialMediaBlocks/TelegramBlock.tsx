@@ -59,6 +59,7 @@ interface TelegramBlockProps {
     onSubmit: () => void;
     _id: string;
     ai: boolean;
+
 }
 interface UserPreference {
     OpenIA?: boolean;
@@ -66,8 +67,9 @@ interface UserPreference {
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
     twitterConnect?: string
+
 }
-const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
+const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
@@ -511,6 +513,26 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
         setTelegramEnabled(newValue);
         await handleSave(newValue);
     };
+    const ChangeStatus = async () => {
+        try {
+            setIsLoading(true);
+            const formData = new FormData();
+            formData.append("status", "drafts");
+
+            // Debug: Log form data entries
+            formData.append("publishedAtTelegram", "")
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            dispatch(fetchPostsByStatus("drafts"));
+
+            setSelectedImage(null);
+        } catch (error) {
+            console.error("Error updating post:", error);
+        } finally {
+            setIsLoading(false);
+            setIsEditing(false);
+        }
+    };
     return (
         <Box
             sx={{
@@ -796,8 +818,10 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                 </LocalizationProvider>
                             </Popover>
                             <Button
-                                onClick={handleSchedulePost}
-                                disabled={isPosting}
+                                // If published, disable the main action by setting onClick to undefined
+                                onClick={announcement?.publishedAtTelegram ? undefined : handleSchedulePost}
+                                // Only disable the button for posting if it's currently posting and not published
+                                disabled={!announcement?.publishedAtTelegram && isPosting}
                                 sx={{
                                     backgroundColor: "#191919",
                                     color: "#666",
@@ -811,19 +835,34 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, onSubmit, 
                                 {isPosting ? (
                                     <CircularProgress size={24} color="inherit" />
                                 ) : announcement?.publishedAtTelegram ? (
-                                    `Published at: ${dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
-                                        announcement.publishedAtTelegram
-                                    ).format("HH:mm")}`
+                                    <>
+                                        {dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} -{" "}
+                                        {dayjs(announcement.publishedAtTelegram).format("HH:mm")}{" "}
+                                        <span
+                                            onClick={ChangeStatus}
+                                            style={{
+                                                marginLeft: 8,
+                                                fontWeight: "bold",
+                                                color: "red",
+                                                cursor: "pointer",
+                                            }}
+                                        >
+                                            X
+                                        </span>
+                                    </>
                                 ) : announcement?.scheduledAtTelegram ? (
-                                    `Scheduled at: ${dayjs(announcement.scheduledAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
-                                        announcement.scheduledAtTelegram
-                                    ).format("HH:mm")}`
+                                    <>
+                                        {`Scheduled at: ${dayjs(announcement.scheduledAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
+                                            announcement.scheduledAtTelegram
+                                        ).format("HH:mm")}`}
+                                    </>
                                 ) : selectedDate && selectedTime ? (
                                     `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
                                 ) : (
                                     "Post Now"
                                 )}
                             </Button>
+
                         </Box>
                     )}
                 </>

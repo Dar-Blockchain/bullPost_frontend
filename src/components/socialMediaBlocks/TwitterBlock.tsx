@@ -475,6 +475,26 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         setTwitterEnabled(newValue);
         await handleSave(newValue);
     };
+    const ChangeStatus = async () => {
+        try {
+            setIsLoading(true);
+            const formData = new FormData();
+            formData.append("status", "drafts");
+
+            // Debug: Log form data entries
+            formData.append("publishedAtTwitter", "")
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            dispatch(fetchPostsByStatus("drafts"));
+
+            setSelectedImage(null);
+        } catch (error) {
+            console.error("Error updating post:", error);
+        } finally {
+            setIsLoading(false);
+            setIsEditing(false);
+        }
+    };
     return (
         <>
             <Box
@@ -797,8 +817,10 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     </LocalizationProvider>
                                 </Popover>
                                 <Button
-                                    onClick={handleSchedulePost}
-                                    disabled={isPosting}
+                                    // If published, disable the main action by setting onClick to undefined
+                                    onClick={announcement?.publishedAtTwitter ? undefined : handleSchedulePost}
+                                    // Only disable the button for posting if it's currently posting and not published
+                                    disabled={!announcement?.publishedAtTwitter && isPosting}
                                     sx={{
                                         backgroundColor: "#191919",
                                         color: "#666",
@@ -812,13 +834,27 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     {isPosting ? (
                                         <CircularProgress size={24} color="inherit" />
                                     ) : announcement?.publishedAtTwitter ? (
-                                        `Published at: ${dayjs(announcement.publishedAtTwitter).format("MMM DD, YYYY")} - ${dayjs(
-                                            announcement.publishedAtTwitter
-                                        ).format("HH:mm")}`
-                                    ) : announcement?.publishedAtTwitter ? (
-                                        `Scheduled at: ${dayjs(announcement.scheduledAtTwitter).format("MMM DD, YYYY")} - ${dayjs(
-                                            announcement.scheduledAtTwitter
-                                        ).format("HH:mm")}`
+                                        <>
+                                            {dayjs(announcement.publishedAtTwitter).format("MMM DD, YYYY")} -{" "}
+                                            {dayjs(announcement.publishedAtTwitter).format("HH:mm")}{" "}
+                                            <span
+                                                onClick={ChangeStatus}
+                                                style={{
+                                                    marginLeft: 8,
+                                                    fontWeight: "bold",
+                                                    color: "red",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                X
+                                            </span>
+                                        </>
+                                    ) : announcement?.scheduledAtTwitter ? (
+                                        <>
+                                            {`Scheduled at: ${dayjs(announcement.scheduledAtTwitter).format("MMM DD, YYYY")} - ${dayjs(
+                                                announcement.scheduledAtTwitter
+                                            ).format("HH:mm")}`}
+                                        </>
                                     ) : selectedDate && selectedTime ? (
                                         `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
                                     ) : (
