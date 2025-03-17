@@ -66,10 +66,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const dispatch = useDispatch<AppDispatch>();
-    // const postId = selectedAnnouncement && selectedAnnouncement.length > 0
-    //     ? selectedAnnouncement[0]._id
-    //     : _id;
-    // State for editing mode and editable text
+
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
     const [preference, setPreference] = useState<UserPreference>({});
@@ -679,7 +676,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     )}
                                     <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                                         <ReactMarkdown>
-                                            {announcement?.discord || displayText || "No announcement yet..."}
+                                            {announcement ? announcement.twitter : displayText || "No announcement yet..."}
+
                                         </ReactMarkdown>
                                     </Box>
                                 </>

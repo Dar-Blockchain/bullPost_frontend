@@ -139,9 +139,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
       >
         <EmojiPicker onEmojiClick={handleEmojiClick} />
       </Popover>
-      <IconButton sx={{ color: "#aaa" }}>
+      {/* <IconButton sx={{ color: "#aaa" }}>
         <InsertPhotoOutlinedIcon fontSize="small" />
-      </IconButton>
+      </IconButton> */}
 
       <IconButton sx={{ color: "#aaa" }} onClick={onSubmit}>
         <AutoAwesomeOutlinedIcon
