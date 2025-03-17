@@ -3,7 +3,6 @@ import { TextField, useTheme, useMediaQuery, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 
-
 interface AnnouncementProps {
   text: string;
   setText: (value: string) => void;
@@ -23,12 +22,12 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
     }
   }, [selectedAnnouncement, setText]);
 
-
   const dispatch = useDispatch<AppDispatch>();
 
   const postId = selectedAnnouncement && selectedAnnouncement.length > 0
     ? selectedAnnouncement[0]._id
     : _id;
+
   return (
     <>
       <Typography
@@ -37,7 +36,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           mb: 1,
           mt: isMobile ? "20px" : "0",
           color: "grey",
-          textAlign: "start", // Left-aligned text
+          textAlign: "start",
           width: isMobile ? "100%" : "50%",
         }}
       >
@@ -51,37 +50,25 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
         placeholder="Write your announcement..."
         value={text}
         onChange={(e) => setText(e.target.value)}
-        // onBlur={handleBlur}
         inputRef={inputRef}
-
         sx={{
           mt: isMobile ? "10px" : "0",
           width: isMobile ? "100%" : "50%",
+          // Style applied directly to the textarea element
           textarea: {
             color: "#fff",
             textAlign: "start",
             fontSize: "14px",
+            resize: "vertical", // Enable vertical resizing by the user
           },
           "& .MuiOutlinedInput-input": {
-            // Force vertical scrolling inside the textarea
             overflowY: "auto",
-
-            /* Scrollbar styling for WebKit/Blink browsers (Chrome, Safari, etc.) */
-            "&::-webkit-scrollbar": {
-              width: "4px",
-            },
+            "&::-webkit-scrollbar": { width: "4px" },
             "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "#FFB300", // gold thumb
+              backgroundColor: "#FFB300",
               borderRadius: "3px",
             },
-
-            // Optional: hide scrollbar track if you want
-            // "&::-webkit-scrollbar-track": {
-            //   backgroundColor: "transparent",
-            // },
           },
-
-          /* The rest of your styling... */
           "& .MuiOutlinedInput-root": {
             borderRadius: "10px",
             "& fieldset": { borderColor: "#333" },
