@@ -397,7 +397,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             // setIsRegenerating(false);
         }
     };
-    const [twitterEnabled, setTwitterEnabled] = useState(false);
+    const [discrodEnabled, setDiscrodEnabled] = useState(false);
 
     useEffect(() => {
         // Ensure this code runs only on the client
@@ -405,7 +405,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         if (storedPref) {
             try {
                 const parsedPref = JSON.parse(storedPref);
-                setTwitterEnabled(parsedPref.Discord || false);
+                setDiscrodEnabled(parsedPref.Discord || false);
             } catch (error) {
                 console.error("Error parsing localStorage preference:", error);
             }
@@ -462,7 +462,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     };
     const handleSwitchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.checked;
-        setTwitterEnabled(newValue);
+        setDiscrodEnabled(newValue);
         await handleSave(newValue);
     };
     return (
@@ -512,7 +512,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     <Box sx={{ flexGrow: 1 }} />
                     {user && <>
                         {preference.DISCORD_WEBHOOK_URL && preference.DISCORD_WEBHOOK_URL.trim().length > 0 ? (
-                            <Switch color="warning" checked={twitterEnabled}
+                            <Switch color="warning" checked={discrodEnabled}
                                 onChange={handleSwitchChange} sx={{ transform: "scale(0.9)" }} />
                         ) : (
                             <Button
@@ -631,7 +631,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         </Box>
                     ) : (
                         // When not editing, conditionally show announcement content or a message
-                        user && !twitterEnabled ? (
+                        user && !discrodEnabled ? (
                             <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                                 Change your parameter if you want to see result.
                             </Box>

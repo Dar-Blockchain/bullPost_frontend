@@ -268,7 +268,7 @@ export default function BullPostPage() {
       .catch((error) => {
         console.error("Error updating token:", error);
       });
-  }, []);
+  }, [preference]);
 
   return (
     <Box
