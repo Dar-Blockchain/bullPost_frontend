@@ -77,7 +77,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           >
             <Avatar
               src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
-              sx={{ width: 40, height: 40 }}
+              sx={{ width: 25, height: 25 }}
             />
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
               <Box>
@@ -85,7 +85,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
                   color: "#A6A6A6", // Text color
                   fontFamily: "Sora, sans-serif", // Apply Sora font
                   fontWeight: 400, // Font weight 400 (Regular)
-                  fontSize: "14px", // Font size 14px
+                  fontSize: "12px", // Font size 14px
                   lineHeight: "24px", // Line height 24px
                   letterSpacing: "0%", // Letter spacing 0%
                 }}>
@@ -104,6 +104,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           color: "grey",
           textAlign: "start",
           width: isMobile ? "100%" : "50%",
+          
         }}
       >
         {postId ? "Your post is saved" : "Your post is not saved"}
