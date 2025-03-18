@@ -72,12 +72,6 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  const loadPosts = async () => {
-    if (loading || postsLoading) return; // Prevent multiple requests if one is already in progress
-    setLoading(true);
-    dispatch(fetchPostsByStatus({ status: activeTab, page: currentPage, limit: 10 })); // Pass the current page and limit
-    setLoading(false);
-  };
   const handleOpenProfile = () => {
     setOpenProfile(true);
   };
@@ -85,6 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const handleCloseProfile = () => {
     setOpenProfile(false);
   };
+
   const handleLogout = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/logout`, {
@@ -96,7 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       });
       if (response.ok) {
         dispatch(logoutUser());
-        // Optionally, force a page reload
         window.location.href = "/"; // Or use a routing library like react-router
       } else {
         console.error("Failed to logout", await response.text());
@@ -105,12 +99,21 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       console.error("Logout error:", error);
     }
   };
-  // Fetch posts when activeTab or currentPage changes
+
+  // Load posts when activeTab or currentPage changes
+  const loadPosts = async () => {
+    if (loading || postsLoading || currentPage > totalPages) return; // Prevent requests if already loading or past totalPages
+
+    setLoading(true);
+    dispatch(fetchPostsByStatus({ status: activeTab, page: currentPage, limit: 6 }));
+    setLoading(false);
+  };
+
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && currentPage <= totalPages) {
       loadPosts();
     }
-  }, [activeTab, currentPage, isLoggedIn, dispatch]);
+  }, [activeTab, currentPage, isLoggedIn, dispatch, totalPages]);
 
   // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: "drafts" | "scheduled" | "posted") => {
@@ -118,15 +121,10 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
     setCurrentPage(1); // Reset to the first page when the tab changes
   };
 
-  // Infinite scrolling logic
-  const handleScroll = () => {
-    if (postsEndRef.current) {
-      const bottom = postsEndRef.current.getBoundingClientRect().bottom;
-      if (bottom <= window.innerHeight) {
-        // If we are at the bottom of the list, load the next page
-        setCurrentPage((prevPage) => prevPage + 1);
-      }
-      console.log(totalPages,"pages")
+  // Handle Load More button click
+  const handleLoadMore = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
     }
   };
 
@@ -143,8 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         justifyContent: "flex-start",
         px: 2,
         borderRight: "1px solid #222",
-        fontFamily: 'Sora, sans-serif', // Explicitly applying Sora if needed
-
+        fontFamily: "Sora, sans-serif",
       }}
     >
       {/* Header: Logo & Close Button (mobile only) */}
@@ -173,10 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             alt="BullPost Logo"
             sx={{ width: 56, height: 52 }}
           />
-          <Typography
-            variant="h6"
-            sx={{ color: "#ff9c00", fontWeight: 600, fontSize: "16px" }}
-          >
+          <Typography variant="h6" sx={{ color: "#ff9c00", fontWeight: 600, fontSize: "16px" }}>
             BullPost
           </Typography>
         </Box>
@@ -239,17 +233,16 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         <Box
           sx={{
             width: "100%",
-            maxHeight: "400px", // adjust as needed
-            overflowY: "auto", // enables vertical scrolling
+            maxHeight: "400px",
+            overflowY: "auto",
             "&::-webkit-scrollbar": {
-              width: "0px", // smaller scrollbar width
+              width: "0px",
             },
             "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "#FFB300", // gold scrollbar thumb
+              backgroundColor: "#FFB300",
               borderRadius: "3px",
             },
           }}
-          onScroll={handleScroll} // Attach scroll listener
         >
           {postsLoading ? (
             <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>
@@ -264,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
                   pb: 2,
                   mt: 2,
                   "&:hover": {
-                    cursor: "pointer", // Change cursor to pointer to indicate it's clickable
+                    cursor: "pointer",
                   },
                 }}
                 onClick={() => {
@@ -284,7 +277,25 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
               No posts available.
             </Typography>
           )}
-          <div ref={postsEndRef}></div> {/* Invisible div to detect when bottom is reached */}
+
+          {/* Load More Button */}
+          {currentPage < totalPages && (
+            <Button
+              onClick={handleLoadMore}
+              variant="outlined"
+              sx={{
+                marginTop: "20px",
+                width: "100%",
+                borderRadius: "10px",
+                fontSize: "14px",
+                color: "#FFB300",
+                borderColor: "#FFB300",
+                "&:hover": { backgroundColor: "#FFA500", color: "#111" },
+              }}
+            >
+              Load More
+            </Button>
+          )}
         </Box>
       )}
 

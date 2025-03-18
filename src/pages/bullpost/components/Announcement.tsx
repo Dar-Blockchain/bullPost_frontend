@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { TextField, useTheme, useMediaQuery, Typography } from "@mui/material";
+import { TextField, useTheme, useMediaQuery, Typography, Box, Avatar } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AnnouncementProps {
   text: string;
@@ -13,6 +14,7 @@ interface AnnouncementProps {
 const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _id }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const { user } = useAuth();
 
   const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
 
@@ -30,6 +32,36 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
 
   return (
     <>
+      {user && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            p: 2,
+            width: isMobile ? "100%" : "52%",
+          }}
+        >
+          <Avatar
+            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
+            sx={{ width: 40, height: 40 }}
+          />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
+            <Box>
+              <Typography sx={{
+                color: "#A6A6A6", // Text color
+                fontFamily: "Sora, sans-serif", // Apply Sora font
+                fontWeight: 400, // Font weight 400 (Regular)
+                fontSize: "14px", // Font size 14px
+                lineHeight: "24px", // Line height 24px
+                letterSpacing: "0%", // Letter spacing 0%
+              }}>
+                {user && user.userName}
+              </Typography>
+            </Box>
+          </Box>
+
+        </Box>
+      )}
       <Typography
         variant="caption"
         sx={{
