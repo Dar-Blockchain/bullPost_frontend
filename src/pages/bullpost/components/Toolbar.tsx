@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
 import { keyframes } from "@mui/system";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ToolbarProps {
   text: string;
@@ -61,6 +62,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const selectedAnnouncement = useSelector(
     (state: RootState) => state.posts.selectedAnnouncement
   );
+  const { user } = useAuth(); // ✅ Get user data
 
   useEffect(() => {
     if (selectedAnnouncement && selectedAnnouncement.length > 0) {
@@ -150,11 +152,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         />
       </IconButton>
       <Box sx={{ width: "1px", backgroundColor: "#555" }} />
-      <Tooltip title="Generate post manually (without AI assistance)" arrow>
+      {user && <Tooltip title="Generate post manually (without AI assistance)" arrow>
         <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
           <SaveIcon fontSize="small" />
         </IconButton>
-      </Tooltip>
+      </Tooltip>}
     </Box>
   );
 };

@@ -206,6 +206,37 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
             ],
         },
     ];
+    const [category, setCategory] = useState<string>("");
+    const [userGoal, setUserGoal] = useState<string>("");
+    const [preferredPlatform, setPreferredPlatform] = useState<string>("");
+    // Helper function to update user data via API for each step
+    const updateUserData = async (payload: object): Promise<boolean> => {
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/updateUserData`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                }
+            );
+            const data = await response.json();
+            if (response.ok) {
+                toast.success("Updated successfully!");
+                return true;
+            } else {
+                toast.error(data.message || "Update failed");
+                return false;
+            }
+        } catch (err) {
+            toast.error("Error updating data");
+            return false;
+        }
+    };
 
     return (
         <Dialog
@@ -450,8 +481,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
 
                             {/* Selection List */}
                             <RadioGroup
-                                value={selectedOption}
-                                onChange={(e) => setSelectedOption(e.target.value)}
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
                                 sx={{ width: "80%" }}
                             >
                                 {[
@@ -508,8 +539,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                     fontWeight: "bold",
                                     "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
                                 }}
-                                onClick={() => setStep(3)} // Move to step 2
-                            >
+                                onClick={async () => {
+                                    if (!category) return;
+                                    const success = await updateUserData({ category });
+                                    if (success) setStep(3);
+                                }}                            >
                                 Continue
                             </Button>
                             {/* <Button
@@ -585,8 +619,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
 
                             {/* Selection List */}
                             <RadioGroup
-                                value={selectedOption}
-                                onChange={(e) => setSelectedOption(e.target.value)}
+                                value={userGoal}
+                                onChange={(e) => setUserGoal(e.target.value)}
                                 sx={{ width: "80%" }}
                             >
                                 {[
@@ -605,7 +639,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                                     sx={{
                                                         fontSize: "14px",
                                                         fontWeight: "bold",
-                                                        color: selectedOption === item.label ? "#FFB300" : "#fff",
+                                                        color: userGoal === item.label ? "#FFB300" : "#fff",
                                                         transition: "color 0.2s ease-in-out"
                                                     }}
                                                 >
@@ -649,8 +683,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                         fontWeight: "bold",
                                         "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
                                     }}
-                                    onClick={() => setStep(4)} // Move to step 2
-                                >
+                                    onClick={async () => {
+                                        if (!userGoal) return;
+                                        const success = await updateUserData({ userGoals: userGoal });
+                                        if (success) setStep(4);
+                                    }}                                >
                                     Continue
                                 </Button>
 
@@ -703,8 +740,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
 
                             {/* Selection List */}
                             <RadioGroup
-                                value={selectedOption}
-                                onChange={(e) => setSelectedOption(e.target.value)}
+                                value={preferredPlatform}
+                                onChange={(e) => setPreferredPlatform(e.target.value)}
                                 sx={{ width: "80%" }}
                             >
                                 {[
@@ -768,8 +805,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                         fontWeight: "bold",
                                         "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
                                     }}
-                                    onClick={() => setStep(5)} // Move to step 2
-                                >
+                                    onClick={async () => {
+                                        if (!preferredPlatform) return;
+                                        const success = await updateUserData({ preferredPlatforms: preferredPlatform });
+                                        if (success) setStep(5);
+                                    }}                                >
                                     Continue
                                 </Button>
 

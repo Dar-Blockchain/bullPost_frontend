@@ -60,7 +60,7 @@ interface DiscordBlockProps {
     onSubmit: () => void;
     _id: string;
     ai: boolean;
-    
+
 }
 interface UserPreference {
     OpenIA?: boolean;
@@ -85,8 +85,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     };
     // Redux state
     const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
-    const announcement = selectedAnnouncement?.[0];
-
+    const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
     // States for text and typewriter effect
     const [displayText, setDisplayText] = useState("");
     const [isEditing, setIsEditing] = useState(false);
@@ -485,11 +484,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         setDiscrodEnabled(newValue);
         await handleSave(newValue);
     };
-    const handleInfoSend = () => {
-        // Replace with your own logic to send the info.
-        console.log("X clicked: sending info...");
-        // For example, send a fetch request or update state.
-    };
+
     const isPublished = Boolean(announcement?.publishedAtDiscord);
 
     return (
@@ -591,8 +586,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 fullWidth
                                 multiline
                                 variant="outlined"
-                                value={displayText} // or use your editableText state here
-                                onChange={(e) => { }}
+                                value={editableText}
+                                onChange={(e) => setEditableText(e.target.value)}
                                 inputRef={textFieldRef}
                                 inputProps={{
                                     onMouseUp: handleMouseUp,
@@ -673,7 +668,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 )}
                                 <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                                     <ReactMarkdown>
-                                        {announcement?.discord || displayText || "No announcement yet..."}
+                                        {announcement ? announcement.discord : displayText || "No announcement yet..."}
                                     </ReactMarkdown>
                                 </Box>
                             </>
@@ -798,7 +793,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 >
                                     {isPosting ? (
                                         <CircularProgress size={24} color="inherit" />
-                                    ) : isPublished ? (
+                                    ) : announcement?.publishedAtDiscord ? (
                                         <>
                                             {dayjs(announcement.publishedAtDiscord).format("MMM DD, YYYY")} -{" "}
                                             {dayjs(announcement.publishedAtDiscord).format("HH:mm")}{" "}

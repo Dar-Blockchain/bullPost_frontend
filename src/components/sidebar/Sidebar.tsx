@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (response.ok) {
         dispatch(logoutUser());
         // Optionally, force a page reload
-        window.location.reload();
+        window.location.href = "/"; // Or use a routing library like react-router
       } else {
         console.error("Failed to logout", await response.text());
       }
