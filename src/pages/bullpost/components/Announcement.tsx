@@ -3,6 +3,7 @@ import { TextField, useTheme, useMediaQuery, Typography, Box, Avatar } from "@mu
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { useAuth } from "@/hooks/useAuth";
+import dayjs from "dayjs";
 
 interface AnnouncementProps {
   text: string;
@@ -30,38 +31,71 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
     ? selectedAnnouncement[0]._id
     : _id;
 
+  // Calculate the word count
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
   return (
     <>
-      {user && (
-        <Box
+      {/* Start instead of "hi" */}
+      {selectedAnnouncement && selectedAnnouncement.length > 0 && !isMobile && <>
+        <Typography
+
+          variant="caption"
           sx={{
-            display: "flex",
-            gap: 2,
-            p: 2,
-            width: isMobile ? "100%" : "52%",
+            mt: "-22px",
+
+            fontSize: "12px",
+            color: "#A6A6A6",
+            textAlign: "start", // Align text to the left (start)
+            width: "100%", // Ensure it spans the full width to align the text properly
           }}
         >
-          <Avatar
-            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
-            sx={{ width: 40, height: 40 }}
-          />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
-            <Box>
-              <Typography sx={{
-                color: "#A6A6A6", // Text color
-                fontFamily: "Sora, sans-serif", // Apply Sora font
-                fontWeight: 400, // Font weight 400 (Regular)
-                fontSize: "14px", // Font size 14px
-                lineHeight: "24px", // Line height 24px
-                letterSpacing: "0%", // Letter spacing 0%
-              }}>
-                {user && user.userName}
-              </Typography>
+          Last edited : {dayjs(selectedAnnouncement[0].createdAt).format("MMM DD, YYYY")}
+        </Typography>
+        < Typography
+          variant="caption"
+          sx={{
+            fontSize: "12px",
+            color: "#A6A6A6",
+            textAlign: "start", // Align text to the left (start)
+            width: "100%", // Ensure it spans the full width to align the text properly
+          }}
+        >
+          Word Count: {wordCount}
+        </Typography >
+
+      </>}
+      {
+        user && !isMobile && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              p: 2,
+              width: isMobile ? "100%" : "52%",
+            }}
+          >
+            <Avatar
+              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
+              sx={{ width: 40, height: 40 }}
+            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
+              <Box>
+                <Typography sx={{
+                  color: "#A6A6A6", // Text color
+                  fontFamily: "Sora, sans-serif", // Apply Sora font
+                  fontWeight: 400, // Font weight 400 (Regular)
+                  fontSize: "14px", // Font size 14px
+                  lineHeight: "24px", // Line height 24px
+                  letterSpacing: "0%", // Letter spacing 0%
+                }}>
+                  {user && user.userName}
+                </Typography>
+              </Box>
             </Box>
           </Box>
-
-        </Box>
-      )}
+        )
+      }
       <Typography
         variant="caption"
         sx={{
@@ -74,6 +108,10 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
       >
         {postId ? "Your post is saved" : "Your post is not saved"}
       </Typography>
+
+      {/* Word Count Display */}
+
+
       <TextField
         fullWidth
         multiline
@@ -86,7 +124,6 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
         sx={{
           mt: isMobile ? "10px" : "0",
           width: isMobile ? "100%" : "50%",
-          // Style applied directly to the textarea element
           textarea: {
             color: "#fff",
             textAlign: "start",
