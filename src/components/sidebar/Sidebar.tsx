@@ -143,6 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         justifyContent: "flex-start",
         px: 2,
         borderRight: "1px solid #222",
+        fontFamily: 'Sora, sans-serif', // Explicitly applying Sora if needed
 
       }}
     >
@@ -189,7 +190,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         <Button
           variant="contained"
           sx={{
-            zIndex: 10000,
+            zIndex: 1000,
             width: "100%",
             backgroundColor: "#FFB300",
             color: "#111",

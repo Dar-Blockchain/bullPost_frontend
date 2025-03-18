@@ -721,7 +721,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
 
                 {user && (
                     <>
-                        <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 2, flexDirection: "column", mt: 2, gap: 1 }}>
                             {/* Toolbar Section */}
                             <Box
                                 sx={{
@@ -828,6 +828,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         height: 50,
                                         flex: 1,
                                         width: "150px",
+                                        textTransform: "none",  // Ensure text is not uppercase
+
                                         "&:hover": { backgroundColor: "#FFA500", color: "black" },
                                     }}
                                 >

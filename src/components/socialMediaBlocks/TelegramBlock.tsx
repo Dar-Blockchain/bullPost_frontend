@@ -556,8 +556,11 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         >
             {/* Top Bar: Telegram Icon and User Profile */}
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                <TelegramIcon fontSize="large" sx={{ color: "#0088CC" }} />
-                {user && (
+                <img
+                    src="/telegram.png"
+                    alt="telegram"
+                    style={{ width: 30, height: 30, marginRight: "10px" }}
+                />                {user && (
                     <Box
                         sx={{
                             display: "flex",
@@ -718,156 +721,160 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                         </>
                     ))}
             </Box>
+            <Box sx={{ position: "sticky", bottom: 0, zIndex: 1 }}>
 
-            {/* Toolbar & Scheduling Section */}
-            {user && (
-                <>
-                    <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, gap: 1 }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                backgroundColor: "#191919",
-                                borderRadius: "30px",
-                                padding: "8px 15px",
-                                border: "1px solid #3C3C3C",
-                                width: "fit-content",
-                            }}
-                        >
-                            <IconButton
-                                sx={{ color: "#8F8F8F" }}
-                                onClick={() => {
-                                    if (!isEditing) {
-                                        const currentText = announcement ? announcement.telegram : displayText;
-                                        setEditableText(currentText);
-                                        setIsEditing(true);
-                                    } else {
-                                        handleUpdate();
-                                    }
-                                }}
-                            >
-                                {isEditing ? (
-                                    isLoading ? (
-                                        <AutorenewIcon fontSize="small" sx={{ animation: `${spin} 1s linear infinite` }} />
-                                    ) : (
-                                        <Done fontSize="small" />
-                                    )
-                                ) : (
-                                    <Edit fontSize="small" />
-                                )}
-                            </IconButton>
-                            <IconButton sx={{ color: "#8F8F8F" }}>
-                                <Mood fontSize="small" />
-                            </IconButton>
-                            <IconButton component="label" sx={{ color: "#8F8F8F" }}>
-                                {!isEditing && isLoading ? (
-                                    <CircularProgress size={24} />
-                                ) : (
-                                    <InsertPhoto fontSize="small" />
-                                )}
-                                <input type="file" accept="image/*" hidden onChange={handleFileChange} />
-                            </IconButton>
-                            <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
-                                <AutoAwesome fontSize="small" />
-                            </IconButton>
-                            <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
-                            <IconButton
+                {/* Toolbar & Scheduling Section */}
+                {user && (
+                    <>
+                        <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, mb: 2, gap: 1 }}>
+                            <Box
                                 sx={{
-                                    color: "red",
-                                    animation: isRegenerating ? "spin 1s linear infinite" : "none",
-                                    "@keyframes spin": {
-                                        "0%": { transform: "rotate(360deg)" },
-                                        "100%": { transform: "rotate(0deg)" },
-                                    },
-                                }}
-                                onClick={() => handleRegenerate(true)} disabled={isRegenerating}
-                            >
-                                <Replay fontSize="small" />
-                            </IconButton>
-                        </Box>
-                    </Box>
-                    {!isMobile && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
-                            <Button
-                                sx={{
-                                    backgroundColor: "#FFB300",
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "12px",
                                     display: "flex",
                                     alignItems: "center",
-                                    justifyContent: "center",
-                                    minWidth: "auto",
-                                    "&:hover": { backgroundColor: "#FFA500" },
-                                }}
-                                onClick={handleClick}
-                            >
-                                <img src="/calendar_month.png" alt="Calendar" />
-                            </Button>
-                            <Popover
-                                open={Boolean(anchorEl)}
-                                anchorEl={anchorEl}
-                                onClose={handleClose}
-                                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                            >
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <Box sx={{ p: 2 }}>
-                                        <DateCalendar value={selectedDate} onChange={handleDateChange} />
-                                        <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
-                                    </Box>
-                                </LocalizationProvider>
-                            </Popover>
-                            <Button
-                                // If published, disable the main action by setting onClick to undefined
-                                onClick={announcement?.publishedAtTelegram ? undefined : handleSchedulePost}
-                                // Only disable the button for posting if it's currently posting and not published
-                                disabled={!announcement?.publishedAtTelegram && isPosting}
-                                sx={{
                                     backgroundColor: "#191919",
-                                    color: "#666",
-                                    borderRadius: "12px",
-                                    height: 50,
-                                    flex: 1,
-                                    width: "150px",
-                                    "&:hover": { backgroundColor: "#FFA500", color: "black" },
+                                    borderRadius: "30px",
+                                    padding: "8px 15px",
+                                    border: "1px solid #3C3C3C",
+                                    width: "fit-content",
                                 }}
                             >
-                                {isPosting ? (
-                                    <CircularProgress size={24} color="inherit" />
-                                ) : announcement?.publishedAtTelegram ? (
-                                    <>
-                                        {dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} -{" "}
-                                        {dayjs(announcement.publishedAtTelegram).format("HH:mm")}{" "}
-                                        <span
-                                            onClick={ChangeStatus}
-                                            style={{
-                                                marginLeft: 8,
-                                                fontWeight: "bold",
-                                                color: "red",
-                                                cursor: "pointer",
-                                            }}
-                                        >
-                                            X
-                                        </span>
-                                    </>
-                                ) : announcement?.scheduledAtTelegram ? (
-                                    <>
-                                        {`Scheduled at: ${dayjs(announcement.scheduledAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
-                                            announcement.scheduledAtTelegram
-                                        ).format("HH:mm")}`}
-                                    </>
-                                ) : selectedDate && selectedTime ? (
-                                    `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
-                                ) : (
-                                    "Post Now"
-                                )}
-                            </Button>
-
+                                <IconButton
+                                    sx={{ color: "#8F8F8F" }}
+                                    onClick={() => {
+                                        if (!isEditing) {
+                                            const currentText = announcement ? announcement.telegram : displayText;
+                                            setEditableText(currentText);
+                                            setIsEditing(true);
+                                        } else {
+                                            handleUpdate();
+                                        }
+                                    }}
+                                >
+                                    {isEditing ? (
+                                        isLoading ? (
+                                            <AutorenewIcon fontSize="small" sx={{ animation: `${spin} 1s linear infinite` }} />
+                                        ) : (
+                                            <Done fontSize="small" />
+                                        )
+                                    ) : (
+                                        <Edit fontSize="small" />
+                                    )}
+                                </IconButton>
+                                <IconButton sx={{ color: "#8F8F8F" }}>
+                                    <Mood fontSize="small" />
+                                </IconButton>
+                                <IconButton component="label" sx={{ color: "#8F8F8F" }}>
+                                    {!isEditing && isLoading ? (
+                                        <CircularProgress size={24} />
+                                    ) : (
+                                        <InsertPhoto fontSize="small" />
+                                    )}
+                                    <input type="file" accept="image/*" hidden onChange={handleFileChange} />
+                                </IconButton>
+                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
+                                    <AutoAwesome fontSize="small" />
+                                </IconButton>
+                                <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
+                                <IconButton
+                                    sx={{
+                                        color: "red",
+                                        animation: isRegenerating ? "spin 1s linear infinite" : "none",
+                                        "@keyframes spin": {
+                                            "0%": { transform: "rotate(360deg)" },
+                                            "100%": { transform: "rotate(0deg)" },
+                                        },
+                                    }}
+                                    onClick={() => handleRegenerate(true)} disabled={isRegenerating}
+                                >
+                                    <Replay fontSize="small" />
+                                </IconButton>
+                            </Box>
                         </Box>
-                    )}
-                </>
-            )}
-        </Box>
+                        {!isMobile && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                                <Button
+                                    sx={{
+                                        backgroundColor: "#FFB300",
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: "12px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        minWidth: "auto",
+                                        "&:hover": { backgroundColor: "#FFA500" },
+                                    }}
+                                    onClick={handleClick}
+                                >
+                                    <img src="/calendar_month.png" alt="Calendar" />
+                                </Button>
+                                <Popover
+                                    open={Boolean(anchorEl)}
+                                    anchorEl={anchorEl}
+                                    onClose={handleClose}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                >
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <Box sx={{ p: 2 }}>
+                                            <DateCalendar value={selectedDate} onChange={handleDateChange} />
+                                            <TimePicker label="Select Time" value={selectedTime} onChange={handleTimeChange} />
+                                        </Box>
+                                    </LocalizationProvider>
+                                </Popover>
+                                <Button
+                                    // If published, disable the main action by setting onClick to undefined
+                                    onClick={announcement?.publishedAtTelegram ? undefined : handleSchedulePost}
+                                    // Only disable the button for posting if it's currently posting and not published
+                                    disabled={!announcement?.publishedAtTelegram && isPosting}
+                                    sx={{
+                                        backgroundColor: "#191919",
+                                        color: "#666",
+                                        borderRadius: "12px",
+                                        height: 50,
+                                        flex: 1,
+                                        textTransform: "none",  // Ensure text is not uppercase
+
+                                        width: "150px",
+                                        "&:hover": { backgroundColor: "#FFA500", color: "black" },
+                                    }}
+                                >
+                                    {isPosting ? (
+                                        <CircularProgress size={24} color="inherit" />
+                                    ) : announcement?.publishedAtTelegram ? (
+                                        <>
+                                            {dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} -{" "}
+                                            {dayjs(announcement.publishedAtTelegram).format("HH:mm")}{" "}
+                                            <span
+                                                onClick={ChangeStatus}
+                                                style={{
+                                                    marginLeft: 8,
+                                                    fontWeight: "bold",
+                                                    color: "red",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                X
+                                            </span>
+                                        </>
+                                    ) : announcement?.scheduledAtTelegram ? (
+                                        <>
+                                            {`Scheduled at: ${dayjs(announcement.scheduledAtTelegram).format("MMM DD, YYYY")} - ${dayjs(
+                                                announcement.scheduledAtTelegram
+                                            ).format("HH:mm")}`}
+                                        </>
+                                    ) : selectedDate && selectedTime ? (
+                                        `${selectedDate.format("MMM DD, YYYY")} - ${selectedTime.format("HH:mm")}`
+                                    ) : (
+                                        "Post Now"
+                                    )}
+                                </Button>
+
+                            </Box>
+                        )}
+                    </>
+                )}
+            </Box>
+        </Box >
     );
 };
 
