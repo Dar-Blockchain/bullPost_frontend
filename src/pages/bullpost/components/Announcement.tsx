@@ -32,7 +32,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
     : _id;
 
   // Calculate the word count
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const wordCount = text && text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (
     <>
