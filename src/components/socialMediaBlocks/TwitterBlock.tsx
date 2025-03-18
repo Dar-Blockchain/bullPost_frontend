@@ -283,7 +283,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             );
             const data = await response.json();
             if (response.ok) {
-                dispatch(fetchPostsByStatus("drafts"));
+                dispatch(fetchPostsByStatus({ status: "draft" }));
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -381,7 +381,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 }
             );
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+                dispatch(fetchPostsByStatus({ status: "draft" }));
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -485,7 +485,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             formData.append("publishedAtTwitter", "")
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            dispatch(fetchPostsByStatus("drafts"));
+            dispatch(fetchPostsByStatus({ status: "drafts" }));
 
             setSelectedImage(null);
         } catch (error) {

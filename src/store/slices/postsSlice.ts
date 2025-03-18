@@ -18,12 +18,14 @@ interface Post {
     scheduledAtTwitter: string;
     scheduledAtTelegram: string;
     publishedAtTelegram: string;
-    
+
     // Add other properties as needed
 }
 
 interface PostsState {
     posts: Post[];
+    totalPages: number;
+
     selectedAnnouncement: Post[];
     loading: boolean;
     error: string | null;
@@ -33,17 +35,23 @@ const initialState: PostsState = {
     posts: [],
     selectedAnnouncement: [],
     loading: false,
+    totalPages: 1,
     error: null,
 };
 
 export const fetchPostsByStatus = createAsyncThunk(
     'posts/fetchPostsByStatus',
-    async (status: string, { rejectWithValue }) => {
+    async ({ status, page, limit }: { status: string, page?: number, limit?: number }, { rejectWithValue }) => {
         const token = localStorage.getItem("token");
         if (!token) {
             return rejectWithValue("Unauthorized: Token not found");
         }
         try {
+            const requestBody: any = { status };
+
+            if (page !== undefined) requestBody.page = page;
+            if (limit !== undefined) requestBody.limit = limit;
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}posts/postsByStatus`,
                 {
@@ -52,7 +60,7 @@ export const fetchPostsByStatus = createAsyncThunk(
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ status }),
+                    body: JSON.stringify(requestBody),
                 }
             );
             if (!response.ok) {
@@ -60,12 +68,16 @@ export const fetchPostsByStatus = createAsyncThunk(
                 return rejectWithValue(data.error || "Failed to fetch posts");
             }
             const data = await response.json();
-            return data.posts || [];
+            return {
+                posts: data.posts || [],
+                totalPages: data.totalPages || 1, // Default to 1 page if not provided
+            };
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
     }
 );
+
 
 export const updatePost = createAsyncThunk(
     'posts/updatePost',
@@ -237,9 +249,10 @@ const postsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchPostsByStatus.fulfilled, (state, action: PayloadAction<Post[]>) => {
+            .addCase(fetchPostsByStatus.fulfilled, (state, action) => {
                 state.loading = false;
-                state.posts = action.payload;
+                state.posts = action.payload.posts;
+                state.totalPages = action.payload.totalPages;
             })
             .addCase(fetchPostsByStatus.rejected, (state, action) => {
                 state.loading = false;

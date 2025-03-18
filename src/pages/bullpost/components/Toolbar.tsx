@@ -108,7 +108,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         setTwitterText(data.twitter);
         setTelegramText(data.telegram);
         setId(data._id);
-        dispatch(fetchPostsByStatus("draft"));
+        dispatch(fetchPostsByStatus({ status: "drafts" }));
         dispatch(setSelectedAnnouncement([]));
         console.log("Post added successfully", data);
         toast.success("Post added successfully!", { position: "top-right" });
@@ -129,7 +129,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const provider = preference?.OpenIA ? "OpenAI" : "Gemini";
 
   return (
-    <Box sx={{ display: "flex", mt: 2, gap: 2, backgroundColor: "#181818", p: 1, borderRadius: "30px", border: "1px solid #555" }}>
+    <Box sx={{ display: "flex", mt: 2, gap: 0.5, backgroundColor: "#181818", p: 1, borderRadius: "30px", border: "1px solid #555" }}>
       <IconButton sx={{ color: "#aaa" }} onClick={handleOpenEmojiPicker}>
         <MoodOutlinedIcon fontSize="small" />
       </IconButton>

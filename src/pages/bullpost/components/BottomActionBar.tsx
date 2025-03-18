@@ -33,7 +33,6 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
     const [timeZone, setTimeZone] = useState<string>("");
-
     useEffect(() => {
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
@@ -71,7 +70,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
     const postId = selectedAnnouncement && selectedAnnouncement.length > 0
         ? selectedAnnouncement[0]._id
         : _id;
-    // Combined function: if a schedule is set, schedule the post; otherwise, post immediately.
+    const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
     const handlePost = async () => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -149,7 +148,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             const data = await response.json();
 
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+                dispatch(fetchPostsByStatus({ status: "drafts" }));
 
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
@@ -189,7 +188,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             });
 
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+                dispatch(fetchPostsByStatus({ status: "drafts" }));
 
                 toast.success("Post scheduled successfully!");
             } else {
@@ -197,6 +196,82 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             }
         } catch (error) {
             console.error("Error:", error);
+            alert("Error scheduling post.");
+        }
+    };
+    const [isPosting, setIsPosting] = useState<boolean>(false);
+
+    const handlePostNowTwitter = async () => {
+        const textToPost = (announcement ? announcement.twitter : "");
+        if (!textToPost) {
+            toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
+            return;
+        }
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        try {
+            setIsPosting(true);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/postNow/` + postId,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            const data = await response.json();
+            if (response.ok) {
+                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                toast.success("Post sent successfully!", { position: "top-right" });
+            } else {
+                toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
+            }
+        } catch (error) {
+            console.error("Error sending message to Discord:", error);
+            toast.error("❌ Failed to send message!", { position: "top-right" });
+        } finally {
+            setIsPosting(false);
+        }
+    };
+    const handleSchedulePostTwitter = async () => {
+        if (!selectedDate || !selectedTime) {
+            return handlePostNowTwitter();
+        }
+        const combinedDateTime = selectedDate
+            .set("hour", selectedTime.hour())
+            .set("minute", selectedTime.minute())
+            .set("second", 0);
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
+            return;
+        }
+        const requestBody = {
+            dateTime: combinedDateTime.toISOString(),
+            timeZone,
+        };
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}postTwitter/schedulePostTweet/${postId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
+            if (response.ok) {
+                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                toast.success("Post scheduled successfully!");
+            } else {
+                toast.error("Failed to schedule post.");
+            }
+        } catch (error) {
+            console.error("Error scheduling post:", error);
             alert("Error scheduling post.");
         }
     };
@@ -323,6 +398,8 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
                             handlePost();
                         } else if (activeSection === "telegram") {
                             handleSchedulePost()
+                        } else if (activeSection === "twitter") {
+                            handleSchedulePostTwitter()
                         }
                     }}
                 >

@@ -201,7 +201,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             );
             const data = await response.json(); console.log(data, "jzjzjzjzjzj")
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+                dispatch(fetchPostsByStatus({ status: "drafts" }));
 
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
@@ -243,7 +243,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 }
             );
             if (response.ok) {
-                dispatch(fetchPostsByStatus("draft"));
+                dispatch(fetchPostsByStatus({ status: "drafts" }));
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -306,7 +306,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             formData.append("publishedAtDiscord", "")
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            dispatch(fetchPostsByStatus("drafts"));
+            dispatch(fetchPostsByStatus({ status: "drafts" }));
 
             setSelectedImage(null);
         } catch (error) {

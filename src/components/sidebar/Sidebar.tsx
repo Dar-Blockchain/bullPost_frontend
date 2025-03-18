@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -26,8 +26,6 @@ import ProfileModal from "../profileUserModal/ProfilModal";
 interface SidebarProps {
   handleOpen: () => void;
   isLoggedIn: boolean;
-  // postPrompt: string;
-  // setPostPrompt: (prompt: string) => void;
 }
 
 interface Post {
@@ -50,19 +48,36 @@ interface Post {
   publishedAtTelegram: string;
 }
 
-
-const Sidebar: React.FC<SidebarProps> = ({
-  handleOpen,
-  isLoggedIn,
-  // postPrompt,
-  // setPostPrompt,
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const [openProfile, setOpenProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "posted">("drafts");
+  const [currentPage, setCurrentPage] = useState<number>(1); // Track current page for pagination
+  const [loading, setLoading] = useState<boolean>(false); // Loading state to prevent multiple requests
+  const postsEndRef = useRef<HTMLDivElement>(null); // Reference for the bottom of the posts list
 
+  const dispatch = useDispatch<AppDispatch>();
+  const { posts, totalPages, loading: postsLoading } = useSelector((state: any) => state.posts);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileOpen(false);
+    }
+  }, [isMobile]);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const loadPosts = async () => {
+    if (loading || postsLoading) return; // Prevent multiple requests if one is already in progress
+    setLoading(true);
+    dispatch(fetchPostsByStatus({ status: activeTab, page: currentPage, limit: 10 })); // Pass the current page and limit
+    setLoading(false);
+  };
   const handleOpenProfile = () => {
     setOpenProfile(true);
   };
@@ -90,37 +105,29 @@ const Sidebar: React.FC<SidebarProps> = ({
       console.error("Logout error:", error);
     }
   };
-  const dispatch = useDispatch<AppDispatch>();
-  // Get posts and loading state from Redux slice
-  const { posts, loading } = useSelector((state: any) => state.posts);
-
-  useEffect(() => {
-    if (!isMobile) {
-      setMobileOpen(false);
-    }
-  }, [isMobile]);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  // activeTab state controls which posts to fetch
-  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "posted">("drafts");
-
-  // Dispatch fetchPostsByStatus thunk whenever activeTab or isLoggedIn changes
+  // Fetch posts when activeTab or currentPage changes
   useEffect(() => {
     if (isLoggedIn) {
-      dispatch(fetchPostsByStatus(activeTab));
-      console.log("Dispatched fetchPostsByStatus", posts.length);
+      loadPosts();
     }
-  }, [activeTab, posts.length, isLoggedIn, dispatch]);
+  }, [activeTab, currentPage, isLoggedIn, dispatch]);
 
   // Handle tab change
-  const handleTabChange = (
-    event: React.SyntheticEvent,
-    newValue: "drafts" | "scheduled" | "posted"
-  ) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: "drafts" | "scheduled" | "posted") => {
     setActiveTab(newValue);
+    setCurrentPage(1); // Reset to the first page when the tab changes
+  };
+
+  // Infinite scrolling logic
+  const handleScroll = () => {
+    if (postsEndRef.current) {
+      const bottom = postsEndRef.current.getBoundingClientRect().bottom;
+      if (bottom <= window.innerHeight) {
+        // If we are at the bottom of the list, load the next page
+        setCurrentPage((prevPage) => prevPage + 1);
+      }
+      console.log(totalPages,"pages")
+    }
   };
 
   const sidebarContent = (
@@ -135,6 +142,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         height: "100%",
         justifyContent: "flex-start",
         px: 2,
+        borderRight: "1px solid #222",
+
       }}
     >
       {/* Header: Logo & Close Button (mobile only) */}
@@ -230,7 +239,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           sx={{
             width: "100%",
             maxHeight: "400px", // adjust as needed
-            overflowY: "auto",  // enables vertical scrolling
+            overflowY: "auto", // enables vertical scrolling
             "&::-webkit-scrollbar": {
               width: "0px", // smaller scrollbar width
             },
@@ -239,40 +248,29 @@ const Sidebar: React.FC<SidebarProps> = ({
               borderRadius: "3px",
             },
           }}
+          onScroll={handleScroll} // Attach scroll listener
         >
-          {loading ? (
-            <Typography
-              sx={{
-                fontSize: "14px",
-                color: "#aaa",
-                mt: 2,
-                textAlign: "center",
-              }}
-            >
+          {postsLoading ? (
+            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>
               Loading...
             </Typography>
-          ) : posts && posts.length > 0 ? (
+          ) : posts.length > 0 ? (
             posts.map((item: Post, index: number) => (
               <Box
                 key={index}
-                sx={{ borderBottom: "1px solid #222", pb: 2, mt: 2 }}
+                sx={{
+                  borderBottom: "1px solid #222",
+                  pb: 2,
+                  mt: 2,
+                  "&:hover": {
+                    cursor: "pointer", // Change cursor to pointer to indicate it's clickable
+                  },
+                }}
                 onClick={() => {
-                  // Update local state and dispatch the selected announcement
                   dispatch(setSelectedAnnouncement([item]));
                 }}
               >
-                <Typography
-                  sx={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    fontSize: "14px",
-                    color: "#C0C0C0",
-                    mb: 0.5,
-                  }}
-                >
+                <Typography sx={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", fontSize: "14px", color: "#C0C0C0", mb: 0.5 }}>
                   {item.prompt}
                 </Typography>
                 <Typography sx={{ fontSize: "12px", color: "#A6A6A6" }}>
@@ -281,20 +279,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               </Box>
             ))
           ) : (
-            <Typography
-              sx={{
-                fontSize: "14px",
-                color: "#aaa",
-                mt: 2,
-                textAlign: "center",
-              }}
-            >
+            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>
               No posts available.
             </Typography>
           )}
+          <div ref={postsEndRef}></div> {/* Invisible div to detect when bottom is reached */}
         </Box>
       )}
-
 
       {/* Login Button (if not logged in) */}
       {!isLoggedIn && (
@@ -333,10 +324,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
             sx={{ width: 40, height: 40 }}
             onClick={handleOpenProfile}
-
           />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }} onClick={handleOpenProfile}
-          >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }} onClick={handleOpenProfile}>
             <Box>
               <Typography sx={{ color: "#fff", fontWeight: 600 }}>
                 {user && user.userName}
@@ -346,14 +335,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               </Typography>
             </Box>
           </Box>
-          <IconButton
-            onClick={handleLogout}          >
+          <IconButton onClick={handleLogout}>
             <LogoutIcon sx={{ color: "#fff" }} />
           </IconButton>
         </Box>
       )}
       <ProfileModal open={openProfile} onClose={handleCloseProfile} user={user} />
-
     </Box>
   );
 
