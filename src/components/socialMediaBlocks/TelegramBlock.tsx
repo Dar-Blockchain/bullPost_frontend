@@ -49,6 +49,7 @@ import {
 } from "@/store/slices/postsSlice";
 import ConnectModal from "./ConnectModal";
 
+// Spinning animation
 const spin = keyframes`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -59,78 +60,69 @@ interface TelegramBlockProps {
     onSubmit: () => void;
     _id: string;
     ai: boolean;
-
 }
+
 interface UserPreference {
     OpenIA?: boolean;
     Gemini?: boolean;
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
-    twitterConnect?: string
-
+    twitterConnect?: string;
 }
+
 const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useAuth();
+
+    // Local state definitions
     const [modalOpen, setModalOpen] = useState(false);
-
-    const handleOpenModal = () => {
-        setModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setModalOpen(false);
-    };
-    // Redux: extract announcement if available
-    const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
-    const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
-    const postId = announcement?._id || _id;
-
-    // States for text display & typewriter effect
     const [displayText, setDisplayText] = useState("");
-    const indexRef = useRef(0);
-    const typingTimeout = useRef<NodeJS.Timeout | null>(null);
-
-    // States for editing
     const [isEditing, setIsEditing] = useState(false);
     const [editableText, setEditableText] = useState("");
-
-    // Loading and regenerating states
     const [isPosting, setIsPosting] = useState<boolean>(false);
-
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
-
-    // Image upload state
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
-
-    // States for scheduling
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
     const [timeZone, setTimeZone] = useState<string>("");
     const [buttonText, setButtonText] = useState<string>("Post Now");
-
-    // State & ref for formatting popover
-    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
+    const [preference, setPreference] = useState<UserPreference>({});
+    const [telegramEnabled, setTelegramEnabled] = useState(false);
 
-    // Detect user's time zone on mount
+    // Refs for typewriter effect and text formatting
+    const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
+    const indexRef = useRef(0);
+    const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    // Retrieve announcement from Redux (announcement takes precedence)
+    const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
+    const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
+    const postId = announcement?._id || _id;
+
+    // Set user's time zone on mount
     useEffect(() => {
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
-    const [preference, setPreference] = useState<UserPreference>({});
 
+    // Load user preferences on mount
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
             const storedPreference = localStorage.getItem("userPreference");
             const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
             setPreference(parsedPreference);
+            // Set Telegram enabled if available
+            if (parsedPreference.Telegram) {
+                setTelegramEnabled(parsedPreference.Telegram);
+            }
         }
-    }, [preference]);
-    // Typewriter effect for submitted text
+    }, []);
+
+    // Typewriter effect for submitted text when AI mode is active
     useEffect(() => {
         if (!submittedText) {
             setDisplayText("");
@@ -143,7 +135,6 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
         setDisplayText(submittedText[0] || "");
         indexRef.current = 1;
-
         const typeNextCharacter = () => {
             if (indexRef.current < submittedText.length) {
                 const nextChar = submittedText[indexRef.current];
@@ -154,54 +145,41 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                 }
             }
         };
-
         typingTimeout.current = setTimeout(typeNextCharacter, 30);
-
         return () => {
             if (typingTimeout.current) clearTimeout(typingTimeout.current);
         };
     }, [submittedText, isEditing, ai]);
 
-    // File change handler for image uploads
+    // Handle file change for image upload
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             console.log("Selected file:", file.name);
             const currentText = announcement ? announcement.telegram : displayText;
-            console.log("Setting editableText:", currentText);
             setEditableText(currentText);
             setSelectedImage(file);
         }
     };
 
-    // Update function for Telegram post (text and image)
+    // Update Telegram post (text and image)
     const handleUpdate = async () => {
         try {
             setIsLoading(true);
-            const textToSend = editableText.trim() ? editableText : displayText;
+            const textToSend = editableText.trim() || displayText;
             const formData = new FormData();
             formData.append("telegram", textToSend);
-
             if (selectedImage) {
                 formData.append("image_telegram", selectedImage);
             } else {
                 console.warn("No image found in selectedImage state.");
             }
-
             // Debug: Log FormData entries
             for (let pair of formData.entries()) {
                 console.log(pair[0] + ": " + pair[1]);
             }
-
-            const updatedPost = await dispatch(
-                updatePost({
-                    id: postId,
-                    body: formData,
-                })
-            ).unwrap();
-
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            // Update display text using telegram field
             setDisplayText(updatedPost?.telegram || textToSend);
             setSelectedImage(null);
         } catch (error) {
@@ -241,49 +219,14 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
             }
         } catch (error) {
-            console.error("Error sending message to Discord:", error);
+            console.error("Error sending message to Telegram:", error);
             toast.error("❌ Failed to send message!", { position: "top-right" });
         } finally {
             setIsPosting(false);
         }
     };
 
-    // const handlePostNow = async () => {
-    //     const textToPost = submittedText.trim() || (announcement ? announcement.telegram : "");
-    //     if (!textToPost) {
-    //         toast.warn("⚠️ Message cannot be empty!", { position: "top-right" });
-    //         return;
-    //     }
-    //     const token = localStorage.getItem("token");
-    //     if (!token) {
-    //         toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
-    //         return;
-    //     }
-    //     try {
-    //         const response = await fetch(
-    //             `${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/postNow/${postId}`,
-    //             {
-    //                 method: "POST",
-    //                 headers: {
-    //                     "Content-Type": "application/json",
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //             }
-    //         );
-    //         const data = await response.json();
-    //         if (response.ok) {
-    //             dispatch(fetchPostsByStatus("draft"));
-    //             toast.success("Post sent successfully!", { position: "top-right" });
-    //         } else {
-    //             toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
-    //         }
-    //     } catch (error) {
-    //         console.error("Error sending message to Telegram:", error);
-    //         toast.error("❌ Failed to send message!", { position: "top-right" });
-    //     }
-    // };
-
-    // Scheduling functions
+    // Update scheduling button text
     const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
         if (announcement?.publishedAtTelegram) {
             const publishedDate = dayjs(announcement.publishedAtTelegram);
@@ -297,14 +240,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
     };
 
-
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
-
+    // Scheduling handlers
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget);
+    const handleClose = () => setAnchorEl(null);
     const handleDateChange = (newDate: Dayjs | null) => {
         setSelectedDate(newDate);
         updateButtonText(newDate, selectedTime);
@@ -314,10 +252,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         updateButtonText(selectedDate, newTime);
     };
 
+    // Schedule post handler
     const handleSchedulePost = async () => {
-        if (!selectedDate || !selectedTime) {
-            return handlePostNow();
-        }
+        if (!selectedDate || !selectedTime) return handlePostNow();
         const combinedDateTime = selectedDate
             .set("hour", selectedTime.hour())
             .set("minute", selectedTime.minute())
@@ -327,11 +264,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             toast.error("❌ Unauthorized: Token not found!", { position: "top-right" });
             return;
         }
-        const requestBody = {
-            dateTime: combinedDateTime.toISOString(),
-            timeZone,
-        };
-
+        const requestBody = { dateTime: combinedDateTime.toISOString(), timeZone };
         try {
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}postTelegram/schedulePostTelegram/${postId}`,
@@ -356,34 +289,24 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
     };
 
-    // Handlers for text formatting popover
+    // Text formatting popover handlers
     const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
         if (!textFieldRef.current) return;
         const { selectionStart, selectionEnd } = textFieldRef.current;
-        if (selectionStart !== selectionEnd) {
-            setAnchorPosition({ top: e.clientY, left: e.clientX });
-        } else {
-            setAnchorPosition(null);
-        }
+        setAnchorPosition(selectionStart !== selectionEnd ? { top: e.clientY, left: e.clientX } : null);
     };
 
     const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (!textFieldRef.current) return;
         const { selectionStart, selectionEnd } = textFieldRef.current;
-        if (selectionStart !== selectionEnd) {
-            setAnchorPosition({ top: 100, left: 100 });
-        } else {
-            setAnchorPosition(null);
-        }
+        setAnchorPosition(selectionStart !== selectionEnd ? { top: 100, left: 100 } : null);
     };
 
     const handleFormat = (formatType: string) => {
         if (!textFieldRef.current) return;
-        const field = textFieldRef.current;
-        const start = field.selectionStart;
-        const end = field.selectionEnd;
-        if (start === null || end === null || start === end) return;
-
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        if (start === end) return;
         const selected = editableText.substring(start, end);
         let newText = editableText;
         switch (formatType) {
@@ -413,14 +336,12 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
         setEditableText(newText);
         setAnchorPosition(null);
-        setTimeout(() => field.focus(), 0);
+        setTimeout(() => textFieldRef.current?.focus(), 0);
     };
 
-
+    // Regenerate post handler using Gemini or OpenAI
     const handleRegenerate = async (icon: boolean) => {
-        if (icon) {
-            setIsRegenerating(true);
-        }
+        if (icon) setIsRegenerating(true);
         try {
             if (preference?.Gemini === true) {
                 await dispatch(regeneratePost({ platform: "telegram", postId })).unwrap();
@@ -432,57 +353,29 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             console.error("Regenerate failed:", error);
             toast.error("Regenerate failed. Please try again.");
         } finally {
-            if (icon) {
-                setIsRegenerating(false);
-            }
+            if (icon) setIsRegenerating(false);
         }
     };
 
-    // Auto-update when an image is selected
-    useEffect(() => {
-        if (selectedImage) {
-            handleUpdate();
+    // Helper to guard icon actions when editing is active
+    const handleIconAction = (action: () => void) => {
+        if (isEditing) {
+            toast.info("Please save your editing block first", { position: "top-right" });
+            return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedImage]);
-    const [telegramEnabled, setTelegramEnabled] = useState(false);
+        action();
+    };
 
-    useEffect(() => {
-        // Ensure this code runs only on the client
-        const storedPref = localStorage.getItem("userPreference");
-        if (storedPref) {
-            try {
-                const parsedPref = JSON.parse(storedPref);
-                setTelegramEnabled(parsedPref.Telegram || false);
-            } catch (error) {
-                console.error("Error parsing localStorage preference:", error);
-            }
-        }
-    }, []);
-
-    const handleSave = async (telegramValue: boolean) => {
+    // Switch preference & save handler for Telegram connection
+    const handleSavePreference = async (telegramValue: boolean) => {
         const token = localStorage.getItem("token");
         if (!token) return;
-
-        // Retrieve existing preferences from localStorage
         const storedPref = localStorage.getItem("userPreference");
         const pref = storedPref ? JSON.parse(storedPref) : {};
-
-        // Update the preference object with Twitter value only
-        const updatedPref = {
-            ...pref,
-            Telegram: telegramValue, // update with true or false from the switch
-        };
-
-        // Save updated preferences back to localStorage
+        const updatedPref = { ...pref, Telegram: telegramValue };
         localStorage.setItem("userPreference", JSON.stringify(updatedPref));
         console.log("Local preferences saved:", updatedPref);
-
-        // Build request body with only the Twitter variable
-        const requestBody = {
-            telegram: telegramValue,
-        };
-
+        const requestBody = { telegram: telegramValue };
         try {
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`,
@@ -508,31 +401,44 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             toast.error("❌ Error saving preferences!", { position: "top-right" });
         }
     };
+
     const handleSwitchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.checked;
         setTelegramEnabled(newValue);
-        await handleSave(newValue);
+        await handleSavePreference(newValue);
     };
-    const ChangeStatus = async () => {
+
+    // Modal controls for Connect
+    const handleOpenModal = () => setModalOpen(true);
+    const handleCloseModal = () => setModalOpen(false);
+
+    // Change status (unpublishing) handler
+    const handleChangeStatus = async () => {
         try {
             setIsLoading(true);
             const formData = new FormData();
             formData.append("status", "drafts");
-
-            // Debug: Log form data entries
-            formData.append("publishedAtTelegram", "")
+            formData.append("publishedAtTelegram", "");
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
             dispatch(fetchPostsByStatus({ status: "drafts" }));
-
             setSelectedImage(null);
         } catch (error) {
-            console.error("Error updating post:", error);
+            console.error("Error updating post status:", error);
         } finally {
             setIsLoading(false);
             setIsEditing(false);
         }
     };
+
+    // Auto-update when a new image is selected
+    useEffect(() => {
+        if (selectedImage) {
+            handleUpdate();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedImage]);
+
     return (
         <Box
             sx={{
@@ -556,11 +462,8 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         >
             {/* Top Bar: Telegram Icon and User Profile */}
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                <img
-                    src="/telegram.png"
-                    alt="telegram"
-                    style={{ width: 30, height: 30, marginRight: "10px" }}
-                />                {user && (
+                <img src="/telegram.png" alt="telegram" style={{ width: 30, height: 30, marginRight: "10px" }} />
+                {user && (
                     <Box
                         sx={{
                             display: "flex",
@@ -580,41 +483,41 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     </Box>
                 )}
                 <Box sx={{ flexGrow: 1 }} />
-                {user && <>
-
-                    {preference.TELEGRAM_CHAT_ID && preference.TELEGRAM_CHAT_ID.trim().length > 0 ? (
-
-                        // {preference.TELEGRAM_CHAT_ID !== "" ? (
-                        <Switch color="warning" checked={telegramEnabled}
-                            onChange={handleSwitchChange} sx={{ transform: "scale(0.9)" }} />
-                    ) : (
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            onClick={handleOpenModal} // Open modal on button click
-
-                            sx={{
-                                width: 83,
-                                height: 34,
-                                borderWidth: 2,
-                                borderRadius: "10px",
-                                borderColor: "#FFB300",
-                                padding: "10px",
-                                backgroundColor: "transparent",
-                                color: "#FFB300",
-                                fontWeight: "bold",
-                                fontSize: "12px",
-                                textTransform: "none",
-                                "&:hover": { backgroundColor: "#FFB300", color: "#111" }, // Change color on hover
-                            }}
-                        // onClick={() => setStep(3)} // Move to next step
-                        // disabled={!selectedOption} // Disable if nothing is selected
-                        >
-                            Connect
-                        </Button>
-                    )}
-                    <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="telegram" />
-                </>}
+                {user && (
+                    <>
+                        {preference.TELEGRAM_CHAT_ID && preference.TELEGRAM_CHAT_ID.trim().length > 0 ? (
+                            <Switch
+                                color="warning"
+                                checked={telegramEnabled}
+                                onChange={handleSwitchChange}
+                                sx={{ transform: "scale(0.9)" }}
+                            />
+                        ) : (
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={handleOpenModal}
+                                sx={{
+                                    width: 83,
+                                    height: 34,
+                                    borderWidth: 2,
+                                    borderRadius: "10px",
+                                    borderColor: "#FFB300",
+                                    padding: "10px",
+                                    backgroundColor: "transparent",
+                                    color: "#FFB300",
+                                    fontWeight: "bold",
+                                    fontSize: "12px",
+                                    textTransform: "none",
+                                    "&:hover": { backgroundColor: "#FFB300", color: "#111" },
+                                }}
+                            >
+                                Connect
+                            </Button>
+                        )}
+                        <ConnectModal open={modalOpen} onClose={handleCloseModal} platform="telegram" />
+                    </>
+                )}
             </Box>
 
             {/* Main Content Area */}
@@ -668,7 +571,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                         <Popover
                             open={Boolean(anchorPosition)}
                             anchorReference="anchorPosition"
-                            anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
+                            anchorPosition={anchorPosition || { top: 0, left: 0 }}
                             onClose={() => setAnchorPosition(null)}
                             anchorOrigin={{ vertical: "top", horizontal: "left" }}
                         >
@@ -699,31 +602,30 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                             </Box>
                         </Popover>
                     </Box>
+                ) : user && !telegramEnabled ? (
+                    <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
+                        Change your parameter if you want to see result.
+                    </Box>
                 ) : (
-                    user && !telegramEnabled ? (
+                    <>
+                        {announcement && announcement.image_telegram && (
+                            <img
+                                src={announcement.image_telegram}
+                                alt="Preview"
+                                style={{ maxWidth: "100%", marginBottom: "10px" }}
+                            />
+                        )}
                         <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                            Change your parameter if you want to see result.
+                            <ReactMarkdown>
+                                {announcement ? announcement.telegram : displayText || "No announcement yet..."}
+                            </ReactMarkdown>
                         </Box>
-                    ) : (
-                        <>
-                            {announcement && announcement.image_telegram && (
-                                <img
-                                    src={announcement.image_telegram}
-                                    alt="Preview"
-                                    style={{ maxWidth: "100%", marginBottom: "10px" }}
-                                />
-                            )}
-                            <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
-                                <ReactMarkdown>
-                                    {announcement ? announcement.telegram : displayText || "No announcement yet..."}
-                                </ReactMarkdown>
-                            </Box>
-                        </>
-                    ))}
+                    </>
+                )}
             </Box>
-            <Box sx={{ position: "sticky", bottom: 0, zIndex: 1 }}>
 
-                {/* Toolbar & Scheduling Section */}
+            {/* Toolbar & Scheduling Section */}
+            <Box sx={{ position: "sticky", bottom: 0, zIndex: 1 }}>
                 {user && (
                     <>
                         <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, mb: 2, gap: 1 }}>
@@ -738,6 +640,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                     width: "fit-content",
                                 }}
                             >
+                                {/* Edit / Save Button */}
                                 <IconButton
                                     sx={{ color: "#8F8F8F" }}
                                     onClick={() => {
@@ -760,10 +663,15 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                         <Edit fontSize="small" />
                                     )}
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }}>
+                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleIconAction(() => { /* Mood action placeholder */ })}>
                                     <Mood fontSize="small" />
                                 </IconButton>
-                                <IconButton component="label" sx={{ color: "#8F8F8F" }}>
+                                <IconButton component="label" sx={{ color: "#8F8F8F" }} onClick={(e) => {
+                                    if (isEditing) {
+                                        e.preventDefault();
+                                        toast.info("Please save your editing block first", { position: "top-right" });
+                                    }
+                                }}>
                                     {!isEditing && isLoading ? (
                                         <CircularProgress size={24} />
                                     ) : (
@@ -771,7 +679,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                     )}
                                     <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
+                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleIconAction(() => handleRegenerate(false))}>
                                     <AutoAwesome fontSize="small" />
                                 </IconButton>
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
@@ -784,7 +692,8 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                             "100%": { transform: "rotate(0deg)" },
                                         },
                                     }}
-                                    onClick={() => handleRegenerate(true)} disabled={isRegenerating}
+                                    onClick={() => handleIconAction(() => handleRegenerate(true))}
+                                    disabled={isRegenerating}
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>
@@ -822,9 +731,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                     </LocalizationProvider>
                                 </Popover>
                                 <Button
-                                    // If published, disable the main action by setting onClick to undefined
                                     onClick={announcement?.publishedAtTelegram ? undefined : handleSchedulePost}
-                                    // Only disable the button for posting if it's currently posting and not published
                                     disabled={!announcement?.publishedAtTelegram && isPosting}
                                     sx={{
                                         backgroundColor: "#191919",
@@ -832,8 +739,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                         borderRadius: "12px",
                                         height: 50,
                                         flex: 1,
-                                        textTransform: "none",  // Ensure text is not uppercase
-
+                                        textTransform: "none",
                                         width: "150px",
                                         "&:hover": { backgroundColor: "#FFA500", color: "black" },
                                     }}
@@ -845,13 +751,8 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                             {dayjs(announcement.publishedAtTelegram).format("MMM DD, YYYY")} -{" "}
                                             {dayjs(announcement.publishedAtTelegram).format("HH:mm")}{" "}
                                             <span
-                                                onClick={ChangeStatus}
-                                                style={{
-                                                    marginLeft: 8,
-                                                    fontWeight: "bold",
-                                                    color: "red",
-                                                    cursor: "pointer",
-                                                }}
+                                                onClick={handleChangeStatus}
+                                                style={{ marginLeft: 8, fontWeight: "bold", color: "red", cursor: "pointer" }}
                                             >
                                                 X
                                             </span>
@@ -868,13 +769,12 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                         "Post Now"
                                     )}
                                 </Button>
-
                             </Box>
                         )}
                     </>
                 )}
             </Box>
-        </Box >
+        </Box>
     );
 };
 
