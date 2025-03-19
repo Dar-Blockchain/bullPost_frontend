@@ -355,7 +355,19 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     // Redirect handler for connecting Twitter if not connected
     const handleRedirect = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/oauth-url`);
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No token found");
+                return;
+            }
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/oauth-url`,
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                }
+            );
             if (!response.ok) throw new Error("Failed to fetch the redirect URL");
             const data = await response.json();
             if (data) {
@@ -367,7 +379,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             console.error("Error during redirection:", error);
         }
     };
-
     // Save preference and update switch state for Twitter
     const handleSavePreference = async (twitterValue: boolean) => {
         const token = localStorage.getItem("token");

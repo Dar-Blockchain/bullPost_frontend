@@ -251,7 +251,11 @@ const postsSlice = createSlice({
             })
             .addCase(fetchPostsByStatus.fulfilled, (state, action) => {
                 state.loading = false;
-                state.posts = action.payload.posts;
+                if (action.meta.arg.page === 1) {
+                    state.posts = action.payload.posts;
+                } else {
+                    state.posts = [...state.posts, ...action.payload.posts];
+                }
                 state.totalPages = action.payload.totalPages;
             })
             .addCase(fetchPostsByStatus.rejected, (state, action) => {

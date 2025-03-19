@@ -8,6 +8,7 @@ import {
   Tab,
   Drawer,
   IconButton,
+  Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -18,9 +19,13 @@ import { useAuth } from "@/hooks/useAuth";
 import dayjs from "dayjs";
 import { AppDispatch } from "@/store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { clearSelectedAnnouncement, fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
+import {
+  clearSelectedAnnouncement,
+  fetchPostsByStatus,
+  setSelectedAnnouncement,
+} from "@/store/slices/postsSlice";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { logout, logoutUser } from "@/store/slices/authSlice";
+import { logoutUser } from "@/store/slices/authSlice";
 import ProfileModal from "../profileUserModal/ProfilModal";
 
 interface SidebarProps {
@@ -55,9 +60,9 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const [openProfile, setOpenProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "posted">("drafts");
-  const [currentPage, setCurrentPage] = useState<number>(1); // Track current page for pagination
-  const [loading, setLoading] = useState<boolean>(false); // Loading state to prevent multiple requests
-  const postsEndRef = useRef<HTMLDivElement>(null); // Reference for the bottom of the posts list
+  const [currentPage, setCurrentPage] = useState<number>(1); // Start at page 1
+  const [loading, setLoading] = useState<boolean>(false);
+  const postsEndRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const { posts, totalPages, loading: postsLoading } = useSelector((state: any) => state.posts);
@@ -84,14 +89,14 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/logout`, {
         method: "POST",
-        credentials: "include", // include credentials if required (for HTTP-only cookies)
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
       });
       if (response.ok) {
         dispatch(logoutUser());
-        window.location.href = "/"; // Or use a routing library like react-router
+        window.location.href = "/";
       } else {
         console.error("Failed to logout", await response.text());
       }
@@ -100,12 +105,12 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
     }
   };
 
-  // Load posts when activeTab or currentPage changes
+  // Load posts using a limit of 10 per page
   const loadPosts = async () => {
-    if (loading || postsLoading || currentPage > totalPages) return; // Prevent requests if already loading or past totalPages
-
+    if (loading || postsLoading || currentPage > totalPages) return;
     setLoading(true);
-    dispatch(fetchPostsByStatus({ status: activeTab, page: currentPage, limit: 6 }));
+    // Change limit from 6 to 10 here:
+    dispatch(fetchPostsByStatus({ status: activeTab, page: currentPage, limit: 10 }));
     setLoading(false);
   };
 
@@ -115,19 +120,18 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
     }
   }, [activeTab, currentPage, isLoggedIn, dispatch, totalPages]);
 
-  // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: "drafts" | "scheduled" | "posted") => {
     setActiveTab(newValue);
-    setCurrentPage(1); // Reset to the first page when the tab changes
+    setCurrentPage(1); // Reset to first page on tab change
   };
 
-  // Handle Load More button click
   const handleLoadMore = () => {
     if (currentPage < totalPages) {
       setCurrentPage((prevPage) => prevPage + 1);
     }
   };
 
+  // Sidebar content: posts list and controls
   const sidebarContent = (
     <Box
       sx={{
@@ -144,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         fontFamily: "Sora, sans-serif",
       }}
     >
-      {/* Header: Logo & Close Button (mobile only) */}
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -154,22 +158,8 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
           mb: 3,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: 2,
-            width: "100%",
-            mb: 3,
-          }}
-        >
-          <Box
-            component="img"
-            src="/BP_Logo.png"
-            alt="BullPost Logo"
-            sx={{ width: 56, height: 52 }}
-          />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, width: "100%", mb: 3 }}>
+          <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 50, height: 50, mr: 1 }} />
           <Typography variant="h6" sx={{ color: "#ff9c00", fontWeight: 600, fontSize: "16px" }}>
             BullPost
           </Typography>
@@ -235,9 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             width: "100%",
             maxHeight: "400px",
             overflowY: "auto",
-            "&::-webkit-scrollbar": {
-              width: "0px",
-            },
+            "&::-webkit-scrollbar": { width: "0px" },
             "&::-webkit-scrollbar-thumb": {
               backgroundColor: "#FFB300",
               borderRadius: "3px",
@@ -256,15 +244,24 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
                   borderBottom: "1px solid #222",
                   pb: 2,
                   mt: 2,
-                  "&:hover": {
-                    cursor: "pointer",
-                  },
+                  "&:hover": { cursor: "pointer" },
                 }}
                 onClick={() => {
                   dispatch(setSelectedAnnouncement([item]));
                 }}
               >
-                <Typography sx={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", fontSize: "14px", color: "#C0C0C0", mb: 0.5 }}>
+                <Typography
+                  sx={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    fontSize: "14px",
+                    color: "#C0C0C0",
+                    mb: 0.5,
+                  }}
+                >
                   {item.prompt}
                 </Typography>
                 <Typography sx={{ fontSize: "12px", color: "#A6A6A6" }}>
@@ -339,12 +336,8 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
           />
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }} onClick={handleOpenProfile}>
             <Box>
-              <Typography sx={{ color: "#fff", fontWeight: 600 }}>
-                {user && user.userName}
-              </Typography>
-              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>
-                Pro subscription
-              </Typography>
+              <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user?.userName}</Typography>
+              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
             </Box>
           </Box>
           <IconButton onClick={handleLogout}>
@@ -352,6 +345,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
           </IconButton>
         </Box>
       )}
+
       <ProfileModal open={openProfile} onClose={handleCloseProfile} user={user} />
     </Box>
   );
@@ -376,14 +370,8 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box
-              component="img"
-              src="/BP_Logo.png"
-              alt="BullPost Logo"
-              sx={{ width: 40, height: 40 }}
-            />
+            <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 40, height: 40 }} />
           </Box>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton
               sx={{
@@ -396,9 +384,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             >
               <AddIcon />
             </IconButton>
-
             {isLoggedIn && <Avatar src="/profile.jpg" sx={{ width: 32, height: 32 }} />}
-
             <IconButton onClick={handleDrawerToggle}>
               <MenuIcon sx={{ color: "#fff" }} />
             </IconButton>

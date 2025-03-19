@@ -58,6 +58,8 @@ export default function BullPostPage() {
   const [openIaKey, setOpenIaKey] = useState("");
   const [geminiKey, setGeminiKey] = useState("");
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
+  const [discordServerName, setDiscordServerName] = useState("");
+
   const [telegramChatId, setTelegramChatId] = useState("");
   const [twitterConnect, setTwitterConnect] = useState("");
   const [Twitter, setTwitter] = useState("");
@@ -74,7 +76,8 @@ export default function BullPostPage() {
       twitterConnect: twitterConnect,
       Twitter: Twitter,
       Discord: Discord,
-      Telegram: Telegram
+      Telegram: Telegram,
+      discordServerName: discordServerName
     };
     localStorage.setItem("userPreference", JSON.stringify(preference));
   }, [preferredProvider, discordWebhookUrl, telegramChatId]);
@@ -102,7 +105,7 @@ export default function BullPostPage() {
           setTwitter(data.twitter ? data.twitter : "")
           setDiscord(data.discord ? data.discord : "")
           setTelegram(data.telegram ? data.telegram : "")
-
+          setDiscordServerName(data.Discord_Server_Name ? data.Discord_Server_Name : "")
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));
