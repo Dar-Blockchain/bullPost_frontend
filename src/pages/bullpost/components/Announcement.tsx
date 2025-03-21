@@ -43,6 +43,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           variant="caption"
           sx={{
             mt: "-22px",
+            ml: "10px",
 
             fontSize: "12px",
             color: "#A6A6A6",
@@ -57,6 +58,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           sx={{
             fontSize: "12px",
             color: "#A6A6A6",
+            ml: "10px",
             textAlign: "start", // Align text to the left (start)
             width: "100%", // Ensure it spans the full width to align the text properly
           }}

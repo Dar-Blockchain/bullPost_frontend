@@ -452,22 +452,22 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         <>
             <Box
                 sx={{
+
                     flex: 1,
-                    backgroundImage: "url('/XColor.png')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "top",
                     backgroundColor: "#111112",
                     p: 2,
+                    backgroundImage: "url('/DiscordColor.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "top",
                     border: "1px solid #3C3C3C",
                     textAlign: "center",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "space-between",
-                    minHeight: isMobile ? "500px" : "400px",
-                    maxHeight: isMobile ? "500px" : "400px",
-                    flexShrink: 0,
+                    // Let this box be tall enough so content can scroll behind the fixed bottom bar
+                    minHeight: "100vh",
                     width: "100%",
                     mt: isMobile ? "10px" : "0",
+                    position: "relative",
                 }}
             >
                 {/* Top Bar: Twitter Icon and User Profile */}
@@ -537,7 +537,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         padding: 2,
                         mt: 2,
                         flexGrow: 1,
-                        maxHeight: isMobile ? "400px" : "400px",
+                        maxHeight: isMobile ? "500px" : "100%",
                         overflowY: "auto",
                         "&::-webkit-scrollbar": { width: "4px" },
                         "&::-webkit-scrollbar-thumb": { backgroundColor: "#FFB300", borderRadius: "3px" },

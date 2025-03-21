@@ -551,24 +551,44 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     return (
         <Box
             sx={{
+
                 flex: 1,
+                backgroundColor: "#111112",
+                p: 2,
                 backgroundImage: "url('/TelegramColor.png')",
                 backgroundSize: "cover",
                 backgroundPosition: "top",
-                backgroundColor: "#111112",
-                p: 2,
                 border: "1px solid #3C3C3C",
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-between",
-                minHeight: isMobile ? "500px" : "400px",
-                maxHeight: isMobile ? "500px" : "400px",
-                flexShrink: 0,
+                // Let this box be tall enough so content can scroll behind the fixed bottom bar
+                minHeight: "100vh",
                 width: "100%",
                 mt: isMobile ? "10px" : "0",
+                position: "relative",
             }}
         >
+            {/* <Box
+                sx={{
+                    flex: 1,
+                    backgroundImage: "url('/TelegramColor.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "top",
+                    backgroundColor: "#111112",
+                    p: 2,
+                    border: "1px solid #3C3C3C",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    minHeight: isMobile ? "500px" : "400px",
+                    maxHeight: isMobile ? "500px" : "400px",
+                    flexShrink: 0,
+                    width: "100%",
+                    mt: isMobile ? "10px" : "0",
+                }}
+            > */}
             {/* Top Bar: Telegram Icon and User Profile */}
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                 <img src="/telegram.png" alt="telegram" style={{ width: 30, height: 30, marginRight: "10px" }} />
@@ -684,7 +704,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     padding: 2,
                     mt: 2,
                     flexGrow: 1,
-                    maxHeight: isMobile ? "400px" : "400px",
+                    maxHeight: isMobile ? "500px" : "100%",
                     overflowY: "auto",
                     "&::-webkit-scrollbar": { width: "4px" },
                     "&::-webkit-scrollbar-thumb": { backgroundColor: "#FFB300", borderRadius: "3px" },

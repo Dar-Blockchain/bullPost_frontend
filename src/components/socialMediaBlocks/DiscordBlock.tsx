@@ -541,6 +541,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         <>
             <Box
                 sx={{
+
                     flex: 1,
                     backgroundColor: "#111112",
                     p: 2,
@@ -551,12 +552,11 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     textAlign: "center",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "space-between",
-                    minHeight: isMobile ? "500px" : "400px",
-                    maxHeight: isMobile ? "500px" : "400px",
-                    flexShrink: 0,
+                    // Let this box be tall enough so content can scroll behind the fixed bottom bar
+                    minHeight: "100vh",
                     width: "100%",
                     mt: isMobile ? "10px" : "0",
+                    position: "relative",
                 }}
             >
                 <Box
@@ -680,7 +680,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                         padding: 2,
                         mt: 2,
                         flexGrow: 1,
-                        maxHeight: isMobile ? "400px" : "400px",
+                        maxHeight: isMobile ? "500px" : "100%",
                         overflowY: "auto",
                         "&::-webkit-scrollbar": { width: "4px" },
                         "&::-webkit-scrollbar-thumb": {
@@ -779,8 +779,16 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     )}
                 </Box>
 
+             
                 {/* Toolbar and Scheduling Section */}
-                <Box sx={{ position: "sticky", bottom: 0, zIndex: 1 }}>
+                <Box sx={{
+                    position: "sticky", bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 999,
+                    // borderTop: "1px solid #3C3C3C",
+                    padding: "8px",
+                }}>
                     {user && (
                         <>
                             <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, mb: 2, gap: 1 }}>
@@ -873,6 +881,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     </IconButton>
                                 </Box>
                             </Box>
+                            
                             {!isMobile && (
                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
                                     <Button

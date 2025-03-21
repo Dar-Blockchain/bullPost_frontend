@@ -323,7 +323,7 @@ export default function BullPostPage() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            p: 2,
+            p: isMobile ? 2 : 0,
           }}
         >
           {!isMobile ? (
