@@ -234,11 +234,11 @@ export default function BullPostPage() {
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-    const username = localStorage.getItem("addAcount");
-    if (username) {
-      console.log("AddAccount flag not found, exiting linking code.");
-      return;
-    }
+    // const username = localStorage.getItem("addAcount");
+    // if (username) {
+    //   console.log("AddAccount flag not found, exiting linking code.");
+    //   return;
+    // }
     if (!refresh_token) {
       console.warn("Refresh token not found in URL.");
       return;
@@ -273,52 +273,52 @@ export default function BullPostPage() {
         console.error("Error updating token:", error);
       });
   }, []);
-  useEffect(() => {
+  // useEffect(() => {
 
-    const params = new URLSearchParams(window.location.search);
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-    // const username = params.get("username");
-    const username = localStorage.getItem("addAcount");
-    if (!username) {
-      console.log("AddAccount flag not found, exiting linking code.");
-      return;
-    }
-    if (!refresh_token) {
-      console.warn("Refresh token not found in URL.");
-      return;
-    }
+  //   const params = new URLSearchParams(window.location.search);
+  //   const access_token = params.get("access_token");
+  //   const refresh_token = params.get("refresh_token");
+  //   // const username = params.get("username");
+  //   const username = localStorage.getItem("addAcount");
+  //   if (!username) {
+  //     console.log("AddAccount flag not found, exiting linking code.");
+  //     return;
+  //   }
+  //   if (!refresh_token) {
+  //     console.warn("Refresh token not found in URL.");
+  //     return;
+  //   }
 
-    // Optionally store the access token if it exists.
-    if (access_token) {
-      localStorage.setItem("twitterAccessToken", access_token);
-    }
-    localStorage.setItem("twitterRefreshToken", refresh_token);
+  //   // Optionally store the access token if it exists.
+  //   if (access_token) {
+  //     localStorage.setItem("twitterAccessToken", access_token);
+  //   }
+  //   localStorage.setItem("twitterRefreshToken", refresh_token);
 
-    const token = localStorage.getItem("token");
+  //   const token = localStorage.getItem("token");
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/addTwitterAccount`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      // Send the refresh token in the body (property name as needed)
-      body: JSON.stringify({ refresh_token: refresh_token, username: username }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        toast.success("New account added successfully");
-        console.log("Token updated successfully:", data);
-        // Redirect to /bullpost after successful update
-        router.push("/bullpost").then(() => {
-          window.location.reload();
-        });
-      })
-      .catch((error) => {
-        console.error("Error updating token:", error);
-      });
-  }, []);
+  //   fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/addTwitterAccount`, {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       "Authorization": `Bearer ${token}`,
+  //     },
+  //     // Send the refresh token in the body (property name as needed)
+  //     body: JSON.stringify({ refresh_token: refresh_token, username: username }),
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       toast.success("New account added successfully");
+  //       console.log("Token updated successfully:", data);
+  //       // Redirect to /bullpost after successful update
+  //       router.push("/bullpost").then(() => {
+  //         window.location.reload();
+  //       });
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error updating token:", error);
+  //     });
+  // }, []);
 
   return (
     <Box
