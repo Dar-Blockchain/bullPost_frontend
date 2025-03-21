@@ -779,7 +779,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     )}
                 </Box>
 
-             
+
                 {/* Toolbar and Scheduling Section */}
                 <Box sx={{
                     position: "sticky", bottom: 0,
@@ -881,9 +881,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                     </IconButton>
                                 </Box>
                             </Box>
-                            
+
                             {!isMobile && (
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1, mb: 2 }}>
                                     <Button
                                         sx={{
                                             backgroundColor: "#FFB300",

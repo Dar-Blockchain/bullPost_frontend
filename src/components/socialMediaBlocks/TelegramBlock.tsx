@@ -876,7 +876,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                             </Box>
                         </Box>
                         {!isMobile && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1, mb: 2 }}>
                                 <Button
                                     sx={{
                                         backgroundColor: "#FFB300",

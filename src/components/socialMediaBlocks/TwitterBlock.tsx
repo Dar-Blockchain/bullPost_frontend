@@ -703,7 +703,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 </Box>
                             </Box>
                             {!isMobile && (
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1, mb: 2 }}>
                                     <Button
                                         sx={{
                                             backgroundColor: "#FFB300",
