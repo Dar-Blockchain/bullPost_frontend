@@ -278,8 +278,12 @@ export default function BullPostPage() {
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-    const username = params.get("username");
-
+    // const username = params.get("username");
+    const username = localStorage.getItem("addAcount");
+    if (!username) {
+      console.log("AddAccount flag not found, exiting linking code.");
+      return;
+    }
     if (!refresh_token) {
       console.warn("Refresh token not found in URL.");
       return;
