@@ -103,10 +103,10 @@ export default function BullPostPage() {
           setGeminiKey(data.GeminiKey || "");
           setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL ? data.DISCORD_WEBHOOK_URL : "");
           setTelegramChatId(data.TELEGRAM_CHAT_ID ? data.TELEGRAM_CHAT_ID : "");
-          setTwitterConnect(data.refresh_token ? data.refresh_token : "");
-          setTwitter(data.twitter ? data.twitter : "")
-          setDiscord(data.discord ? data.discord : "")
-          setTelegram(data.telegram ? data.telegram : "")
+          setTwitterConnect(data.refresh_token || "");
+          setTwitter(data.twitter || "")
+          setDiscord(data.discord || "")
+          setTelegram(data.telegram || "")
           setDiscordServerName(data.Discord_Server_Name ? data.Discord_Server_Name : "")
           setTelegramGroupName(data.TELEGRAM_GroupName ? data.TELEGRAM_GroupName : "")
 
@@ -259,6 +259,53 @@ export default function BullPostPage() {
       .then((response) => response.json())
       .then((data) => {
         toast.success("Twitter Linked successfully");
+        console.log("Token updated successfully:", data);
+        // Redirect to /bullpost after successful update
+        router.push("/bullpost").then(() => {
+          window.location.reload();
+        });
+      })
+      .catch((error) => {
+        console.error("Error updating token:", error);
+      });
+  }, []);
+  useEffect(() => {
+    // Ensure this runs only on the client side.
+    if (!localStorage.getItem("addacount")) {
+      console.log("AddAccount flag not found, exiting linking code.");
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const username = params.get("username");
+
+    if (!refresh_token) {
+      console.warn("Refresh token not found in URL.");
+      return;
+    }
+
+    // Optionally store the access token if it exists.
+    if (access_token) {
+      localStorage.setItem("twitterAccessToken", access_token);
+    }
+    localStorage.setItem("twitterRefreshToken", refresh_token);
+
+    const token = localStorage.getItem("token");
+
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/addTwitterAccount`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      // Send the refresh token in the body (property name as needed)
+      body: JSON.stringify({ refresh_token: refresh_token, username: username }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        toast.success("New account added successfully");
         console.log("Token updated successfully:", data);
         // Redirect to /bullpost after successful update
         router.push("/bullpost").then(() => {

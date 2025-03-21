@@ -18,9 +18,15 @@ interface TelegramAccount {
   chatId: string;
   _id: string;
 }
-
+interface TwitterAccount {
+  accountName: string;
+  refresh_token: string;
+  _id: string;
+}
 const AccountsTab: React.FC = () => {
-  // Discord states
+  // Discord states 
+  const [twitterAccounts, setTwitterAccounts] = useState<TwitterAccount[]>([]);
+
   const [discordAccounts, setDiscordAccounts] = useState<DiscordAccount[]>([]);
   const [showDiscordInputs, setShowDiscordInputs] = useState(false);
   const [discordServer, setDiscordServer] = useState('');
@@ -57,7 +63,7 @@ const AccountsTab: React.FC = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ types: ["discord", 'telegram'] }),
+          body: JSON.stringify({ types: ["discord", 'telegram', "twitter"] }),
         }
       );
       if (!response.ok) {
@@ -73,8 +79,12 @@ const AccountsTab: React.FC = () => {
       const accountsArrayTelegram = data && data.data && Array.isArray(data.data.telegram)
         ? data.data.telegram
         : [];
+      const accountsArrayTwitter = data && data.data && Array.isArray(data.data.twitter)
+        ? data.data.twitter
+        : [];
       setDiscordAccounts(accountsArray);
       setTelegramAccounts(accountsArrayTelegram)
+      setTwitterAccounts(accountsArrayTwitter)
     } catch (error) {
       console.error('Error fetching Discord accounts:', error);
     }
@@ -236,6 +246,7 @@ const AccountsTab: React.FC = () => {
       setTelegramChatId('');
       setShowTelegramInputs(false);
       loadDiscordAccounts()
+
     } catch (error) {
       console.error("Error adding Telegram account:", error);
       toast.error("❌ Error adding Telegram account", { position: "top-right" });
@@ -277,12 +288,33 @@ const AccountsTab: React.FC = () => {
       toast.error("❌ Error removing Telegram account", { position: "top-right" });
     }
   };
+  const handleRedirect = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/oauth-url`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch the redirect URL");
+      const data = await response.json();
+      if (data) {
+        localStorage.setItem("addAcount", "true"); // Set the flag in localStorage
 
-  // Helper function to truncate account names (only first 3 words)
-  const truncateWords = (text: string, maxWords: number = 3): string => {
-    const words = text.split(/\s+/);
-    if (words.length <= maxWords) return text;
-    return words.slice(0, maxWords).join(" ") + " ...";
+        window.location.href = data; // Redirect to the provided URL
+      } else {
+        console.error("Invalid URL received");
+      }
+    } catch (error) {
+      console.error("Error during redirection:", error);
+    }
   };
 
   return (
@@ -292,9 +324,18 @@ const AccountsTab: React.FC = () => {
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
           <TwitterIcon sx={{ verticalAlign: 'middle', mr: 1 }} /> X Accounts
         </Typography>
-        <AccountItem name="OxJulio" onRemove={() => console.log('Remove X account')} />
-        <AccountItem name="AnotherX" onRemove={() => console.log('Remove AnotherX')} />
-        <AddAccountItem onClick={() => console.log('Add X account')} />
+        {twitterAccounts
+          .filter((acc) => acc) // Filter out any undefined items
+          .map((acc, index) => (
+            <AccountItem
+              key={acc._id || index}
+              name={`${acc.accountName}`}
+              url={`(${acc.refresh_token})`}
+              onRemove={() => { }}
+            />
+          ))
+        }
+        <AddAccountItem onClick={handleRedirect} />
       </Box>
 
       {/* Discord Accounts */}

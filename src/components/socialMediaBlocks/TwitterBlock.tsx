@@ -109,11 +109,26 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             const storedPreference = localStorage.getItem("userPreference");
             const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
             setPreference(parsedPreference);
-            if (parsedPreference.twitterConnect) {
-                setTwitterEnabled(true);
+            if (parsedPreference.Twitter) {
+                setTwitterEnabled(parsedPreference.Twitter);
             }
+            // if (parsedPreference.discordServerName) {
+            //     setTelegramServerName(parsedPreference.twitterConnect);
+            // }
         }
     }, []);
+    // useEffect(() => {
+    //     if (typeof window !== "undefined") {
+    //         const storedPreference = localStorage.getItem("userPreference");
+    //         const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
+    //         setPreference(parsedPreference);
+    //         if (parsedPreference.twitterConnect) {
+    //             setTwitterEnabled(true);
+    //             setTelegramEnabled(parsedPreference.Telegram);
+
+    //         }
+    //     }
+    // }, []);
 
     // Typewriter effect: Display text character-by-character when AI mode is enabled
     useEffect(() => {
