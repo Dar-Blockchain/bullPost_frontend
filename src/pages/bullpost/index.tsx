@@ -92,37 +92,55 @@ export default function BullPostPage() {
     discordServerName,
     telegramGroupName,]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
-          console.log(data, "data");
-          setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
-          setOpenIaKey(data.OpenIaKey || "");
-          setGeminiKey(data.GeminiKey || "");
-          setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL ? data.DISCORD_WEBHOOK_URL : "");
-          setTelegramChatId(data.TELEGRAM_CHAT_ID ? data.TELEGRAM_CHAT_ID : "");
-          setTwitterConnect(data.refresh_token || "");
-          setTwitter(data.twitter || "")
-          setDiscord(data.discord || "")
-          setTelegram(data.telegram || "")
-          setDiscordServerName(data.Discord_Server_Name ? data.Discord_Server_Name : "")
-          setTelegramGroupName(data.TELEGRAM_GroupName ? data.TELEGRAM_GroupName : "")
-
+    useEffect(() => {
+      const reloadPreferences = () => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data) {
+              console.log(data, "data");
+              setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
+              setOpenIaKey(data.OpenIaKey || "");
+              setGeminiKey(data.GeminiKey || "");
+              setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
+              setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+              setTwitterConnect(data.refresh_token || "");
+              setTwitter(data.twitter || "");
+              setDiscord(data.discord || "");
+              setTelegram(data.telegram || "");
+              setDiscordServerName(data.Discord_Server_Name || "");
+              setTelegramGroupName(data.TELEGRAM_GroupName || "");
+            }
+          })
+          .catch((err) => console.error("Error fetching preferences:", err));
+      };
+    
+      // When the component mounts (or user changes), fetch preferences:
+      if (user) {
+        reloadPreferences();
+      }
+    
+      // Listen for the page visibility change so that when the page becomes visible, we refresh.
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible" && user) {
+          reloadPreferences();
         }
-      })
-      .catch((err) => console.error("Error fetching preferences:", err));
-  }, [user,twitterConnect]); // re-run when 'user' changes (i.e. when logged in)
-
+      };
+    
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      };
+    }, [user]);
+    
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
     // User must have either an OpenIA key or a Gemini key, and both Discord and Telegram keys
