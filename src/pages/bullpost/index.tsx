@@ -234,7 +234,10 @@ export default function BullPostPage() {
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-
+    const username = params.get("username");
+    if (username) {
+      return;
+    }
     if (!refresh_token) {
       console.warn("Refresh token not found in URL.");
       return;
@@ -270,11 +273,6 @@ export default function BullPostPage() {
       });
   }, []);
   useEffect(() => {
-    // Ensure this runs only on the client side.
-    if (!localStorage.getItem("addacount")) {
-      console.log("AddAccount flag not found, exiting linking code.");
-      return;
-    }
 
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
