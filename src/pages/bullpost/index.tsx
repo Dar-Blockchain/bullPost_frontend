@@ -121,7 +121,7 @@ export default function BullPostPage() {
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));
-  }, [user]); // re-run when 'user' changes (i.e. when logged in)
+  }, [user,twitterConnect]); // re-run when 'user' changes (i.e. when logged in)
 
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
