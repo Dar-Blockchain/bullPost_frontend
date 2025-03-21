@@ -308,7 +308,8 @@ const AccountsTab: React.FC = () => {
           .map((acc, index) => (
             <AccountItem
               key={acc._id || index}
-              name={`${acc.groupName} (${acc.webhookUrl})`}
+              name={`${acc.groupName}`}
+              url={`(${acc.webhookUrl})`}
               onRemove={() => handleRemoveDiscord(acc, index)}
             />
           ))
@@ -385,7 +386,9 @@ const AccountsTab: React.FC = () => {
           .map((acc, index) => (
             <AccountItem
               key={acc._id || index}
-              name={truncateWords(`${acc.groupName} (${acc.chatId})`, 3)}
+              name={`${acc.groupName}`}
+              url={`(${acc.chatId})`}
+
               onRemove={() => handleRemoveTelegram(acc, index)}
             />
           ))

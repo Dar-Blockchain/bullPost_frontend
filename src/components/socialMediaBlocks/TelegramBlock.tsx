@@ -61,7 +61,11 @@ interface TelegramBlockProps {
     _id: string;
     ai: boolean;
 }
-
+interface TelegramAccount {
+    _id: string;
+    chatId: string;
+    groupName: string;
+}
 interface UserPreference {
     OpenIA?: boolean;
     Gemini?: boolean;
@@ -109,18 +113,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
 
-    // Load user preferences on mount
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const storedPreference = localStorage.getItem("userPreference");
-            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
-            setPreference(parsedPreference);
-            // Set Telegram enabled if available
-            if (parsedPreference.Telegram) {
-                setTelegramEnabled(parsedPreference.Telegram);
-            }
-        }
-    }, []);
+
 
     // Typewriter effect for submitted text when AI mode is active
     useEffect(() => {
@@ -438,7 +431,123 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedImage]);
+    const [accounts, setAccounts] = useState<TelegramAccount[]>([]);
+    const [anchorEl2, setAnchorEl2] = useState(null);
+    const open = Boolean(anchorEl);
 
+    const handleArrowClick = (event: any) => {
+        setAnchorEl2(event.currentTarget);
+    };
+
+    const handleClose2 = () => {
+        setAnchorEl2(null);
+    };
+
+    useEffect(() => {
+        const loadTelegramAccounts = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No token found");
+                return;
+            }
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getAcountData`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ types: ["telegram"] }),
+                    }
+                );
+                if (!response.ok) {
+                    console.error("Failed to fetch Discord accounts:", response.statusText);
+                    return;
+                }
+                const data = await response.json();
+                const accountsArray =
+                    data && data.data && Array.isArray(data.data.telegram
+                    )
+                        ? data.data.telegram
+
+                        : [];
+                setAccounts(accountsArray);
+            } catch (error) {
+                console.error("Error fetching Discord accounts:", error);
+            }
+        };
+
+        loadTelegramAccounts();
+    }, []);
+    const [telegramChatId, setTelegramChatId] = useState("");
+    // Define a separate anchor for your Telegram popover, similar to your Discord one
+    const [telegramAnchor, setTelegramAnchor] = useState<HTMLElement | null>(null);
+    const [telegramServerName, setTelegramServerName] = useState("");
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const storedPreference = localStorage.getItem("userPreference");
+            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
+            setPreference(parsedPreference);
+            if (parsedPreference.Telegram) {
+                setTelegramEnabled(parsedPreference.Telegram);
+            }
+            if (parsedPreference.discordServerName) {
+                setTelegramServerName(parsedPreference.telegramGroupName);
+            }
+        }
+    }, []);
+    const handleCloseTelegramPopover = () => {
+        setTelegramAnchor(null);
+    };
+    const handleAssignTelegramWebhook = async (account: TelegramAccount) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            return;
+        }
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/assignTelegramChatId
+`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        chatId: account.chatId,
+                        // groupName: account.groupName,
+                    }),
+                }
+            );
+            const data = await response.json();
+            if (response.ok) {
+                toast.success("Telegram webhook assigned successfully!");
+                // Update current Telegram chat id (or group name) in state
+                setTelegramChatId(account.groupName);
+                setTelegramServerName(account.groupName)
+                // Update user preferences in localStorage
+                const storedPreference = localStorage.getItem("userPreference");
+                const pref = storedPreference ? JSON.parse(storedPreference) : {};
+                // You can adjust these keys to suit your application's needs
+                pref.telegramChatId = account.groupName;
+                pref.TELEGRAM_WEBHOOK_URL = account.chatId;
+                localStorage.setItem("userPreference", JSON.stringify(pref));
+            } else {
+                toast.error(
+                    `Failed to assign telegram webhook: ${data.error || "Unknown error"}`
+                );
+            }
+        } catch (error) {
+            console.error("Error assigning telegram webhook:", error);
+            toast.error("Error assigning telegram webhook");
+        } finally {
+            handleCloseTelegramPopover(); // Close the Telegram popover after the API call
+        }
+    };
     return (
         <Box
             sx={{
@@ -464,23 +573,70 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                 <img src="/telegram.png" alt="telegram" style={{ width: 30, height: 30, marginRight: "10px" }} />
                 {user && (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                            padding: "4px 10px",
-                            border: "1px solid #3C3C3C",
-                            borderRadius: "20px",
-                            backgroundColor: "#0F0F0F",
-                        }}
-                    >
-                        <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
-                        <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                            @{user.userName}
-                        </Typography>
-                        <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
-                    </Box>
+                    <>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                                padding: "4px 10px",
+                                border: "1px solid #3C3C3C",
+                                borderRadius: "20px",
+                                backgroundColor: "#0F0F0F",
+                            }}
+                        >
+                            <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
+                            <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
+                                @{telegramServerName}
+                            </Typography>
+                            <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
+                                <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
+                            </IconButton>
+                        </Box>
+                        <Popover
+                            open={Boolean(anchorEl2)}
+                            anchorEl={anchorEl2}
+                            onClose={handleClose2}
+
+                            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                            transformOrigin={{ vertical: "top", horizontal: "right" }}
+                            PaperProps={{
+                                sx: {
+                                    backgroundColor: "black",
+                                    border: "1px solid #3C3C3C",
+                                    borderRadius: "12px",
+                                    boxShadow: 3,
+                                    padding: 1,
+                                },
+                            }}
+                        >
+                            <Box sx={{ minWidth: "200px" }}>
+                                {accounts.map((account) => (
+                                    <Box
+                                        key={account._id}
+                                        onClick={() => handleAssignTelegramWebhook(account)}
+
+                                        sx={{
+                                            padding: "8px 16px",
+                                            cursor: "pointer",
+                                            "&:hover": { backgroundColor: "#2F2F2F" },
+                                        }}
+                                    >
+                                        <Typography variant="body1" sx={{ color: "grey" }}>
+                                            @{account.groupName}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                                {accounts.length === 0 && (
+                                    <Box sx={{ padding: "8px 16px" }}>
+                                        <Typography variant="body2" color="textSecondary">
+                                            No telegram accounts found.
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
+                        </Popover>
+                    </>
                 )}
                 <Box sx={{ flexGrow: 1 }} />
                 {user && (

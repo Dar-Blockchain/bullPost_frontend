@@ -151,12 +151,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
           sx={{ animation: isLoading ? `${spin} 1s linear infinite` : "none" }}
         />
       </IconButton>
-      <Box sx={{ width: "1px", backgroundColor: "#555" }} />
-      {user && <Tooltip title="Generate post manually (without AI assistance)" arrow>
-        <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
-          <SaveIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>}
+      {user && <><Box sx={{ width: "1px", backgroundColor: "#555" }} />
+        <Tooltip title="Generate post manually (without AI assistance)" arrow>
+          <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
+            <SaveIcon fontSize="small" />
+          </IconButton>
+        </Tooltip></>}
     </Box>
   );
 };

@@ -178,19 +178,19 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
                                     Telegram Data                                </Typography>
 
                                 <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Input
-                                        value={telegramChatId}
-                                        onChange={(e) => setTelegramChatId(e.target.value)}
-                                        placeholder="Enter Telegram Chat ID"
-                                        sx={inputStyles}
-                                    />
-                                </Box>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: "10px" }}>
                                     <Input
                                         value={telegramGroupName}
                                         onChange={(e) => setTelegramGroupName(e.target.value)}
                                         placeholder="Enter Telegram Group Name"
+                                        sx={inputStyles}
+                                    />
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Input
+                                        value={telegramChatId}
+                                        onChange={(e) => setTelegramChatId(e.target.value)}
+                                        placeholder="Enter Telegram Chat ID"
                                         sx={inputStyles}
                                     />
                                 </Box>

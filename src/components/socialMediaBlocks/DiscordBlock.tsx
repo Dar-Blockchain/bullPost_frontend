@@ -9,6 +9,9 @@ import {
     Popover,
     TextField,
     CircularProgress,
+    List,
+    ListItem,
+    ListItemText,
 } from "@mui/material";
 import { keyframes, useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -47,7 +50,11 @@ import dayjs from "dayjs";
 import ReactMarkdown from "react-markdown";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ConnectModal from "./ConnectModal";
-
+interface DiscordAccount {
+    _id: string;
+    webhookUrl: string;
+    groupName: string;
+}
 // Keyframes for spinning animation
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -438,6 +445,97 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     };
 
     const isPublished = Boolean(announcement?.publishedAtDiscord);
+    const [accounts, setAccounts] = useState<DiscordAccount[]>([]);
+    const [anchorEl2, setAnchorEl2] = useState(null);
+    const open = Boolean(anchorEl);
+
+    const handleArrowClick = (event: any) => {
+        setAnchorEl2(event.currentTarget);
+    };
+
+    const handleClose2 = () => {
+        setAnchorEl2(null);
+    };
+
+    // Fetch Discord accounts from the API
+    useEffect(() => {
+        const loadDiscordAccounts = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No token found");
+                return;
+            }
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getAcountData`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ types: ["discord"] }),
+                    }
+                );
+                if (!response.ok) {
+                    console.error("Failed to fetch Discord accounts:", response.statusText);
+                    return;
+                }
+                const data = await response.json();
+                const accountsArray =
+                    data && data.data && Array.isArray(data.data.discord)
+                        ? data.data.discord
+                        : [];
+                setAccounts(accountsArray);
+            } catch (error) {
+                console.error("Error fetching Discord accounts:", error);
+            }
+        };
+
+        loadDiscordAccounts();
+    }, []);
+    const handleAssignWebhook = async (account: DiscordAccount) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            return;
+        }
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/assignDiscordWebhook`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        webhookUrl: account.webhookUrl,
+                        groupName: account.groupName,
+                    }),
+                }
+            );
+            const data = await response.json();
+            if (response.ok) {
+                toast.success("Webhook assigned successfully!");
+                // Update current Discord server name in state
+                setDiscordServerName(account.groupName);
+                // Update user preferences in localStorage
+                const storedPreference = localStorage.getItem("userPreference");
+                const pref = storedPreference ? JSON.parse(storedPreference) : {};
+                pref.discordServerName = account.groupName;
+                pref.DISCORD_WEBHOOK_URL = account.webhookUrl; // if you want to save the webhook URL too
+                localStorage.setItem("userPreference", JSON.stringify(pref));
+            } else {
+                toast.error(`Failed to assign webhook: ${data.error || "Unknown error"}`);
+            }
+        } catch (error) {
+            console.error("Error assigning webhook:", error);
+            toast.error("Error assigning webhook");
+        } finally {
+            handleClose2(); // Close the popover after the API call
+        }
+    };
 
     return (
         <>
@@ -461,7 +559,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     mt: isMobile ? "10px" : "0",
                 }}
             >
-                {/* Top Bar: Discord Icon and User Profile */}
                 <Box
                     sx={{
                         display: "flex",
@@ -472,23 +569,70 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 >
                     <img src="/discord.svg" alt="Discord" style={{ width: 30, height: 30, marginRight: "10px" }} />
                     {user && (
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                                padding: "4px 10px",
-                                border: "1px solid #3C3C3C",
-                                borderRadius: "20px",
-                                backgroundColor: "#0F0F0F",
-                            }}
-                        >
-                            <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
-                            <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                @{discordServerName}
-                            </Typography>
-                            <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
-                        </Box>
+                        <>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1.5,
+                                    padding: "4px 10px",
+                                    border: "1px solid #3C3C3C",
+                                    borderRadius: "20px",
+                                    backgroundColor: "#0F0F0F",
+                                }}
+                            >
+                                <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
+                                <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
+                                    @{discordServerName ? discordServerName : "BullPost User"}
+                                </Typography>
+                                <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
+                                    <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
+                                </IconButton>
+                            </Box>
+                            <Popover
+                                open={Boolean(anchorEl2)}
+                                anchorEl={anchorEl2}
+                                onClose={handleClose2}
+
+                                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                                PaperProps={{
+                                    sx: {
+                                        backgroundColor: "black",
+                                        border: "1px solid #3C3C3C",
+                                        borderRadius: "12px",
+                                        boxShadow: 3,
+                                        padding: 1,
+                                    },
+                                }}
+                            >
+                                <Box sx={{ minWidth: "200px" }}>
+                                    {accounts.map((account) => (
+                                        <Box
+                                            key={account._id}
+                                            onClick={() => handleAssignWebhook(account)}
+
+                                            sx={{
+                                                padding: "8px 16px",
+                                                cursor: "pointer",
+                                                "&:hover": { backgroundColor: "#2F2F2F" },
+                                            }}
+                                        >
+                                            <Typography variant="body1" sx={{ color: "grey" }}>
+                                                @{account.groupName}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                    {accounts.length === 0 && (
+                                        <Box sx={{ padding: "8px 16px" }}>
+                                            <Typography variant="body2" color="textSecondary">
+                                                No Discord accounts found.
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+                            </Popover>
+                        </>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
                     {user && (

@@ -86,11 +86,18 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   };
 
   const handleLogout = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/logout`, {
         method: "POST",
         credentials: "include",
         headers: {
+          Authorization: `Bearer ${token}`,
+
           "Content-Type": "application/json",
         },
       });

@@ -7,10 +7,19 @@ import AddIcon from '@mui/icons-material/Add';
 interface AccountItemProps {
   avatar?: string;
   name: string;
+  url?: string;
   onRemove: () => void;
 }
+function shortenString(str: string, front = 8, back = 8) {
+  // If the string is already short enough, return as-is
+  if (str.length <= front + back) return str;
+  // Otherwise, return front...back
+  const firstPart = str.slice(0, front);
+  const lastPart = str.slice(-back);
+  return `${firstPart}...${lastPart}`;
+}
+export const AccountItem: React.FC<AccountItemProps> = ({ avatar, name, url, onRemove }) => (
 
-export const AccountItem: React.FC<AccountItemProps> = ({ avatar, name, onRemove }) => (
   <Box
     sx={{
       display: 'flex',
@@ -22,9 +31,15 @@ export const AccountItem: React.FC<AccountItemProps> = ({ avatar, name, onRemove
       mb: 1,
     }}
   >
+
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       {avatar && <Avatar src={avatar} alt={name} sx={{ width: 32, height: 32 }} />}
       <Typography sx={{ fontSize: '0.95rem' }}>{name}</Typography>
+      {url && (
+        <Typography sx={{ fontSize: '0.95rem' }}>
+          {shortenString(url)}
+        </Typography>
+      )}
     </Box>
     <IconButton
       onClick={onRemove}
