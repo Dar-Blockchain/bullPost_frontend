@@ -82,7 +82,15 @@ export default function BullPostPage() {
       telegramGroupName: telegramGroupName
     };
     localStorage.setItem("userPreference", JSON.stringify(preference));
-  }, [preferredProvider, discordWebhookUrl, telegramChatId]);
+  }, [preferredProvider,
+    discordWebhookUrl,
+    telegramChatId,
+    twitterConnect, // Added so that changes to twitterConnect update localStorage
+    Twitter,
+    Discord,
+    Telegram,
+    discordServerName,
+    telegramGroupName,]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
