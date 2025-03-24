@@ -285,7 +285,7 @@ export default function BullPostPage() {
         .then((res) => res.json())
         .then((data) => {
           toast.success("New account added successfully");
-          localStorage.setItem("addAccount", "false");
+          localStorage.removeItem("addAccount");
           console.log("New Twitter account data:", data);
           router.push("/bullpost").then(() => window.location.reload());
         })

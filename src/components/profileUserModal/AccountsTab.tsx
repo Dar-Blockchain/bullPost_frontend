@@ -306,7 +306,7 @@ const AccountsTab: React.FC = () => {
       if (!response.ok) throw new Error("Failed to fetch the redirect URL");
       const data = await response.json();
       if (data) {
-        localStorage.setItem("addAcount", "true"); // Set the flag in localStorage
+        localStorage.setItem("addAccount", "true"); // Set the flag in localStorage
 
         window.location.href = data; // Redirect to the provided URL
       } else {
