@@ -92,55 +92,37 @@ export default function BullPostPage() {
     discordServerName,
     telegramGroupName,]);
 
-    useEffect(() => {
-      const reloadPreferences = () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data) {
-              console.log(data, "data");
-              setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
-              setOpenIaKey(data.OpenIaKey || "");
-              setGeminiKey(data.GeminiKey || "");
-              setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
-              setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
-              setTwitterConnect(data.refresh_token || "");
-              setTwitter(data.twitter || "");
-              setDiscord(data.discord || "");
-              setTelegram(data.telegram || "");
-              setDiscordServerName(data.Discord_Server_Name || "");
-              setTelegramGroupName(data.TELEGRAM_GroupName || "");
-            }
-          })
-          .catch((err) => console.error("Error fetching preferences:", err));
-      };
-    
-      // When the component mounts (or user changes), fetch preferences:
-      if (user) {
-        reloadPreferences();
-      }
-    
-      // Listen for the page visibility change so that when the page becomes visible, we refresh.
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === "visible" && user) {
-          reloadPreferences();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          console.log(data, "data");
+          setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
+          setOpenIaKey(data.OpenIaKey || "");
+          setGeminiKey(data.GeminiKey || "");
+          setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL ? data.DISCORD_WEBHOOK_URL : "");
+          setTelegramChatId(data.TELEGRAM_CHAT_ID ? data.TELEGRAM_CHAT_ID : "");
+          setTwitterConnect(data.refresh_token || "");
+          setTwitter(data.twitter || "")
+          setDiscord(data.discord || "")
+          setTelegram(data.telegram || "")
+          setDiscordServerName(data.Discord_Server_Name ? data.Discord_Server_Name : "")
+          setTelegramGroupName(data.TELEGRAM_GroupName ? data.TELEGRAM_GroupName : "")
+
         }
-      };
-    
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      return () => {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      };
-    }, [user]);
-    
+      })
+      .catch((err) => console.error("Error fetching preferences:", err));
+  }, [user]); // re-run when 'user' changes (i.e. when logged in)
+
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
     // User must have either an OpenIA key or a Gemini key, and both Discord and Telegram keys
@@ -256,95 +238,76 @@ export default function BullPostPage() {
     }
   }, [preference]);
   useEffect(() => {
-    // Ensure this runs only on the client side.
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-    // const username = localStorage.getItem("addAcount");
-    // if (username) {
-    //   console.log("AddAccount flag not found, exiting linking code.");
-    //   return;
-    // }
+
+    // Check the localStorage flag
+    const addAccountFlag = localStorage.getItem("addAcount");
+
+    // If we don’t have a refresh_token, stop everything.
     if (!refresh_token) {
-      console.warn("Refresh token not found in URL.");
+      console.warn("No refresh token found in URL. Exiting...");
       return;
     }
 
-    // Optionally store the access token if it exists.
+    // Optionally store the access_token if it exists
     if (access_token) {
       localStorage.setItem("twitterAccessToken", access_token);
     }
     localStorage.setItem("twitterRefreshToken", refresh_token);
 
+    // Retrieve the user's main token
     const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No main token found. Exiting...");
+      return;
+    }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ refresh_token })
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        toast.success("Twitter Linked successfully");
-        console.log("Token updated successfully:", data);
-        // Redirect to /bullpost after successful update
-        router.push("/bullpost").then(() => {
-          window.location.reload();
-        });
+    // Decide which endpoint to call
+    if (addAccountFlag) {
+      // "Add new account" endpoint
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/addTwitterAccount`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          refresh_token: refresh_token,
+          username: addAccountFlag,
+        }),
       })
-      .catch((error) => {
-        console.error("Error updating token:", error);
-      });
+        .then((res) => res.json())
+        .then((data) => {
+          toast.success("New account added successfully");
+          console.log("New Twitter account data:", data);
+          router.push("/bullpost").then(() => window.location.reload());
+        })
+        .catch((error) => {
+          console.error("Error adding new Twitter account:", error);
+        });
+    } else {
+      // "Link existing account" endpoint
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/LinkTwitter`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ refresh_token }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          toast.success("Twitter linked successfully");
+          console.log("Linked Twitter data:", data);
+          router.push("/bullpost").then(() => window.location.reload());
+        })
+        .catch((error) => {
+          console.error("Error linking Twitter:", error);
+        });
+    }
   }, []);
-  // useEffect(() => {
-
-  //   const params = new URLSearchParams(window.location.search);
-  //   const access_token = params.get("access_token");
-  //   const refresh_token = params.get("refresh_token");
-  //   // const username = params.get("username");
-  //   const username = localStorage.getItem("addAcount");
-  //   if (!username) {
-  //     console.log("AddAccount flag not found, exiting linking code.");
-  //     return;
-  //   }
-  //   if (!refresh_token) {
-  //     console.warn("Refresh token not found in URL.");
-  //     return;
-  //   }
-
-  //   // Optionally store the access token if it exists.
-  //   if (access_token) {
-  //     localStorage.setItem("twitterAccessToken", access_token);
-  //   }
-  //   localStorage.setItem("twitterRefreshToken", refresh_token);
-
-  //   const token = localStorage.getItem("token");
-
-  //   fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/addTwitterAccount`, {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       "Authorization": `Bearer ${token}`,
-  //     },
-  //     // Send the refresh token in the body (property name as needed)
-  //     body: JSON.stringify({ refresh_token: refresh_token, username: username }),
-  //   })
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       toast.success("New account added successfully");
-  //       console.log("Token updated successfully:", data);
-  //       // Redirect to /bullpost after successful update
-  //       router.push("/bullpost").then(() => {
-  //         window.location.reload();
-  //       });
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error updating token:", error);
-  //     });
-  // }, []);
 
   return (
     <Box
