@@ -241,7 +241,7 @@ export default function BullPostPage() {
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-
+    const username = params.get("username");
     // Check the localStorage flag
     const addAccountFlag = localStorage.getItem("addAcount");
 
@@ -275,7 +275,7 @@ export default function BullPostPage() {
         },
         body: JSON.stringify({
           refresh_token: refresh_token,
-          username: addAccountFlag,
+          username: username,
         }),
       })
         .then((res) => res.json())
