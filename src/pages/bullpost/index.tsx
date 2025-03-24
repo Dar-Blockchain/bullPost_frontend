@@ -247,7 +247,7 @@ export default function BullPostPage() {
     const refresh_token = params.get("refresh_token");
     const username = params.get("username");
     // Check the localStorage flag
-    const addAccountFlag = localStorage.getItem("addAcount");
+    const addAccountFlag = localStorage.getItem("addAccount");
 
     // If we don’t have a refresh_token, stop everything.
     if (!refresh_token) {
