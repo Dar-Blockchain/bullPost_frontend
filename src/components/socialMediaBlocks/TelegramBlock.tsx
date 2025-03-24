@@ -73,6 +73,8 @@ interface UserPreference {
     TELEGRAM_CHAT_ID?: string;
     TELEGRAM_GroupName?: string;
     twitterConnect?: string;
+    discord?: string;
+    telegram?: string;
 }
 
 const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai }) => {
@@ -136,7 +138,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
                     setTELEGRAM_GroupName(data.TELEGRAM_GroupName || "");
                     // Enable Telegram switch if TELEGRAM_CHAT_ID exists and is non-empty
-                    setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
+                    setTelegramEnabled(Boolean(data.telegram));
                 }
             })
             .catch((err) => console.error("Error fetching preferences:", err));
