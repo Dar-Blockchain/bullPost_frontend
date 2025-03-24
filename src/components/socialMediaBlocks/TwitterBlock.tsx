@@ -506,6 +506,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         ? data.data.twitter
                         : [];
                 setAccounts(accountsArray);
+                console.log(twitterName, 'here twitter Name')
             } catch (error) {
                 console.error("Error fetching twitter accounts:", error);
             }
@@ -538,11 +539,12 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 toast.success("twitter assigned successfully!");
                 // Update current Discord server name in state
                 setTwitterName(account.twitter_Name);
+
                 // Update user preferences in localStorage
                 const storedPreference = localStorage.getItem("userPreference");
                 const pref = storedPreference ? JSON.parse(storedPreference) : {};
                 pref.twitterConnect = account.refresh_token;
-                // pref.DISCORD_WEBHOOK_URL = account.webhookUrl; // if you want to save the webhook URL too
+                pref.twitterName = account.twitter_Name; // if you want to save the webhook URL too
                 localStorage.setItem("userPreference", JSON.stringify(pref));
             } else {
                 toast.error(`Failed to assign webhook: ${data.error || "Unknown error"}`);
@@ -554,7 +556,15 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             handleClose2(); // Close the popover after the API call
         }
     };
-
+    useEffect(() => {
+        const storedPreference = localStorage.getItem("userPreference");
+        if (storedPreference) {
+            const parsed = JSON.parse(storedPreference);
+            if (parsed.twitterName) {
+                setTwitterName(parsed.twitterName);
+            }
+        }
+    }, []);
     return (
         <>
             <Box
@@ -595,7 +605,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                             >
                                 <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
                                 <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                    @{user.userName}
+                                    @{twitterName}
                                 </Typography>
                                 <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                                     <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />

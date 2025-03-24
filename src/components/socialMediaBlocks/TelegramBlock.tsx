@@ -498,6 +498,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             }
         }
     }, []);
+    
     const handleCloseTelegramPopover = () => {
         setTelegramAnchor(null);
     };
@@ -548,6 +549,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             handleCloseTelegramPopover(); // Close the Telegram popover after the API call
         }
     };
+
     return (
         <Box
             sx={{
@@ -607,7 +609,8 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                         >
                             <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
                             <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                @{telegramServerName}
+                                @{telegramServerName || "BullPost User"}
+
                             </Typography>
                             <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                                 <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />

@@ -316,7 +316,41 @@ const AccountsTab: React.FC = () => {
       console.error("Error during redirection:", error);
     }
   };
-
+  const handleRemoveTwitter = async (acc: TwitterAccount, index: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/removeTwitterAccount
+`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            refresh_token: acc.refresh_token,
+          }),
+        }
+      );
+      if (!response.ok) {
+        console.error("Failed to remove Twitter account:", response.statusText);
+        toast.error("❌ Failed to remove Twitter account", { position: "top-right" });
+        return;
+      }
+      const data = await response.json();
+      console.log("Removed Twitter account:", data);
+      setTwitterAccounts((prev) => prev.filter((_, i) => i !== index));
+      toast.success("Twitter account removed", { position: "top-right" });
+    } catch (error) {
+      console.error("Error removing Twitter account:", error);
+      toast.error("❌ Error removing Twitter account", { position: "top-right" });
+    }
+  };
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: gridColumns, gap: 4 }}>
       {/* X (Twitter) Accounts */}
@@ -331,7 +365,7 @@ const AccountsTab: React.FC = () => {
               key={acc._id || index}
               name={`${acc.twitter_Name}`}
               url={`(${acc.refresh_token})`}
-              onRemove={() => { }}
+              onRemove={() => handleRemoveTwitter(acc, index)}
             />
           ))
         }
