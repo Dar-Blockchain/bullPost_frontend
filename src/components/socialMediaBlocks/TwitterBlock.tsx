@@ -44,7 +44,11 @@ import {
     StrikethroughS as StrikethroughSIcon,
     Code as CodeIcon,
 } from "@mui/icons-material";
-
+interface TwitterAccount {
+    _id: string;
+    twitter_Name: string;
+    refresh_token: string;
+}
 // Interfaces
 interface TwitterBlockProps {
     submittedText: string;
@@ -453,7 +457,17 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             setIsEditing(false);
         }
     };
+    const [accounts, setAccounts] = useState<TwitterAccount[]>([]);
+    const [anchorEl2, setAnchorEl2] = useState(null);
+    const open = Boolean(anchorEl);
 
+    const handleArrowClick = (event: any) => {
+        setAnchorEl2(event.currentTarget);
+    };
+
+    const handleClose2 = () => {
+        setAnchorEl2(null);
+    };
     // Helper to guard icon actions while editing
     const handleIconAction = (action: () => void) => {
         if (isEditing) {
@@ -461,6 +475,84 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             return;
         }
         action();
+    };
+    const [twitterName, setTwitterName] = useState("");
+    useEffect(() => {
+        const loadDiscordAccounts = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("No token found");
+                return;
+            }
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getAcountData`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ types: ["twitter"] }),
+                    }
+                );
+                if (!response.ok) {
+                    console.error("Failed to fetch twitter accounts:", response.statusText);
+                    return;
+                }
+                const data = await response.json();
+                const accountsArray =
+                    data && data.data && Array.isArray(data.data.twitter)
+                        ? data.data.twitter
+                        : [];
+                setAccounts(accountsArray);
+            } catch (error) {
+                console.error("Error fetching twitter accounts:", error);
+            }
+        };
+
+        loadDiscordAccounts();
+    }, []);
+    const handleAssignTwitter = async (account: TwitterAccount) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("No token found");
+            return;
+        }
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/assignTwitterAccount`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        refresh_token: account.refresh_token,
+                    }),
+                }
+            );
+            const data = await response.json();
+            if (response.ok) {
+                toast.success("twitter assigned successfully!");
+                // Update current Discord server name in state
+                setTwitterName(account.twitter_Name);
+                // Update user preferences in localStorage
+                const storedPreference = localStorage.getItem("userPreference");
+                const pref = storedPreference ? JSON.parse(storedPreference) : {};
+                pref.twitterConnect = account.refresh_token;
+                // pref.DISCORD_WEBHOOK_URL = account.webhookUrl; // if you want to save the webhook URL too
+                localStorage.setItem("userPreference", JSON.stringify(pref));
+            } else {
+                toast.error(`Failed to assign webhook: ${data.error || "Unknown error"}`);
+            }
+        } catch (error) {
+            console.error("Error assigning webhook:", error);
+            toast.error("Error assigning webhook");
+        } finally {
+            handleClose2(); // Close the popover after the API call
+        }
     };
 
     return (
@@ -489,23 +581,71 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                     <img src="/X.png" alt="X" style={{ width: 30, height: 30, marginRight: "10px" }} />
                     {user && (
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                                padding: "4px 10px",
-                                border: "1px solid #3C3C3C",
-                                borderRadius: "20px",
-                                backgroundColor: "#0F0F0F",
-                            }}
-                        >
-                            <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
-                            <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                @{user.userName}
-                            </Typography>
-                            <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
-                        </Box>
+                        <>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1.5,
+                                    padding: "4px 10px",
+                                    border: "1px solid #3C3C3C",
+                                    borderRadius: "20px",
+                                    backgroundColor: "#0F0F0F",
+                                }}
+                            >
+                                <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
+                                <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
+                                    @{user.userName}
+                                </Typography>
+                                <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
+                                    <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
+                                </IconButton>
+                            </Box>
+                            <Popover
+                                open={Boolean(anchorEl2)}
+                                anchorEl={anchorEl2}
+                                onClose={handleClose2}
+
+                                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                                PaperProps={{
+                                    sx: {
+                                        backgroundColor: "black",
+                                        border: "1px solid #3C3C3C",
+                                        borderRadius: "12px",
+                                        boxShadow: 3,
+                                        padding: 1,
+                                    },
+                                }}
+                            >
+                                <Box sx={{ minWidth: "200px" }}>
+                                    {accounts.map((account) => (
+                                        <Box
+                                            key={account._id}
+                                            onClick={() => handleAssignTwitter(account)}
+
+                                            sx={{
+                                                padding: "8px 16px",
+                                                cursor: "pointer",
+                                                "&:hover": { backgroundColor: "#2F2F2F" },
+                                            }}
+                                        >
+                                            <Typography variant="body1" sx={{ color: "grey" }}>
+                                                @{account.twitter_Name}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                    {accounts.length === 0 && (
+                                        <Box sx={{ padding: "8px 16px" }}>
+                                            <Typography variant="body2" color="textSecondary">
+                                                No Discord accounts found.
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+                            </Popover>
+                        </>
+
                     )}
                     <Box sx={{ flexGrow: 1 }} />
                     {user && (
@@ -797,7 +937,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         </>
                     )}
                 </Box>
-            </Box>
+            </Box >
         </>
     );
 };

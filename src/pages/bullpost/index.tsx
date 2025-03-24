@@ -60,6 +60,8 @@ export default function BullPostPage() {
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
   const [discordServerName, setDiscordServerName] = useState("");
   const [telegramGroupName, setTelegramGroupName] = useState("");
+  const [TwitterName, setTwitterName] = useState("");
+  const [TwitterRefreshName, setTwitterRefreshName] = useState("");
 
   const [telegramChatId, setTelegramChatId] = useState("");
   const [twitterConnect, setTwitterConnect] = useState("");
@@ -79,7 +81,9 @@ export default function BullPostPage() {
       Discord: Discord,
       Telegram: Telegram,
       discordServerName: discordServerName,
-      telegramGroupName: telegramGroupName
+      telegramGroupName: telegramGroupName,
+      setTwitterName: TwitterName,
+      // TwitterRefreshName: TwitterRefreshName
     };
     localStorage.setItem("userPreference", JSON.stringify(preference));
   }, [preferredProvider,
@@ -90,7 +94,7 @@ export default function BullPostPage() {
     Discord,
     Telegram,
     discordServerName,
-    telegramGroupName,]);
+    telegramGroupName, TwitterName]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -116,8 +120,7 @@ export default function BullPostPage() {
           setDiscord(data.discord || "")
           setTelegram(data.telegram || "")
           setDiscordServerName(data.Discord_Server_Name ? data.Discord_Server_Name : "")
-          setTelegramGroupName(data.TELEGRAM_GroupName ? data.TELEGRAM_GroupName : "")
-
+          setTwitterName(data.twitterName ? data.twitterName : "")
         }
       })
       .catch((err) => console.error("Error fetching preferences:", err));

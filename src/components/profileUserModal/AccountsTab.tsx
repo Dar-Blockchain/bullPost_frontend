@@ -19,7 +19,7 @@ interface TelegramAccount {
   _id: string;
 }
 interface TwitterAccount {
-  accountName: string;
+  twitter_Name: string;
   refresh_token: string;
   _id: string;
 }
@@ -329,7 +329,7 @@ const AccountsTab: React.FC = () => {
           .map((acc, index) => (
             <AccountItem
               key={acc._id || index}
-              name={`${acc.accountName}`}
+              name={`${acc.twitter_Name}`}
               url={`(${acc.refresh_token})`}
               onRemove={() => { }}
             />
