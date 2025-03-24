@@ -9,9 +9,6 @@ import {
     Popover,
     TextField,
     CircularProgress,
-    List,
-    ListItem,
-    ListItemText,
 } from "@mui/material";
 import { keyframes, useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -50,16 +47,12 @@ import dayjs from "dayjs";
 import ReactMarkdown from "react-markdown";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ConnectModal from "./ConnectModal";
+
 interface DiscordAccount {
     _id: string;
     webhookUrl: string;
     groupName: string;
 }
-// Keyframes for spinning animation
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
 
 interface DiscordBlockProps {
     submittedText: string;
@@ -74,6 +67,25 @@ interface UserPreference {
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
     discord?: boolean;
+}
+
+// Keyframes for spinning animation
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+interface PreferencesData {
+    OpenIA?: boolean;
+    Gemini?: boolean;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+    refresh_token?: string;
+    twitter?: string;
+    discord?: boolean;
+    Discord_Server_Name?: string;
+    twitter_Name?: string;
+    TELEGRAM_GroupName?: string;
 }
 
 const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
@@ -114,22 +126,42 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     useEffect(() => {
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
+
     const [discordServerName, setDiscordServerName] = useState("");
 
-    // Load user preferences from localStorage on mount
+    // Fetch preferences from API instead of localStorage
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const storedPreference = localStorage.getItem("userPreference");
-            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
-            setPreference(parsedPreference);
-            if (parsedPreference.Discord) {
-                setDiscrodEnabled(parsedPreference.Discord);
-            }
-            if (parsedPreference.discordServerName) {
-                setDiscordServerName(parsedPreference.discordServerName);
-            }
-        }
-    }, []);
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data: PreferencesData) => {
+                if (data) {
+                    console.log(data, "data");
+                    setPreference({
+                        OpenIA: data.OpenIA,
+                        Gemini: data.Gemini,
+                        DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
+                        TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+                        discord: data.discord,
+                    });
+                    if (data.discord) {
+                        setDiscrodEnabled(data.discord);
+                    }
+                    if (data.Discord_Server_Name) {
+                        setDiscordServerName(data.Discord_Server_Name);
+                    }
+                    // Set other state variables if needed
+                }
+            })
+            .catch((err) => console.error("Error fetching preferences:", err));
+    }, [user]);
 
     // Typewriter effect for submitted text if AI mode is enabled
     useEffect(() => {
@@ -385,11 +417,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     const handleSave = async (discordValue: boolean) => {
         const token = localStorage.getItem("token");
         if (!token) return;
-        const storedPref = localStorage.getItem("userPreference");
-        const pref = storedPref ? JSON.parse(storedPref) : {};
-        const updatedPref = { ...pref, Discord: discordValue };
-        localStorage.setItem("userPreference", JSON.stringify(updatedPref));
-        console.log("Local preferences saved:", updatedPref);
+        // Instead of updating localStorage, you may want to update your backend preferences
         const requestBody = { discord: discordValue };
         try {
             const response = await fetch(
@@ -446,8 +474,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
     const isPublished = Boolean(announcement?.publishedAtDiscord);
     const [accounts, setAccounts] = useState<DiscordAccount[]>([]);
-    const [anchorEl2, setAnchorEl2] = useState(null);
-    const open = Boolean(anchorEl);
+    const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
 
     const handleArrowClick = (event: any) => {
         setAnchorEl2(event.currentTarget);
@@ -483,9 +510,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 }
                 const data = await response.json();
                 const accountsArray =
-                    data && data.data && Array.isArray(data.data.discord)
-                        ? data.data.discord
-                        : [];
+                    data && data.data && Array.isArray(data.data.discord) ? data.data.discord : [];
                 setAccounts(accountsArray);
             } catch (error) {
                 console.error("Error fetching Discord accounts:", error);
@@ -494,6 +519,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
         loadDiscordAccounts();
     }, []);
+
     const handleAssignWebhook = async (account: DiscordAccount) => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -520,12 +546,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 toast.success("Webhook assigned successfully!");
                 // Update current Discord server name in state
                 setDiscordServerName(account.groupName);
-                // Update user preferences in localStorage
-                const storedPreference = localStorage.getItem("userPreference");
-                const pref = storedPreference ? JSON.parse(storedPreference) : {};
-                pref.discordServerName = account.groupName;
-                pref.DISCORD_WEBHOOK_URL = account.webhookUrl; // if you want to save the webhook URL too
-                localStorage.setItem("userPreference", JSON.stringify(pref));
+                // Optionally update your backend preferences with the new webhook details
             } else {
                 toast.error(`Failed to assign webhook: ${data.error || "Unknown error"}`);
             }
@@ -541,7 +562,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
         <>
             <Box
                 sx={{
-
                     flex: 1,
                     backgroundColor: "#111112",
                     p: 2,
@@ -552,7 +572,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     textAlign: "center",
                     display: "flex",
                     flexDirection: "column",
-                    // Let this box be tall enough so content can scroll behind the fixed bottom bar
                     minHeight: "100vh",
                     width: "100%",
                     mt: isMobile ? "10px" : "0",
@@ -583,7 +602,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                             >
                                 <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
                                 <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                    @{discordServerName ? discordServerName : "BullPost User"}
+                                    @{discordServerName || "BullPost User"}
                                 </Typography>
                                 <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                                     <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
@@ -593,7 +612,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                 open={Boolean(anchorEl2)}
                                 anchorEl={anchorEl2}
                                 onClose={handleClose2}
-
                                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                                 transformOrigin={{ vertical: "top", horizontal: "right" }}
                                 PaperProps={{
@@ -611,7 +629,6 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                                         <Box
                                             key={account._id}
                                             onClick={() => handleAssignWebhook(account)}
-
                                             sx={{
                                                 padding: "8px 16px",
                                                 cursor: "pointer",
@@ -779,16 +796,17 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                     )}
                 </Box>
 
-
                 {/* Toolbar and Scheduling Section */}
-                <Box sx={{
-                    position: "sticky", bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 999,
-                    // borderTop: "1px solid #3C3C3C",
-                    padding: "8px",
-                }}>
+                <Box
+                    sx={{
+                        position: "sticky",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 999,
+                        padding: "8px",
+                    }}
+                >
                     {user && (
                         <>
                             <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, mb: 2, gap: 1 }}>

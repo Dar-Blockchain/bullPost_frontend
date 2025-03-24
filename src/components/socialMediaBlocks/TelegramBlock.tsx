@@ -71,6 +71,7 @@ interface UserPreference {
     Gemini?: boolean;
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
+    TELEGRAM_GroupName?: string;
     twitterConnect?: string;
 }
 
@@ -97,7 +98,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
     const [preference, setPreference] = useState<UserPreference>({});
     const [telegramEnabled, setTelegramEnabled] = useState(false);
+    const [TELEGRAM_GroupName, setTELEGRAM_GroupName] = useState("");
 
+    TELEGRAM_GroupName
     // Refs for typewriter effect and text formatting
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
     const indexRef = useRef(0);
@@ -113,7 +116,31 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
 
-
+    // Fetch user preferences from API (using the same API GET as in your TwitterBlock)
+    useEffect(() => {
+        if (!user) return;
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data: UserPreference) => {
+                if (data) {
+                    console.log(data, "data");
+                    setPreference(data);
+                    setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
+                    setTELEGRAM_GroupName(data.TELEGRAM_GroupName || "");
+                    // Enable Telegram switch if TELEGRAM_CHAT_ID exists and is non-empty
+                    setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
+                }
+            })
+            .catch((err) => console.error("Error fetching preferences:", err));
+    }, [user]);
 
     // Typewriter effect for submitted text when AI mode is active
     useEffect(() => {
@@ -167,7 +194,6 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             } else {
                 console.warn("No image found in selectedImage state.");
             }
-            // Debug: Log FormData entries
             for (let pair of formData.entries()) {
                 console.log(pair[0] + ": " + pair[1]);
             }
@@ -219,7 +245,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
     };
 
-    // Update scheduling button text
+    // Update scheduling button text based on date/time selections or published time
     const updateButtonText = (date: Dayjs | null, time: Dayjs | null) => {
         if (announcement?.publishedAtTelegram) {
             const publishedDate = dayjs(announcement.publishedAtTelegram);
@@ -350,7 +376,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
     };
 
-    // Helper to guard icon actions when editing is active
+    // Guard icon actions when editing is active
     const handleIconAction = (action: () => void) => {
         if (isEditing) {
             toast.info("Please save your editing block first", { position: "top-right" });
@@ -359,15 +385,10 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         action();
     };
 
-    // Switch preference & save handler for Telegram connection
+    // Switch preference & save handler for Telegram connection (if needed)
     const handleSavePreference = async (telegramValue: boolean) => {
         const token = localStorage.getItem("token");
         if (!token) return;
-        const storedPref = localStorage.getItem("userPreference");
-        const pref = storedPref ? JSON.parse(storedPref) : {};
-        const updatedPref = { ...pref, Telegram: telegramValue };
-        localStorage.setItem("userPreference", JSON.stringify(updatedPref));
-        console.log("Local preferences saved:", updatedPref);
         const requestBody = { telegram: telegramValue };
         try {
             const response = await fetch(
@@ -431,14 +452,14 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedImage]);
-    const [accounts, setAccounts] = useState<TelegramAccount[]>([]);
-    const [anchorEl2, setAnchorEl2] = useState(null);
-    const open = Boolean(anchorEl);
 
+    // Telegram account assignment (fetch and assign Telegram accounts)
+    const [accounts, setAccounts] = useState<TelegramAccount[]>([]);
+    const [anchorEl2, setAnchorEl2] = useState<HTMLElement | null>(null);
+    const open = Boolean(anchorEl);
     const handleArrowClick = (event: any) => {
         setAnchorEl2(event.currentTarget);
     };
-
     const handleClose2 = () => {
         setAnchorEl2(null);
     };
@@ -463,45 +484,24 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     }
                 );
                 if (!response.ok) {
-                    console.error("Failed to fetch Discord accounts:", response.statusText);
+                    console.error("Failed to fetch telegram accounts:", response.statusText);
                     return;
                 }
                 const data = await response.json();
                 const accountsArray =
-                    data && data.data && Array.isArray(data.data.telegram
-                    )
+                    data && data.data && Array.isArray(data.data.telegram)
                         ? data.data.telegram
-
                         : [];
                 setAccounts(accountsArray);
             } catch (error) {
-                console.error("Error fetching Discord accounts:", error);
+                console.error("Error fetching telegram accounts:", error);
             }
         };
 
         loadTelegramAccounts();
     }, []);
-    const [telegramChatId, setTelegramChatId] = useState("");
-    // Define a separate anchor for your Telegram popover, similar to your Discord one
-    const [telegramAnchor, setTelegramAnchor] = useState<HTMLElement | null>(null);
-    const [telegramServerName, setTelegramServerName] = useState("");
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const storedPreference = localStorage.getItem("userPreference");
-            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
-            setPreference(parsedPreference);
-            if (parsedPreference.Telegram) {
-                setTelegramEnabled(parsedPreference.Telegram);
-            }
-            if (parsedPreference.discordServerName) {
-                setTelegramServerName(parsedPreference.telegramGroupName);
-            }
-        }
-    }, []);
-    
-    const handleCloseTelegramPopover = () => {
-        setTelegramAnchor(null);
-    };
+
+    // Assign Telegram account handler using the API GET preferences result
     const handleAssignTelegramWebhook = async (account: TelegramAccount) => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -510,8 +510,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
         try {
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/assignTelegramChatId
-`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/assignTelegramChatId`,
                 {
                     method: "POST",
                     headers: {
@@ -520,40 +519,50 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     },
                     body: JSON.stringify({
                         chatId: account.chatId,
-                        // groupName: account.groupName,
                     }),
                 }
             );
             const data = await response.json();
             if (response.ok) {
                 toast.success("Telegram webhook assigned successfully!");
-                // Update current Telegram chat id (or group name) in state
-                setTelegramChatId(account.groupName);
-                setTelegramServerName(account.groupName)
-                // Update user preferences in localStorage
-                const storedPreference = localStorage.getItem("userPreference");
-                const pref = storedPreference ? JSON.parse(storedPreference) : {};
-                // You can adjust these keys to suit your application's needs
-                pref.telegramChatId = account.groupName;
-                pref.TELEGRAM_WEBHOOK_URL = account.chatId;
-                localStorage.setItem("userPreference", JSON.stringify(pref));
+                if (!user) return;
+                const token = localStorage.getItem("token");
+                if (!token) return;
+                fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    },
+                })
+                    .then((res) => res.json())
+                    .then((data: UserPreference) => {
+                        if (data) {
+                            console.log(data, "data");
+                            setPreference(data);
+                            setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
+                            setTELEGRAM_GroupName(data.TELEGRAM_GroupName || "");
+                            // Enable Telegram switch if TELEGRAM_CHAT_ID exists and is non-empty
+                            setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching preferences:", err));
+                // Update current Telegram chat id or group name in state as needed
+                // For example, you might update a state variable that holds the current group name
             } else {
-                toast.error(
-                    `Failed to assign telegram webhook: ${data.error || "Unknown error"}`
-                );
+                toast.error(`Failed to assign telegram webhook: ${data.error || "Unknown error"}`);
             }
         } catch (error) {
             console.error("Error assigning telegram webhook:", error);
             toast.error("Error assigning telegram webhook");
         } finally {
-            handleCloseTelegramPopover(); // Close the Telegram popover after the API call
+            handleClose2();
         }
     };
 
     return (
         <Box
             sx={{
-
                 flex: 1,
                 backgroundColor: "#111112",
                 p: 2,
@@ -564,33 +573,12 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
-                // Let this box be tall enough so content can scroll behind the fixed bottom bar
                 minHeight: "100vh",
                 width: "100%",
                 mt: isMobile ? "10px" : "0",
                 position: "relative",
             }}
         >
-            {/* <Box
-                sx={{
-                    flex: 1,
-                    backgroundImage: "url('/TelegramColor.png')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "top",
-                    backgroundColor: "#111112",
-                    p: 2,
-                    border: "1px solid #3C3C3C",
-                    textAlign: "center",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    minHeight: isMobile ? "500px" : "400px",
-                    maxHeight: isMobile ? "500px" : "400px",
-                    flexShrink: 0,
-                    width: "100%",
-                    mt: isMobile ? "10px" : "0",
-                }}
-            > */}
             {/* Top Bar: Telegram Icon and User Profile */}
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                 <img src="/telegram.png" alt="telegram" style={{ width: 30, height: 30, marginRight: "10px" }} />
@@ -609,8 +597,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                         >
                             <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
                             <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                @{telegramServerName || "BullPost User"}
-
+                                @{preference.TELEGRAM_GroupName
+                                    ? preference.TELEGRAM_GroupName
+                                    : "BullPost User"}
                             </Typography>
                             <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                                 <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
@@ -620,7 +609,6 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                             open={Boolean(anchorEl2)}
                             anchorEl={anchorEl2}
                             onClose={handleClose2}
-
                             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                             transformOrigin={{ vertical: "top", horizontal: "right" }}
                             PaperProps={{
@@ -638,7 +626,6 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                     <Box
                                         key={account._id}
                                         onClick={() => handleAssignTelegramWebhook(account)}
-
                                         sx={{
                                             padding: "8px 16px",
                                             cursor: "pointer",
@@ -845,12 +832,16 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                 <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleIconAction(() => { /* Mood action placeholder */ })}>
                                     <Mood fontSize="small" />
                                 </IconButton>
-                                <IconButton component="label" sx={{ color: "#8F8F8F" }} onClick={(e) => {
-                                    if (isEditing) {
-                                        e.preventDefault();
-                                        toast.info("Please save your editing block first", { position: "top-right" });
-                                    }
-                                }}>
+                                <IconButton
+                                    component="label"
+                                    sx={{ color: "#8F8F8F" }}
+                                    onClick={(e) => {
+                                        if (isEditing) {
+                                            e.preventDefault();
+                                            toast.info("Please save your editing block first", { position: "top-right" });
+                                        }
+                                    }}
+                                >
                                     {!isEditing && isLoading ? (
                                         <CircularProgress size={24} />
                                     ) : (

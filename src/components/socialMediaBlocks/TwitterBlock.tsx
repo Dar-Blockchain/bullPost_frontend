@@ -44,12 +44,13 @@ import {
     StrikethroughS as StrikethroughSIcon,
     Code as CodeIcon,
 } from "@mui/icons-material";
+
 interface TwitterAccount {
     _id: string;
     twitter_Name: string;
     refresh_token: string;
 }
-// Interfaces
+
 interface TwitterBlockProps {
     submittedText: string;
     _id: string;
@@ -63,16 +64,22 @@ interface UserPreference {
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
     twitterConnect?: string;
+    twitter?: string;
+    discord?: string;
+    telegram?: string;
+    Discord_Server_Name?: string;
+    twitter_Name?: string;
+    refresh_token?: string;
+    TELEGRAM_GroupName?: string;
 }
 
-// Component
 const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useAuth();
 
-    // Local States
+    // Local States for display and editing
     const [displayText, setDisplayText] = useState("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -80,7 +87,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
     const [twitterEnabled, setTwitterEnabled] = useState(false);
-    const [preference, setPreference] = useState<UserPreference>({});
     const [isPosting, setIsPosting] = useState<boolean>(false);
 
     // Scheduling states
@@ -90,14 +96,14 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const [timeZone, setTimeZone] = useState<string>("");
     const [buttonText, setButtonText] = useState<string>("Post Now");
 
-    // For typewriter effect
+    // Typewriter effect refs
     const indexRef = useRef(0);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
     // Ref for formatting popover
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
 
-    // Redux: Get announcement (if any) and determine postId
+    // Redux: Get announcement and determine postId
     const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
     const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
     const postId = announcement?._id || _id;
@@ -107,34 +113,57 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
 
-    // Load user preferences (only once)
+    // Preference states (instead of one combined "preference" object)
+    const [preferredProvider, setPreferredProvider] = useState<string>("");
+    const [openIaKey, setOpenIaKey] = useState<string>("");
+    const [geminiKey, setGeminiKey] = useState<string>("");
+    const [discordWebhookUrl, setDiscordWebhookUrl] = useState<string>("");
+    const [telegramChatId, setTelegramChatId] = useState<string>("");
+    const [twitterConnect, setTwitterConnect] = useState<string>("");
+    const [twitter, setTwitter] = useState<string>("");
+    const [discord, setDiscord] = useState<string>("");
+    const [telegram, setTelegram] = useState<string>("");
+    const [discordServerName, setDiscordServerName] = useState<string>("");
+    const [twitterName, setTwitterName] = useState<string>("");
+    const [telegramGroupName, setTelegramGroupName] = useState<string>("");
+
+    // Fetch user preferences from API using the provided snippet.
+    // This effect will run whenever the user changes (e.g., when logged in)
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const storedPreference = localStorage.getItem("userPreference");
-            const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
-            setPreference(parsedPreference);
-            if (parsedPreference.Twitter) {
-                setTwitterEnabled(parsedPreference.Twitter);
-            }
-            // if (parsedPreference.discordServerName) {
-            //     setTelegramServerName(parsedPreference.twitterConnect);
-            // }
-        }
-    }, []);
-    // useEffect(() => {
-    //     if (typeof window !== "undefined") {
-    //         const storedPreference = localStorage.getItem("userPreference");
-    //         const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
-    //         setPreference(parsedPreference);
-    //         if (parsedPreference.twitterConnect) {
-    //             setTwitterEnabled(true);
-    //             setTelegramEnabled(parsedPreference.Telegram);
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data: UserPreference) => {
+                if (data) {
+                    console.log(data, "data");
+                    setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
+                    setOpenIaKey((data as any).OpenIaKey || "");
+                    setGeminiKey((data as any).GeminiKey || "");
+                    setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
+                    setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+                    setTwitterConnect(data.refresh_token || "");
+                    setTwitter(data.twitter || "");
+                    setDiscord(data.discord || "");
+                    setTelegram(data.telegram || "");
+                    setDiscordServerName(data.Discord_Server_Name || "");
+                    setTwitterName(data.twitter_Name || "");
+                    setTelegramGroupName(data.TELEGRAM_GroupName || "");
 
-    //         }
-    //     }
-    // }, []);
+                    // Enable Twitter switch if twitter string exists and is non-empty
+                    setTwitterEnabled(Boolean(data.twitter));
+                }
+            })
+            .catch((err) => console.error("Error fetching preferences:", err));
+    }, [user]);
 
-    // Typewriter effect: Display text character-by-character when AI mode is enabled
+    // Typewriter effect for submitted text if AI mode is enabled
     useEffect(() => {
         if (!submittedText) {
             setDisplayText("");
@@ -168,7 +197,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             console.log("Selected file:", file.name);
-            // Use announcement.twitter if available, otherwise use displayText
             const currentText = announcement?.twitter || displayText;
             setEditableText(currentText);
             setSelectedImage(file);
@@ -188,13 +216,11 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             } else {
                 console.warn("No image found in selectedImage state.");
             }
-            // Debug: Log formData entries
             for (let pair of formData.entries()) {
                 console.log(pair[0] + ": " + pair[1]);
             }
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            // Note: Using updatedPost.twitter to update display text
             setDisplayText(updatedPost?.twitter || textToSend);
             setSelectedImage(null);
         } catch (error) {
@@ -270,7 +296,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const handleRegenerate = async (icon: boolean) => {
         if (icon) setIsRegenerating(true);
         try {
-            if (preference?.Gemini === true) {
+            if (geminiKey && preferredProvider === "Gemini") {
                 await dispatch(regeneratePost({ platform: "twitter", postId })).unwrap();
             } else {
                 await dispatch(regeneratePostOpenAi({ platform: "twitter", postId })).unwrap();
@@ -325,11 +351,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const handleClose = () => setAnchorEl(null);
     const handleDateChange = (newDate: Dayjs | null) => {
         setSelectedDate(newDate);
-        // Optionally update scheduling text here if needed
     };
     const handleTimeChange = (newTime: Dayjs | null) => {
         setSelectedTime(newTime);
-        // Optionally update scheduling text here if needed
     };
 
     const handleSchedulePost = async () => {
@@ -379,18 +403,15 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 console.error("No token found");
                 return;
             }
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/oauth-url`,
-                {
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                }
-            );
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/oauth-url`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (!response.ok) throw new Error("Failed to fetch the redirect URL");
             const data = await response.json();
             if (data) {
-                window.location.href = data; // Redirect to the provided URL
+                window.location.href = data;
             } else {
                 console.error("Invalid URL received");
             }
@@ -398,14 +419,11 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             console.error("Error during redirection:", error);
         }
     };
-    // Save preference and update switch state for Twitter
+
+    // Save preference and update switch state for Twitter using API
     const handleSavePreference = async (twitterValue: boolean) => {
         const token = localStorage.getItem("token");
         if (!token) return;
-        const storedPref = localStorage.getItem("userPreference");
-        const pref = storedPref ? JSON.parse(storedPref) : {};
-        const updatedPref = { ...pref, Twitter: twitterValue };
-        localStorage.setItem("userPreference", JSON.stringify(updatedPref));
         const requestBody = { twitter: twitterValue };
         try {
             const response = await fetch(
@@ -444,7 +462,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             setIsLoading(true);
             const formData = new FormData();
             formData.append("status", "drafts");
-            // For debugging: clear publishedAtTwitter field
             formData.append("publishedAtTwitter", "");
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
@@ -457,9 +474,18 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             setIsEditing(false);
         }
     };
+
+    // Guard icon actions while editing
+    const handleIconAction = (action: () => void) => {
+        if (isEditing) {
+            toast.info("Please save your editing block first", { position: "top-right" });
+            return;
+        }
+        action();
+    };
+
     const [accounts, setAccounts] = useState<TwitterAccount[]>([]);
-    const [anchorEl2, setAnchorEl2] = useState(null);
-    const open = Boolean(anchorEl);
+    const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
 
     const handleArrowClick = (event: any) => {
         setAnchorEl2(event.currentTarget);
@@ -468,17 +494,10 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const handleClose2 = () => {
         setAnchorEl2(null);
     };
-    // Helper to guard icon actions while editing
-    const handleIconAction = (action: () => void) => {
-        if (isEditing) {
-            toast.info("Please save your editing block first", { position: "top-right" });
-            return;
-        }
-        action();
-    };
-    const [twitterName, setTwitterName] = useState("");
+
+    // Fetch Twitter accounts from API
     useEffect(() => {
-        const loadDiscordAccounts = async () => {
+        const loadTwitterAccounts = async () => {
             const token = localStorage.getItem("token");
             if (!token) {
                 console.error("No token found");
@@ -506,14 +525,22 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         ? data.data.twitter
                         : [];
                 setAccounts(accountsArray);
-                console.log(twitterName, 'here twitter Name')
             } catch (error) {
                 console.error("Error fetching twitter accounts:", error);
             }
         };
 
-        loadDiscordAccounts();
+        loadTwitterAccounts();
     }, []);
+
+    // Update twitterName from preferences if available
+    useEffect(() => {
+        if (twitterName) {
+            setTwitterName(twitterName);
+        }
+    }, [twitterName]);
+
+    // Assign Twitter account handler
     const handleAssignTwitter = async (account: TwitterAccount) => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -536,40 +563,23 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             );
             const data = await response.json();
             if (response.ok) {
-                toast.success("twitter assigned successfully!");
-                // Update current Discord server name in state
+                toast.success("Twitter assigned successfully!");
                 setTwitterName(account.twitter_Name);
-
-                // Update user preferences in localStorage
-                const storedPreference = localStorage.getItem("userPreference");
-                const pref = storedPreference ? JSON.parse(storedPreference) : {};
-                pref.twitterConnect = account.refresh_token;
-                pref.twitterName = account.twitter_Name; // if you want to save the webhook URL too
-                localStorage.setItem("userPreference", JSON.stringify(pref));
             } else {
-                toast.error(`Failed to assign webhook: ${data.error || "Unknown error"}`);
+                toast.error(`Failed to assign account: ${data.error || "Unknown error"}`);
             }
         } catch (error) {
-            console.error("Error assigning webhook:", error);
-            toast.error("Error assigning webhook");
+            console.error("Error assigning account:", error);
+            toast.error("Error assigning account");
         } finally {
-            handleClose2(); // Close the popover after the API call
+            handleClose2();
         }
     };
-    useEffect(() => {
-        const storedPreference = localStorage.getItem("userPreference");
-        if (storedPreference) {
-            const parsed = JSON.parse(storedPreference);
-            if (parsed.twitterName) {
-                setTwitterName(parsed.twitterName);
-            }
-        }
-    }, []);
+
     return (
         <>
             <Box
                 sx={{
-
                     flex: 1,
                     backgroundColor: "#111112",
                     p: 2,
@@ -580,7 +590,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     textAlign: "center",
                     display: "flex",
                     flexDirection: "column",
-                    // Let this box be tall enough so content can scroll behind the fixed bottom bar
                     minHeight: "100vh",
                     width: "100%",
                     mt: isMobile ? "10px" : "0",
@@ -615,7 +624,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 open={Boolean(anchorEl2)}
                                 anchorEl={anchorEl2}
                                 onClose={handleClose2}
-
                                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                                 transformOrigin={{ vertical: "top", horizontal: "right" }}
                                 PaperProps={{
@@ -633,7 +641,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         <Box
                                             key={account._id}
                                             onClick={() => handleAssignTwitter(account)}
-
                                             sx={{
                                                 padding: "8px 16px",
                                                 cursor: "pointer",
@@ -648,19 +655,18 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     {accounts.length === 0 && (
                                         <Box sx={{ padding: "8px 16px" }}>
                                             <Typography variant="body2" color="textSecondary">
-                                                No Discord accounts found.
+                                                No Twitter accounts found.
                                             </Typography>
                                         </Box>
                                     )}
                                 </Box>
                             </Popover>
                         </>
-
                     )}
                     <Box sx={{ flexGrow: 1 }} />
                     {user && (
                         <>
-                            {preference.twitterConnect && preference.twitterConnect.trim().length > 0 ? (
+                            {twitterConnect && twitterConnect.trim().length > 0 ? (
                                 <Switch
                                     color="warning"
                                     checked={twitterEnabled}
@@ -819,9 +825,10 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         sx={{ color: "#8F8F8F" }}
                                         onClick={() => {
                                             if (!isEditing) {
-                                                const currentText = selectedAnnouncement && selectedAnnouncement.length > 0
-                                                    ? selectedAnnouncement[0].twitter
-                                                    : displayText;
+                                                const currentText =
+                                                    selectedAnnouncement && selectedAnnouncement.length > 0
+                                                        ? selectedAnnouncement[0].twitter
+                                                        : displayText;
                                                 setEditableText(currentText);
                                                 setIsEditing(true);
                                             } else {
@@ -831,15 +838,22 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                     >
                                         {isEditing ? <Done fontSize="small" /> : <Edit fontSize="small" />}
                                     </IconButton>
-                                    <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleIconAction(() => { /* Mood action placeholder */ })}>
+                                    <IconButton
+                                        sx={{ color: "#8F8F8F" }}
+                                        onClick={() => handleIconAction(() => { /* Mood action placeholder */ })}
+                                    >
                                         <Mood fontSize="small" />
                                     </IconButton>
-                                    <IconButton component="label" sx={{ color: "#8F8F8F" }} onClick={(e) => {
-                                        if (isEditing) {
-                                            e.preventDefault();
-                                            toast.info("Please save your editing block first", { position: "top-right" });
-                                        }
-                                    }}>
+                                    <IconButton
+                                        component="label"
+                                        sx={{ color: "#8F8F8F" }}
+                                        onClick={(e) => {
+                                            if (isEditing) {
+                                                e.preventDefault();
+                                                toast.info("Please save your editing block first", { position: "top-right" });
+                                            }
+                                        }}
+                                    >
                                         {!isEditing && isLoading ? (
                                             <CircularProgress size={24} />
                                         ) : (
@@ -920,12 +934,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                                 {dayjs(announcement.publishedAtTwitter).format("HH:mm")}{" "}
                                                 <span
                                                     onClick={ChangeStatus}
-                                                    style={{
-                                                        marginLeft: 8,
-                                                        fontWeight: "bold",
-                                                        color: "red",
-                                                        cursor: "pointer",
-                                                    }}
+                                                    style={{ marginLeft: 8, fontWeight: "bold", color: "red", cursor: "pointer" }}
                                                 >
                                                     X
                                                 </span>
@@ -947,7 +956,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                         </>
                     )}
                 </Box>
-            </Box >
+            </Box>
         </>
     );
 };
