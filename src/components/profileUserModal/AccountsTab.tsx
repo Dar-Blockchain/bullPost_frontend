@@ -356,8 +356,15 @@ const AccountsTab: React.FC = () => {
       {/* X (Twitter) Accounts */}
       <Box>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+          <img
+            src="/XBottom.png"
+            alt="Discord"
+            style={{ verticalAlign: "middle", marginRight: "8px" }}
+          />
+          X Accounts        </Typography>
+        {/* <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
           <TwitterIcon sx={{ verticalAlign: 'middle', mr: 1 }} /> X Accounts
-        </Typography>
+        </Typography> */}
         {twitterAccounts
           .filter((acc) => acc) // Filter out any undefined items
           .map((acc, index) => (
@@ -375,7 +382,12 @@ const AccountsTab: React.FC = () => {
       {/* Discord Accounts */}
       <Box>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-          <DiscordIcon sx={{ verticalAlign: 'middle', mr: 1 }} /> Discord Accounts
+          <img
+            src="/discordBottom.png"
+            alt="Discord"
+            style={{ verticalAlign: "middle", marginRight: "8px" }}
+          />
+          Discord Accounts
         </Typography>
         {/* Display fetched Discord accounts */}
         {discordAccounts

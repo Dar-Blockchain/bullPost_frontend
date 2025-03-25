@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
-    DialogTitle,
     DialogActions,
     Box,
     Typography,
@@ -20,59 +19,89 @@ interface ConnectModalProps {
     platform: string;
 }
 
+interface PreferencesData {
+    Discord_Server_Name?: string;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+    TELEGRAM_GroupName?: string;
+    // Include other keys if needed
+}
+
 const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) => {
-    // For Discord, we need both a server name and a webhook URL.
+    // For Discord
     const [discordServer, setDiscordServer] = useState("");
     const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
-    // For Telegram:
+    // For Telegram
     const [telegramChatId, setTelegramChatId] = useState("");
     const [telegramGroupName, setTelegramGroupName] = useState("");
 
-    const handleSave = async () => {
+    // Fetch user preferences from API on mount (or when the platform changes)
+    useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) return;
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data: PreferencesData) => {
+                if (data) {
+                    console.log(data, "fetched preferences");
+                    if (platform === "discord") {
+                        if (data.Discord_Server_Name) {
+                            setDiscordServer(data.Discord_Server_Name);
+                        }
+                        if (data.DISCORD_WEBHOOK_URL) {
+                            setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL);
+                        }
+                    } else if (platform === "telegram") {
+                        if (data.TELEGRAM_CHAT_ID) {
+                            setTelegramChatId(data.TELEGRAM_CHAT_ID);
+                        }
+                        if (data.TELEGRAM_GroupName) {
+                            setTelegramGroupName(data.TELEGRAM_GroupName);
+                        }
+                    }
+                }
+            })
+            .catch((err) => console.error("Error fetching preferences:", err));
+    }, [platform]); // re-run if platform changes
 
-        // Retrieve existing preferences from localStorage
-        const storedPref = localStorage.getItem("userPreference");
-        const pref = storedPref ? JSON.parse(storedPref) : {};
-
-        // Update local preferences
-        let updatedPref = { ...pref };
+    const handleSave = async () => {
+        // Validate inputs based on platform
         if (platform === "discord") {
-            if (discordServer.trim() !== "") {
-                updatedPref.groupName = discordServer;
-            }
-            if (discordWebhookUrl.trim() !== "") {
-                updatedPref.webhookUrl = discordWebhookUrl;
+            if (!discordServer.trim() || !discordWebhookUrl.trim()) {
+                toast.error("❌ Please fill out both Discord Server Name and Discord Webhook URL.", {
+                    position: "top-right",
+                });
+                return;
             }
         } else if (platform === "telegram") {
-            if (telegramChatId.trim() !== "") {
-                updatedPref.TELEGRAM_CHAT_ID = telegramChatId;
+            if (!telegramGroupName.trim() || !telegramChatId.trim()) {
+                toast.error("❌ Please fill out both Telegram Group Name and Telegram Chat ID.", {
+                    position: "top-right",
+                });
+                return;
             }
         }
-        localStorage.setItem("userPreference", JSON.stringify(updatedPref));
-        console.log("Local preferences saved:", updatedPref);
+
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
         // Build request body with non-empty keys only.
         let requestBody: any = {};
         if (platform === "discord") {
-            if (discordServer.trim() !== "") {
-                requestBody.Discord_Server_Name
-                    = discordServer;
-            }
-            if (discordWebhookUrl.trim() !== "") {
-                requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
-            }
+            requestBody.Discord_Server_Name = discordServer;
+            requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
         } else if (platform === "telegram") {
-            if (telegramGroupName.trim() !== "") {
-                requestBody.TELEGRAM_GroupName = telegramGroupName;
-            }
-            if (telegramChatId.trim() !== "") {
-                requestBody.TELEGRAM_CHAT_ID = telegramChatId;
-            }
+            requestBody.TELEGRAM_GroupName = telegramGroupName;
+            requestBody.TELEGRAM_CHAT_ID = telegramChatId;
         }
 
-        // Choose endpoint based on platform. For Discord, use the new endpoint.
+        // Choose endpoint based on platform.
         let endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/linkedToTelegram`;
         if (platform === "discord") {
             endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/linkedToDiscord`;
@@ -95,6 +124,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
             const data = await response.json();
             console.log("Preferences saved to backend:", data);
             toast.success("Preferences saved successfully!", { position: "top-right" });
+
             onClose();
         } catch (error) {
             console.error("Error saving preferences:", error);
@@ -104,13 +134,13 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
 
     // Common styles for input elements (compact & transparent)
     const inputStyles = {
-        width: '710px',
-        height: '40px',
-        borderRadius: '5px',
-        border: '1px solid #FFB300',
-        padding: '10px',
-        backgroundColor: 'transparent',
-        '& input': { color: '#fff' },
+        width: "710px",
+        height: "40px",
+        borderRadius: "5px",
+        border: "1px solid #FFB300",
+        padding: "10px",
+        backgroundColor: "transparent",
+        "& input": { color: "#fff" },
     };
 
     return (
@@ -120,17 +150,17 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
             fullWidth
             PaperProps={{
                 sx: {
-                    backgroundColor: '#171717',
-                    color: '#555555',
+                    backgroundColor: "#171717",
+                    color: "#555555",
                     borderRadius: 3,
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-                    overflow: 'hidden',
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+                    overflow: "hidden",
                 },
             }}
         >
             <DialogContent
                 sx={{
-                    backgroundColor: '#101010',
+                    backgroundColor: "#101010",
                     py: 2,
                     px: 3,
                     "&::-webkit-scrollbar": { width: "4px" },
@@ -143,79 +173,80 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
                     backgroundPosition: "top",
                 }}
             >
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {platform === "discord" && (
                         <>
                             <Box>
                                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                                    Discord Data                                </Typography>
-                                <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    Discord Data
+                                </Typography>
+                                <Divider sx={{ mb: 2, borderColor: "#444" }} />
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                                     <Input
                                         value={discordServer}
                                         onChange={(e) => setDiscordServer(e.target.value)}
                                         placeholder="Enter Discord Server Name"
                                         sx={inputStyles}
+                                        required
                                     />
-
                                 </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: "10px" }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: "10px" }}>
                                     <Input
                                         value={discordWebhookUrl}
                                         onChange={(e) => setDiscordWebhookUrl(e.target.value)}
                                         placeholder="Enter Discord Webhook URL"
                                         sx={inputStyles}
+                                        required
                                     />
                                 </Box>
                             </Box>
-
                         </>
                     )}
                     {platform === "telegram" && (
                         <>
                             <Box>
                                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
-                                    Telegram Data                                </Typography>
-
-                                <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: "10px", mb: "10px" }}>
+                                    Telegram Data
+                                </Typography>
+                                <Divider sx={{ mb: 2, borderColor: "#444" }} />
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: "10px", mb: "10px" }}>
                                     <Input
                                         value={telegramGroupName}
                                         onChange={(e) => setTelegramGroupName(e.target.value)}
                                         placeholder="Enter Telegram Group Name"
                                         sx={inputStyles}
+                                        required
                                     />
                                 </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                                     <Input
                                         value={telegramChatId}
                                         onChange={(e) => setTelegramChatId(e.target.value)}
                                         placeholder="Enter Telegram Chat ID"
                                         sx={inputStyles}
+                                        required
                                     />
                                 </Box>
                             </Box>
-
                         </>
-
                     )}
                 </Box>
             </DialogContent>
             <DialogActions
                 sx={{
-                    backgroundColor: '#101010',
+                    backgroundColor: "#101010",
                     py: 2,
                     px: 3,
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                     <Button
                         variant="contained"
                         onClick={handleSave}
                         sx={{
-                            backgroundColor: '#FFB300',
-                            color: '#000',
-                            '&:hover': { backgroundColor: '#e6ac00' },
+                            backgroundColor: "#FFB300",
+                            color: "#000",
+                            "&:hover": { backgroundColor: "#e6ac00" },
                         }}
                     >
                         Save Data
@@ -223,9 +254,9 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
                     <Button
                         onClick={onClose}
                         sx={{
-                            backgroundColor: 'grey',
+                            backgroundColor: "grey",
                             ml: "10px",
-                            color: 'white',
+                            color: "white",
                         }}
                     >
                         Close

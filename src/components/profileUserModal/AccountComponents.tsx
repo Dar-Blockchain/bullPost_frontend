@@ -10,7 +10,7 @@ interface AccountItemProps {
   url?: string;
   onRemove: () => void;
 }
-function shortenString(str: string, front = 8, back = 8) {
+function shortenString(str: string, front = 6, back = 6) {
   // If the string is already short enough, return as-is
   if (str.length <= front + back) return str;
   // Otherwise, return front...back
