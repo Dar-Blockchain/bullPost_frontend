@@ -178,7 +178,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
                                     Telegram Data                                </Typography>
 
                                 <Divider sx={{ mb: 2, borderColor: '#444' }} />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: "10px", mb: "2" }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: "10px", mb: "10px" }}>
                                     <Input
                                         value={telegramGroupName}
                                         onChange={(e) => setTelegramGroupName(e.target.value)}
