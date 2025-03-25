@@ -234,7 +234,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             );
             const data = await response.json();
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -299,7 +299,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                 }
             );
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -437,7 +437,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
             formData.append("publishedAtTelegram", "");
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            dispatch(fetchPostsByStatus({ status: "drafts" }));
+            dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
             setSelectedImage(null);
         } catch (error) {
             console.error("Error updating post status:", error);

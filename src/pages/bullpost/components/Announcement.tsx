@@ -25,7 +25,6 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
     }
   }, [selectedAnnouncement, setText]);
 
-  const dispatch = useDispatch<AppDispatch>();
 
   const postId = selectedAnnouncement && selectedAnnouncement.length > 0
     ? selectedAnnouncement[0]._id
@@ -106,7 +105,7 @@ const Announcement: React.FC<AnnouncementProps> = ({ text, setText, inputRef, _i
           color: "grey",
           textAlign: "start",
           width: isMobile ? "100%" : "50%",
-          
+
         }}
       >
         {postId ? "Your post is saved" : "Your post is not saved"}

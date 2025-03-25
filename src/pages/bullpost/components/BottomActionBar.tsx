@@ -148,7 +148,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             const data = await response.json();
 
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
 
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
@@ -188,7 +188,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             });
 
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
 
                 toast.success("Post scheduled successfully!");
             } else {
@@ -222,7 +222,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
             );
             const data = await response.json();
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -265,7 +265,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
                 }
             );
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -340,48 +340,48 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
                 <IconButton
                     sx={{
                         color: activeSection === "drafts" ? "#fff" : "#aaa",
-                        backgroundColor: activeSection === "drafts" ? "#555" : "transparent",
+                        // backgroundColor: activeSection === "drafts" ? "#555" : "transparent",
                         borderRadius: "10px",
                     }}
                     onClick={() => setActiveSection("drafts")}
                 >
-                    <DescriptionIcon fontSize="medium" />
+                    <img src="/DraftBottom.png" alt="Discord" />
                 </IconButton>
 
                 {/* Discord Icon */}
                 <IconButton
                     sx={{
                         color: "#fff",
-                        backgroundColor: activeSection === "discord" ? "#5865F2" : "transparent",
+                        // backgroundColor: activeSection === "discord" ? "#5865F2" : "transparent",
                         borderRadius: "10px",
                     }}
                     onClick={() => setActiveSection("discord")}
                 >
-                    <img src="/discordBottom.png" alt="Discord" style={{ marginRight: "10px" }} />
+                    <img src="/discordBottom.png" alt="Discord" />
                 </IconButton>
 
                 {/* Twitter Icon */}
                 <IconButton
                     sx={{
                         color: activeSection === "twitter" ? "#fff" : "#aaa",
-                        backgroundColor: activeSection === "twitter" ? "#1DA1F2" : "transparent",
+                        // backgroundColor: activeSection === "twitter" ? "#1DA1F2" : "transparent",
                         borderRadius: "10px",
                     }}
                     onClick={() => setActiveSection("twitter")}
                 >
-                    <TwitterIcon fontSize="medium" />
+                    <img src="/XBottom.png" alt="Discord" />
                 </IconButton>
 
                 {/* Telegram Icon */}
                 <IconButton
                     sx={{
                         color: activeSection === "telegram" ? "#fff" : "#aaa",
-                        backgroundColor: activeSection === "telegram" ? "#0088CC" : "transparent",
+                        // backgroundColor: activeSection === "telegram" ? "#0088CC" : "transparent",
                         borderRadius: "10px",
                     }}
                     onClick={() => setActiveSection("telegram")}
                 >
-                    <TelegramIcon fontSize="medium" />
+                    <img src="/TelegramBottom.png" alt="Discord" />
                 </IconButton>
             </Box>
 

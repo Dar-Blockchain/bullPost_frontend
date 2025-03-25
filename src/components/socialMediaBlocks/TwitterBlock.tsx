@@ -10,7 +10,7 @@ import {
     Popover,
     CircularProgress,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { keyframes, useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
     ArrowDropDownCircleOutlined,
@@ -44,6 +44,7 @@ import {
     StrikethroughS as StrikethroughSIcon,
     Code as CodeIcon,
 } from "@mui/icons-material";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 
 interface TwitterAccount {
     _id: string;
@@ -57,7 +58,10 @@ interface TwitterBlockProps {
     onSubmit: () => void;
     ai: boolean;
 }
-
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
 interface UserPreference {
     OpenIA?: boolean;
     Gemini?: boolean;
@@ -333,7 +337,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             );
             const data = await response.json();
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "draft" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -384,7 +388,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 }
             );
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "draft" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -465,7 +469,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             formData.append("publishedAtTwitter", "");
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            dispatch(fetchPostsByStatus({ status: "drafts" }));
+            dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
             setSelectedImage(null);
         } catch (error) {
             console.error("Error updating post:", error);
@@ -838,8 +842,15 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                             }
                                         }}
                                     >
-                                        {isEditing ? <Done fontSize="small" /> : <Edit fontSize="small" />}
-                                    </IconButton>
+                                        {isEditing ? (
+                                            isLoading ? (
+                                                <AutorenewIcon fontSize="small" sx={{ animation: `${spin} 1s linear infinite` }} />
+                                            ) : (
+                                                <Done fontSize="small" />
+                                            )
+                                        ) : (
+                                            <Edit fontSize="small" />
+                                        )}                                    </IconButton>
                                     <IconButton
                                         sx={{ color: "#8F8F8F" }}
                                         onClick={() => handleIconAction(() => { /* Mood action placeholder */ })}

@@ -30,6 +30,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
+    clearSelectedAnnouncement,
     fetchPostsByStatus,
     regeneratePost,
     regeneratePostOpenAi,
@@ -242,7 +243,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             const data = await response.json();
             console.log(data, "Post Now Response");
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+
                 toast.success("Post sent successfully!", { position: "top-right" });
             } else {
                 toast.error(`${data.error || "Failed to send message."}`, { position: "top-right" });
@@ -277,7 +280,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 }
             );
             if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts" }));
+                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
                 toast.success("Post scheduled successfully!");
             } else {
                 toast.error("Failed to schedule post.");
@@ -336,7 +339,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
             formData.append("publishedAtDiscord", "");
             const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
             dispatch(setSelectedAnnouncement([updatedPost]));
-            dispatch(fetchPostsByStatus({ status: "drafts" }));
+            dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
             setSelectedImage(null);
         } catch (error) {
             console.error("Error updating post status:", error);
@@ -797,19 +800,11 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                 </Box>
 
                 {/* Toolbar and Scheduling Section */}
-                <Box
-                    sx={{
-                        position: "sticky",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        zIndex: 999,
-                        padding: "8px",
-                    }}
-                >
+                <Box sx={{ position: "sticky", bottom: 0, zIndex: 1 }}>
                     {user && (
                         <>
                             <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, mb: 2, gap: 1 }}>
+
                                 <Box
                                     sx={{
                                         display: "flex",

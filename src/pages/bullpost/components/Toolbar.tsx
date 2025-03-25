@@ -108,7 +108,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         setTwitterText(data.twitter);
         setTelegramText(data.telegram);
         setId(data._id);
-        dispatch(fetchPostsByStatus({ status: "drafts" }));
+        dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
         dispatch(setSelectedAnnouncement([]));
         console.log("Post added successfully", data);
         toast.success("Post added successfully!", { position: "top-right" });

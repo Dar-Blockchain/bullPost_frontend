@@ -191,7 +191,7 @@ export default function BullPostPage() {
         setTwitterText(data.newPost.twitter);
         setTelegramText(data.newPost.telegram);
         setId(data.newPost._id);
-        dispatch(fetchPostsByStatus({ status: "drafts" }));
+        dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
         dispatch(setSelectedAnnouncement([data.newPost]));
         toast.success("✅ Post generated successfully!", { position: "top-right" });
       }
@@ -301,12 +301,13 @@ export default function BullPostPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          refresh_token, username: username,
+          refresh_token, twitter_Name
+            : username,
         }),
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log(username,'here my new username')
+          console.log(username, 'here my new username')
           toast.success("Twitter linked successfully");
           console.log("Linked Twitter data:", data);
           router.push("/bullpost").then(() => window.location.reload());
