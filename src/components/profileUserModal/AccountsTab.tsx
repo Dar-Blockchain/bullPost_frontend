@@ -357,7 +357,7 @@ const AccountsTab: React.FC = () => {
       <Box>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
           <img
-            src="/XBottom.png"
+            src="/Xbottom.png"
             alt="X"
             style={{ verticalAlign: "middle", marginRight: "8px" }}
           />
