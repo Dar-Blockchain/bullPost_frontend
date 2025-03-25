@@ -358,10 +358,11 @@ const AccountsTab: React.FC = () => {
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
           <img
             src="/XBottom.png"
-            alt="Discord"
+            alt="X"
             style={{ verticalAlign: "middle", marginRight: "8px" }}
           />
-          X Accounts        </Typography>
+          X Accounts
+        </Typography>
         {/* <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
           <TwitterIcon sx={{ verticalAlign: 'middle', mr: 1 }} /> X Accounts
         </Typography> */}
