@@ -306,6 +306,7 @@ export default function BullPostPage() {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log(username,'here my new username')
           toast.success("Twitter linked successfully");
           console.log("Linked Twitter data:", data);
           router.push("/bullpost").then(() => window.location.reload());
