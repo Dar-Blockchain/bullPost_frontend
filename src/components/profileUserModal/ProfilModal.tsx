@@ -61,6 +61,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
             onClose={onClose}
             maxWidth="md"
             fullWidth
+            
             PaperProps={{
                 sx: {
                     backgroundColor: '#171717',
@@ -69,6 +70,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
                     overflow: 'hidden',
                     height: '80vh',
+                    zIndex: 10000,
 
                 },
             }}

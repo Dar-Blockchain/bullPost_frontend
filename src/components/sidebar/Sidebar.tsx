@@ -341,7 +341,16 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             sx={{ width: 40, height: 40 }}
             onClick={handleOpenProfile}
           />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }} onClick={handleOpenProfile}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexGrow: 1,
+              cursor: "pointer", // Changes the cursor to a pointer when hovering
+            }}
+            onClick={handleOpenProfile}
+          >
             <Box>
               <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user?.userName}</Typography>
               <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
@@ -373,7 +382,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             backgroundColor: "#171717",
             padding: "10px 15px",
             borderBottom: "1px solid #222",
-            zIndex: 1500,
+            zIndex: 4,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -387,16 +396,23 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
                 borderRadius: "8px",
                 "&:hover": { backgroundColor: "#FFA500" },
               }}
-              onClick={handleOpen}
+              onClick={
+                // handleOpen
+                () => {
+                  dispatch(clearSelectedAnnouncement());
+                }
+              }
             >
               <AddIcon />
             </IconButton>
-            {isLoggedIn && <Avatar src="/profile.jpg" sx={{ width: 32, height: 32 }} />}
+            {isLoggedIn && <Avatar
+              // onClick={handleOpenProfile}
+              src="/profile.jpg" sx={{ width: 32, height: 32 }} />}
             <IconButton onClick={handleDrawerToggle}>
               <MenuIcon sx={{ color: "#fff" }} />
             </IconButton>
           </Box>
-        </Box>
+        </Box >
       )}
 
       {/* Desktop Sidebar */}

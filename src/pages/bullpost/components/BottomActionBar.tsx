@@ -369,7 +369,7 @@ const BottomActionBar: React.FC<Props> = ({ activeSection, setActiveSection, _id
                     }}
                     onClick={() => setActiveSection("twitter")}
                 >
-                    <img src="/XBottom.png" alt="Discord" />
+                    <img src="/Xbottom.png" alt="X" />
                 </IconButton>
 
                 {/* Telegram Icon */}
