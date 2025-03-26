@@ -45,6 +45,7 @@ import {
     Code as CodeIcon,
 } from "@mui/icons-material";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
+import EmojiPicker from "emoji-picker-react";
 
 interface TwitterAccount {
     _id: string;
@@ -579,7 +580,36 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             handleClose2();
         }
     };
+    const [emojiAnchorEl, setEmojiAnchorEl] = useState<null | HTMLElement>(null);
+    const handleEmojiButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!isEditing) {
+            toast.info("Please enable editing first", { position: "top-right" });
+            return;
+        }
+        setEmojiAnchorEl(e.currentTarget);
+    };
 
+    const handleCloseEmojiPicker = () => {
+        setEmojiAnchorEl(null);
+    };
+    const handleEmojiClick = (emojiData: any, event: MouseEvent) => {
+        if (!textFieldRef.current) return;
+        const start = textFieldRef.current.selectionStart;
+        const end = textFieldRef.current.selectionEnd;
+        const before = editableText.substring(0, start);
+        const after = editableText.substring(end);
+        const emoji = emojiData.emoji || emojiData; // adjust based on your EmojiPicker response
+        const newText = before + emoji + after;
+        setEditableText(newText);
+        // Set caret position after inserted emoji
+        setTimeout(() => {
+            if (textFieldRef.current) {
+                textFieldRef.current.focus();
+                textFieldRef.current.selectionStart = textFieldRef.current.selectionEnd = start + emoji.length;
+            }
+        }, 0);
+        handleCloseEmojiPicker();
+    };
     return (
         <>
             <Box
@@ -851,12 +881,17 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         ) : (
                                             <Edit fontSize="small" />
                                         )}                                    </IconButton>
-                                    <IconButton
-                                        sx={{ color: "#8F8F8F" }}
-                                        onClick={() => handleIconAction(() => { /* Mood action placeholder */ })}
-                                    >
+                                    <IconButton sx={{ color: "#8F8F8F" }} onClick={handleEmojiButtonClick}>
                                         <Mood fontSize="small" />
                                     </IconButton>
+                                    <Popover
+                                        open={Boolean(emojiAnchorEl)}
+                                        anchorEl={emojiAnchorEl}
+                                        onClose={handleCloseEmojiPicker}
+                                        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                    >
+                                        <EmojiPicker onEmojiClick={handleEmojiClick} />
+                                    </Popover>
                                     <IconButton
                                         component="label"
                                         sx={{ color: "#8F8F8F" }}
