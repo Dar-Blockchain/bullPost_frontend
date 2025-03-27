@@ -118,7 +118,7 @@ const AppSettingsTab: React.FC = () => {
 
   // Common styles for input elements
   const inputStyles = {
-    width: '710px',
+    width: '90%',
     height: '40px',
     borderRadius: '5px',
     border: '1px solid #ccc',

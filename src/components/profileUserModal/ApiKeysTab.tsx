@@ -25,7 +25,7 @@ const ApiKeysTab: React.FC = () => {
 
     // Input style shared among API key inputs
     const inputStyles = {
-        width: '710px',
+        width: '90%',
         height: '40px',
         borderRadius: '5px',
         border: '1px solid #ccc',
