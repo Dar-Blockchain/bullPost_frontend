@@ -133,7 +133,8 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   }, []);
 
   const [discordServerName, setDiscordServerName] = useState("");
-
+  const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
+  const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
   // Fetch preferences from API
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -478,8 +479,13 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   const handleCloseModal = () => setModalOpen(false);
 
   // Regenerate post using Gemini or OpenAI
-  const handleRegenerate = async (icon: boolean) => {
-    if (icon) setIsRegenerating(true);
+  const handleRegenerate = async (icon: boolean, isAutoAwesome: boolean) => {
+    if (isAutoAwesome) {
+      setIsRegeneratingAutoAwesome(true);
+    } else {
+      setIsRegeneratingReplay(true);
+    }
+
     try {
       if (preference?.Gemini) {
         await dispatch(regeneratePost({ platform: "discord", postId })).unwrap();
@@ -490,7 +496,11 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     } catch (error) {
       toast.error("Regenerate failed. Please try again.");
     } finally {
-      if (icon) setIsRegenerating(false);
+      if (isAutoAwesome) {
+        setIsRegeneratingAutoAwesome(false);
+      } else {
+        setIsRegeneratingReplay(false);
+      }
     }
   };
 
@@ -879,24 +889,29 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                   </IconButton>
 
                   {/* Regenerate (AutoAwesome) Button */}
-                  <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleRegenerate(false)}>
+                  <IconButton
+                    sx={{
+                      color: "#8F8F8F",
+                      animation: isRegeneratingAutoAwesome ? `${spin} 1s linear infinite` : "none", // Apply animation for AutoAwesome button
+                    }}
+                    onClick={() => handleRegenerate(false, true)} // true for AutoAwesome button
+                  >
                     <AutoAwesome fontSize="small" />
                   </IconButton>
 
                   <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
 
-                  {/* Regenerate (Replay) Button */}
                   <IconButton
                     sx={{
                       color: "red",
-                      animation: isRegenerating ? "spin 1s linear infinite" : "none",
+                      animation: isRegeneratingReplay ? "spin 1s linear infinite" : "none", // Apply animation for Replay button
                       "@keyframes spin": {
                         "0%": { transform: "rotate(360deg)" },
                         "100%": { transform: "rotate(0deg)" },
                       },
                     }}
-                    onClick={() => handleRegenerate(true)}
-                    disabled={isRegenerating}
+                    onClick={() => handleRegenerate(true, false)} // false for Replay button
+                    disabled={isRegeneratingReplay} // Disable button while regenerating
                   >
                     <Replay fontSize="small" />
                   </IconButton>

@@ -75,9 +75,22 @@ interface UserPreference {
     TELEGRAM_GroupName?: string;
     twitterConnect?: string;
     discord?: string;
-    telegram?: string;
-}
+    telegram?: boolean;
 
+}
+interface PreferencesData {
+    OpenIA?: boolean;
+    Gemini?: boolean;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+    refresh_token?: string;
+    twitter?: boolean;
+    discord?: boolean;
+    telegram?: boolean;
+    Discord_Server_Name?: string;
+    twitter_Name?: string;
+    TELEGRAM_GroupName?: string;
+}
 const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -118,32 +131,62 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     useEffect(() => {
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
-
-    // Fetch user preferences from API (using the same API GET as in your TwitterBlock)
     useEffect(() => {
-        if (!user) return;
         const token = localStorage.getItem("token");
         if (!token) return;
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
             .then((res) => res.json())
-            .then((data: UserPreference) => {
+            .then((data: PreferencesData) => {
                 if (data) {
-                    console.log(data, "data");
-                    setPreference(data);
-                    setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
-                    setTELEGRAM_GroupName(data.TELEGRAM_GroupName || "");
-                    // Enable Telegram switch if TELEGRAM_CHAT_ID exists and is non-empty
-                    setTelegramEnabled(Boolean(data.telegram));
+                    setPreference({
+                        OpenIA: data.OpenIA,
+                        Gemini: data.Gemini,
+                        DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
+                        TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+                        telegram: data.telegram,
+                    });
+                    if (data.telegram) {
+                        setTelegramEnabled(data.telegram);
+                    }
+                    if (data.TELEGRAM_GroupName) {
+                        setTELEGRAM_GroupName(data.TELEGRAM_GroupName);
+                    }
                 }
             })
             .catch((err) => console.error("Error fetching preferences:", err));
     }, [user]);
+    // Fetch user preferences from API (using the same API GET as in your TwitterBlock)
+    // useEffect(() => {
+    //     if (!user) return;
+    //     const token = localStorage.getItem("token");
+    //     if (!token) return;
+    //     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+    //         method: "GET",
+    //         headers: {
+    //             "Content-Type": "application/json",
+    //             "Authorization": `Bearer ${token}`,
+    //         },
+    //     })
+    //         .then((res) => res.json())
+    //         .then((data: UserPreference) => {
+    //             if (data) {
+    //                 console.log(data, "data");
+
+    //                 setPreference(data);
+    //                 setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
+    //                 setTELEGRAM_GroupName(data.TELEGRAM_GroupName || "");
+    //                 // Enable Telegram switch if TELEGRAM_CHAT_ID exists and is non-empty
+    //                 setTelegramEnabled(Boolean(data.telegram));
+    //             }
+    //         })
+    //         .catch((err) => console.error("Error fetching preferences:", err));
+    // }, [user]);
 
     // Typewriter effect for submitted text when AI mode is active
     useEffect(() => {
@@ -360,25 +403,33 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         setAnchorPosition(null);
         setTimeout(() => textFieldRef.current?.focus(), 0);
     };
-
+    const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
+    const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
     // Regenerate post handler using Gemini or OpenAI
-    const handleRegenerate = async (icon: boolean) => {
-        if (icon) setIsRegenerating(true);
+    const handleRegenerate = async (icon: boolean, isAutoAwesome: boolean) => {
+        if (isAutoAwesome) {
+            setIsRegeneratingAutoAwesome(true);
+        } else {
+            setIsRegeneratingReplay(true);
+        }
+
         try {
-            if (preference?.Gemini === true) {
+            if (preference?.Gemini) {
                 await dispatch(regeneratePost({ platform: "telegram", postId })).unwrap();
             } else {
                 await dispatch(regeneratePostOpenAi({ platform: "telegram", postId })).unwrap();
             }
             toast.success("Regenerate successful! 🎉");
         } catch (error) {
-            console.error("Regenerate failed:", error);
             toast.error("Regenerate failed. Please try again.");
         } finally {
-            if (icon) setIsRegenerating(false);
+            if (isAutoAwesome) {
+                setIsRegeneratingAutoAwesome(false);
+            } else {
+                setIsRegeneratingReplay(false);
+            }
         }
     };
-
     // Guard icon actions when editing is active
     const handleIconAction = (action: () => void) => {
         if (isEditing) {
@@ -890,21 +941,29 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                                     )}
                                     <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                                 </IconButton>
-                                <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleIconAction(() => handleRegenerate(false))}>
+                                <IconButton
+                                    sx={{
+                                        color: "#8F8F8F",
+                                        animation: isRegeneratingAutoAwesome ? `${spin} 1s linear infinite` : "none", // Apply animation for AutoAwesome button
+                                    }}
+                                    onClick={() => handleRegenerate(false, true)} // true for AutoAwesome button
+                                >
                                     <AutoAwesome fontSize="small" />
                                 </IconButton>
+
                                 <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
+
                                 <IconButton
                                     sx={{
                                         color: "red",
-                                        animation: isRegenerating ? "spin 1s linear infinite" : "none",
+                                        animation: isRegeneratingReplay ? "spin 1s linear infinite" : "none", // Apply animation for Replay button
                                         "@keyframes spin": {
                                             "0%": { transform: "rotate(360deg)" },
                                             "100%": { transform: "rotate(0deg)" },
                                         },
                                     }}
-                                    onClick={() => handleIconAction(() => handleRegenerate(true))}
-                                    disabled={isRegenerating}
+                                    onClick={() => handleRegenerate(true, false)} // false for Replay button
+                                    disabled={isRegeneratingReplay} // Disable button while regenerating
                                 >
                                     <Replay fontSize="small" />
                                 </IconButton>

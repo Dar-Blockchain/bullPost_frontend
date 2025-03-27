@@ -63,14 +63,27 @@ const spin = keyframes`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 `;
+interface PreferencesData {
+    OpenIA?: boolean;
+    Gemini?: boolean;
+    DISCORD_WEBHOOK_URL?: string;
+    TELEGRAM_CHAT_ID?: string;
+    refresh_token?: string;
+    twitter?: boolean;
+    discord?: boolean;
+    Discord_Server_Name?: string;
+    twitter_Name?: string;
+    TELEGRAM_GroupName?: string;
+}
+
 interface UserPreference {
     OpenIA?: boolean;
     Gemini?: boolean;
     DISCORD_WEBHOOK_URL?: string;
     TELEGRAM_CHAT_ID?: string;
     twitterConnect?: string;
-    twitter?: string;
-    discord?: string;
+    twitter?: boolean;
+    discord?: boolean;
     telegram?: string;
     Discord_Server_Name?: string;
     twitter_Name?: string;
@@ -83,6 +96,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useAuth();
+    const [preference, setPreference] = useState<UserPreference>({});
 
     // Local States for display and editing
     const [displayText, setDisplayText] = useState("");
@@ -141,32 +155,63 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
             .then((res) => res.json())
-            .then((data: UserPreference) => {
+            .then((data: PreferencesData) => {
                 if (data) {
-                    console.log(data, "data");
-                    setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
-                    setOpenIaKey((data as any).OpenIaKey || "");
-                    setGeminiKey((data as any).GeminiKey || "");
-                    setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
-                    setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
-                    setTwitterConnect(data.refresh_token || "");
-                    setTwitter(data.twitter || "");
-                    setDiscord(data.discord || "");
-                    setTelegram(data.telegram || "");
-                    setDiscordServerName(data.Discord_Server_Name || "");
-                    setTwitterName(data.twitter_Name || "");
-                    setTelegramGroupName(data.TELEGRAM_GroupName || "");
-
-                    // Enable Twitter switch if twitter string exists and is non-empty
-                    setTwitterEnabled(Boolean(data.twitter));
+                    setPreference({
+                        OpenIA: data.OpenIA,
+                        Gemini: data.Gemini,
+                        DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
+                        TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+                        twitter: data.twitter,
+                        refresh_token: data.refresh_token
+                    });
+                    if (data.twitter) {
+                        setTwitterEnabled(data.twitter);
+                    }
+                    if (data.twitter_Name) {
+                        setTwitterName(data.twitter_Name);
+                    }
                 }
             })
             .catch((err) => console.error("Error fetching preferences:", err));
     }, [user]);
+    // useEffect(() => {
+    //     const token = localStorage.getItem("token");
+    //     if (!token) return;
+    //     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+    //         method: "GET",
+    //         headers: {
+    //             "Content-Type": "application/json",
+    //             "Authorization": `Bearer ${token}`,
+    //         },
+    //     })
+    //         .then((res) => res.json())
+    //         .then((data: UserPreference) => {
+    //             if (data) {
+    //                 console.log(data, "data");
+    //                 setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
+    //                 setOpenIaKey((data as any).OpenIaKey || "");
+    //                 setGeminiKey((data as any).GeminiKey || "");
+    //                 setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
+    //                 setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
+    //                 setTwitterConnect(data.refresh_token || "");
+    //                 setTwitter(data.twitter || "");
+    //                 setDiscord(data.discord || "");
+    //                 setTelegram(data.telegram || "");
+    //                 setDiscordServerName(data.Discord_Server_Name || "");
+    //                 setTwitterName(data.twitter_Name || "");
+    //                 setTelegramGroupName(data.TELEGRAM_GroupName || "");
+
+    //                 // Enable Twitter switch if twitter string exists and is non-empty
+    //                 setTwitterEnabled(Boolean(data.twitter));
+    //             }
+    //         })
+    //         .catch((err) => console.error("Error fetching preferences:", err));
+    // }, [user]);
 
     // Typewriter effect for submitted text if AI mode is enabled
     useEffect(() => {
@@ -298,20 +343,31 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
 
     // Regenerate post using Gemini or OpenAI
     const [isRegenerating, setIsRegenerating] = useState(false);
-    const handleRegenerate = async (icon: boolean) => {
-        if (icon) setIsRegenerating(true);
+    const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
+    const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
+    // Regenerate post handler using Gemini or OpenAI
+    const handleRegenerate = async (icon: boolean, isAutoAwesome: boolean) => {
+        if (isAutoAwesome) {
+            setIsRegeneratingAutoAwesome(true);
+        } else {
+            setIsRegeneratingReplay(true);
+        }
+
         try {
-            if (geminiKey && preferredProvider === "Gemini") {
+            if (preference?.Gemini) {
                 await dispatch(regeneratePost({ platform: "twitter", postId })).unwrap();
             } else {
                 await dispatch(regeneratePostOpenAi({ platform: "twitter", postId })).unwrap();
             }
             toast.success("Regenerate successful! 🎉");
         } catch (error) {
-            console.error("Regenerate failed:", error);
             toast.error("Regenerate failed. Please try again.");
         } finally {
-            if (icon) setIsRegenerating(false);
+            if (isAutoAwesome) {
+                setIsRegeneratingAutoAwesome(false);
+            } else {
+                setIsRegeneratingReplay(false);
+            }
         }
     };
 
@@ -702,7 +758,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     <Box sx={{ flexGrow: 1 }} />
                     {user && (
                         <>
-                            {twitterConnect && twitterConnect.trim().length > 0 ? (
+                            {preference.refresh_token && preference.refresh_token.trim().length > 0 ? (
+
                                 <Switch
                                     color="warning"
                                     checked={twitterEnabled}
@@ -909,21 +966,29 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                         )}
                                         <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                                     </IconButton>
-                                    <IconButton sx={{ color: "#8F8F8F" }} onClick={() => handleIconAction(() => handleRegenerate(false))}>
+                                    <IconButton
+                                        sx={{
+                                            color: "#8F8F8F",
+                                            animation: isRegeneratingAutoAwesome ? `${spin} 1s linear infinite` : "none", // Apply animation for AutoAwesome button
+                                        }}
+                                        onClick={() => handleRegenerate(false, true)} // true for AutoAwesome button
+                                    >
                                         <AutoAwesome fontSize="small" />
                                     </IconButton>
+
                                     <Box sx={{ width: "1px", height: "20px", backgroundColor: "#555", mx: 1 }} />
+
                                     <IconButton
                                         sx={{
                                             color: "red",
-                                            animation: isRegenerating ? "spin 1s linear infinite" : "none",
+                                            animation: isRegeneratingReplay ? "spin 1s linear infinite" : "none", // Apply animation for Replay button
                                             "@keyframes spin": {
                                                 "0%": { transform: "rotate(360deg)" },
                                                 "100%": { transform: "rotate(0deg)" },
                                             },
                                         }}
-                                        onClick={() => handleIconAction(() => handleRegenerate(true))}
-                                        disabled={isRegenerating}
+                                        onClick={() => handleRegenerate(true, false)} // false for Replay button
+                                        disabled={isRegeneratingReplay} // Disable button while regenerating
                                     >
                                         <Replay fontSize="small" />
                                     </IconButton>
