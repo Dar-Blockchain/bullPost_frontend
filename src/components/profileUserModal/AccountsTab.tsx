@@ -41,6 +41,7 @@ const AccountsTab: React.FC = () => {
   // Responsive grid: 1 column on xs, 2 on sm, 3 on md+
   const isMobile = useMediaQuery('(max-width:600px)');
   const gridColumns = { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' };
+  // const gridColumns = { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' };
 
   useEffect(() => {
     loadDiscordAccounts();
@@ -352,7 +353,10 @@ const AccountsTab: React.FC = () => {
     }
   };
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: gridColumns, gap: 4 }}>
+    <Box sx={{
+      display: 'grid', gridTemplateColumns: gridColumns, gap: 4,
+      // padding: "10px"
+    }}>
       {/* X (Twitter) Accounts */}
       <Box>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
