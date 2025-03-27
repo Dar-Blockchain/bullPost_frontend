@@ -149,6 +149,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                         Gemini: data.Gemini,
                         DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
                         TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+                        TELEGRAM_GroupName: data.TELEGRAM_GroupName,
                         telegram: data.telegram,
                     });
                     if (data.telegram) {
