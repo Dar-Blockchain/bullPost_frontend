@@ -137,11 +137,11 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const [twitterName, setTwitterName] = useState<string>("");
 
     const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
-
     useEffect(() => {
-        dispatch(loadPreferences());
-    }, [dispatch]);
-
+        if (user) {
+            dispatch(loadPreferences());
+        }
+    }, [dispatch, user]);
     // Effect to update the local state (discordEnabled) when preferences change.
     useEffect(() => {
         if (preference?.twitter) {

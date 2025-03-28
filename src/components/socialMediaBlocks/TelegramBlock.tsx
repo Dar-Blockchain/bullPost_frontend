@@ -120,9 +120,10 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
 
     useEffect(() => {
-        dispatch(loadPreferences());
-    }, [dispatch]);
-
+        if (user) {
+            dispatch(loadPreferences());
+        }
+    }, [dispatch, user]);
     // Effect to update the local state (discordEnabled) when preferences change.
     useEffect(() => {
         if (preference?.telegram) {

@@ -139,8 +139,10 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   //   }
   // }, [preference]);
   useEffect(() => {
-    dispatch(loadPreferences());
-  }, [dispatch]);
+    if (user) {
+      dispatch(loadPreferences());
+    }
+  }, [dispatch, user]);
 
   // Effect to update the local state (discordEnabled) when preferences change.
   useEffect(() => {
