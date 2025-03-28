@@ -51,7 +51,7 @@ export default function BullPostPage() {
 
   useEffect(() => {
     dispatch(loadPreferences());
-  }, [dispatch]);
+  }, [preferences, dispatch]);
   // Preference settings and keys state (declared once)
   const initialProviderPref = preferences
     ? (preferences.OpenIA ? "OpenAI" : "Gemini")
@@ -71,18 +71,18 @@ export default function BullPostPage() {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-      setPreferredProvider(preferences.OpenIA ? "OpenAI" : "Gemini");
-      setOpenIaKey(preferences.OpenIaKey || "");
-      setGeminiKey(preferences.GeminiKey || "");
-      setDiscordWebhookUrl(preferences.DISCORD_WEBHOOK_URL || "");
-      setTelegramChatId(preferences.TELEGRAM_CHAT_ID || "");
-      setTwitterConnect(preferences.refresh_token || "");
+    setPreferredProvider(preferences.OpenIA ? "OpenAI" : "Gemini");
+    setOpenIaKey(preferences.OpenIaKey || "");
+    setGeminiKey(preferences.GeminiKey || "");
+    setDiscordWebhookUrl(preferences.DISCORD_WEBHOOK_URL || "");
+    setTelegramChatId(preferences.TELEGRAM_CHAT_ID || "");
+    setTwitterConnect(preferences.refresh_token || "");
 
-      setDiscordServerName(preferences.Discord_Server_Name || "");
-      setTwitterName(preferences.twitter_Name || "");
-      setTelegramGroupName(preferences.TELEGRAM_GroupName || "");
-      setInitialized(true);
-    
+    setDiscordServerName(preferences.Discord_Server_Name || "");
+    setTwitterName(preferences.twitter_Name || "");
+    setTelegramGroupName(preferences.TELEGRAM_GroupName || "");
+    setInitialized(true);
+
   }, [preferences]);
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
