@@ -46,6 +46,7 @@ import {
 } from "@mui/icons-material";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import EmojiPicker from "emoji-picker-react";
+import { loadPreferences } from "@/store/slices/accountsSlice";
 
 interface TwitterAccount {
     _id: string;
@@ -96,7 +97,6 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useAuth();
-    const [preference, setPreference] = useState<UserPreference>({});
 
     // Local States for display and editing
     const [displayText, setDisplayText] = useState("");
@@ -133,52 +133,50 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     }, []);
 
     // Preference states (instead of one combined "preference" object)
-    const [preferredProvider, setPreferredProvider] = useState<string>("");
-    const [openIaKey, setOpenIaKey] = useState<string>("");
-    const [geminiKey, setGeminiKey] = useState<string>("");
-    const [discordWebhookUrl, setDiscordWebhookUrl] = useState<string>("");
-    const [telegramChatId, setTelegramChatId] = useState<string>("");
-    const [twitterConnect, setTwitterConnect] = useState<string>("");
-    const [twitter, setTwitter] = useState<string>("");
-    const [discord, setDiscord] = useState<string>("");
-    const [telegram, setTelegram] = useState<string>("");
-    const [discordServerName, setDiscordServerName] = useState<string>("");
+
     const [twitterName, setTwitterName] = useState<string>("");
-    const [telegramGroupName, setTelegramGroupName] = useState<string>("");
+
+    const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
+    useEffect(() => {
+        if (preference?.twitter) {
+            setTwitterEnabled(preference.twitter);
+        }
+        dispatch(loadPreferences()); // Dispatch loadPreferences on mount to fetch the preferences
+    }, [preference, dispatch]);
 
     // Fetch user preferences from API using the provided snippet.
     // This effect will run whenever the user changes (e.g., when logged in)
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((res) => res.json())
-            .then((data: PreferencesData) => {
-                if (data) {
-                    setPreference({
-                        OpenIA: data.OpenIA,
-                        Gemini: data.Gemini,
-                        DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
-                        TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
-                        twitter: data.twitter,
-                        refresh_token: data.refresh_token
-                    });
-                    if (data.twitter) {
-                        setTwitterEnabled(data.twitter);
-                    }
-                    if (data.twitter_Name) {
-                        setTwitterName(data.twitter_Name);
-                    }
-                }
-            })
-            .catch((err) => console.error("Error fetching preferences:", err));
-    }, [user]);
+    // useEffect(() => {
+    //     const token = localStorage.getItem("token");
+    //     if (!token) return;
+    //     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+    //         method: "GET",
+    //         headers: {
+    //             "Content-Type": "application/json",
+    //             Authorization: `Bearer ${token}`,
+    //         },
+    //     })
+    //         .then((res) => res.json())
+    //         .then((data: PreferencesData) => {
+    //             if (data) {
+    //                 setPreference({
+    //                     OpenIA: data.OpenIA,
+    //                     Gemini: data.Gemini,
+    //                     DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
+    //                     TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+    //                     twitter: data.twitter,
+    //                     refresh_token: data.refresh_token
+    //                 });
+    //                 if (data.twitter) {
+    //                     setTwitterEnabled(data.twitter);
+    //                 }
+    //                 if (data.twitter_Name) {
+    //                     setTwitterName(data.twitter_Name);
+    //                 }
+    //             }
+    //         })
+    //         .catch((err) => console.error("Error fetching preferences:", err));
+    // }, [user]);
     // useEffect(() => {
     //     const token = localStorage.getItem("token");
     //     if (!token) return;
@@ -704,8 +702,8 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                             >
                                 <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
                                 <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                    @{twitterName
-                                        ? twitterName
+                                    @{preference.twitter_Name
+                                        ? preference.twitter_Name
                                         : "BullPost User"}
                                 </Typography>
                                 <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>

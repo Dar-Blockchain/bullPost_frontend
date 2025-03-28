@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, IconButton, Popover } from "@mui/material";
+import { Box, IconButton, Popover, Tooltip } from "@mui/material";
 import MoodOutlinedIcon from "@mui/icons-material/MoodOutlined";
 import InsertPhotoOutlinedIcon from "@mui/icons-material/InsertPhotoOutlined";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
@@ -8,10 +8,10 @@ import SaveIcon from '@mui/icons-material/Save';
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { toast } from "react-toastify";
-import Tooltip from "@mui/material/Tooltip";
 import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
 import { keyframes } from "@mui/system";
 import { useAuth } from "@/hooks/useAuth";
+import { loadPreferences } from "@/store/slices/accountsSlice";
 
 interface ToolbarProps {
   text: string;
@@ -20,11 +20,8 @@ interface ToolbarProps {
   onSubmit: () => void;
   onEmojiSelect: (emoji: string) => void;
   setSubmittedText: (value: string) => void;
-  discordText: string;
   setDiscordText: (value: string) => void;
-  twitterText: string;
   setTwitterText: (value: string) => void;
-  telegramText: string;
   setTelegramText: (value: string) => void;
   _id: string;
   setId: (value: string) => void;
@@ -50,25 +47,36 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setTelegramText,
   setId,
   setAi,
-  isLoading
+  isLoading,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const dispatch = useDispatch<AppDispatch>();
+  const { user } = useAuth();
 
-  const handleOpenEmojiPicker = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+  // Load preferences via Redux on mount
+  useEffect(() => {
+    dispatch(loadPreferences());
+  }, [dispatch]);
+
+  // Get preferences from Redux state
+  const preference = useSelector((state: RootState) => state.accounts.preferences);
+
+  // Determine provider from preferences
+  const provider = preference?.OpenIA ? "OpenAI" : "Gemini";
 
   const selectedAnnouncement = useSelector(
     (state: RootState) => state.posts.selectedAnnouncement
   );
-  const { user } = useAuth(); // ✅ Get user data
 
   useEffect(() => {
     if (selectedAnnouncement && selectedAnnouncement.length > 0) {
       setText(selectedAnnouncement[0].prompt);
     }
   }, [selectedAnnouncement, setText]);
+
+  const handleOpenEmojiPicker = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
   const handleCloseEmojiPicker = () => {
     setAnchorEl(null);
@@ -91,7 +99,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             prompt: text,
@@ -124,10 +132,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
-  const storedPreference = typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
-  const preference = storedPreference ? JSON.parse(storedPreference) : {};
-  const provider = preference?.OpenIA ? "OpenAI" : "Gemini";
-
   return (
     <Box sx={{ display: "flex", mt: 2, gap: 0.5, backgroundColor: "#181818", p: 1, borderRadius: "30px", border: "1px solid #555" }}>
       <IconButton sx={{ color: "#aaa" }} onClick={handleOpenEmojiPicker}>
@@ -144,19 +148,22 @@ const Toolbar: React.FC<ToolbarProps> = ({
       {/* <IconButton sx={{ color: "#aaa" }}>
         <InsertPhotoOutlinedIcon fontSize="small" />
       </IconButton> */}
-
       <IconButton sx={{ color: "#aaa" }} onClick={onSubmit}>
         <AutoAwesomeOutlinedIcon
           fontSize="small"
           sx={{ animation: isLoading ? `${spin} 1s linear infinite` : "none" }}
         />
       </IconButton>
-      {user && <><Box sx={{ width: "1px", backgroundColor: "#555" }} />
-        <Tooltip title="Generate post manually (without AI assistance)" arrow>
-          <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
-            <SaveIcon fontSize="small" />
-          </IconButton>
-        </Tooltip></>}
+      {user && (
+        <>
+          <Box sx={{ width: "1px", backgroundColor: "#555" }} />
+          <Tooltip title="Generate post manually (without AI assistance)" arrow>
+            <IconButton sx={{ color: "#aaa" }} onClick={onManualGenerate}>
+              <SaveIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
+      )}
     </Box>
   );
 };

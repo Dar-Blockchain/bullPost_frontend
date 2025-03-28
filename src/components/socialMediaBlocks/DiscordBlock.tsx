@@ -50,6 +50,7 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ConnectModal from "./ConnectModal";
 // Import your EmojiPicker component (for example from "emoji-picker-react")
 import EmojiPicker from "emoji-picker-react";
+import { loadPreferences } from "@/store/slices/accountsSlice";
 
 interface DiscordAccount {
   _id: string;
@@ -112,7 +113,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [textAnchorPosition, setTextAnchorPosition] = useState<{ top: number; left: number } | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [preference, setPreference] = useState<UserPreference>({});
+  // const [preference, setPreference] = useState<UserPreference>({});
   const [discrodEnabled, setDiscrodEnabled] = useState(false);
   // Anchor for the emoji popover (we use a separate state so it doesn't conflict with scheduling popover)
   const [emojiAnchorEl, setEmojiAnchorEl] = useState<null | HTMLElement>(null);
@@ -126,46 +127,58 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
   const announcement = selectedAnnouncement && selectedAnnouncement.length > 0 ? selectedAnnouncement[0] : null;
   const postId = announcement?._id || _id;
+  const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
 
   // Detect user's time zone on mount
   useEffect(() => {
     setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
   }, []);
+  // useEffect(() => {
+  //   if (preference?.discord) {
+  //     setDiscordEnabled(preference.discord);
+  //   }
+  // }, [preference]);
+  useEffect(() => {
+    if (preference?.discord) {
+      setDiscrodEnabled(preference.discord);
+    }
+    dispatch(loadPreferences()); // Dispatch loadPreferences on mount to fetch the preferences
+  }, [preference, dispatch]);
 
   const [discordServerName, setDiscordServerName] = useState("");
   const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
   const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
   // Fetch preferences from API
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data: PreferencesData) => {
-        if (data) {
-          setPreference({
-            OpenIA: data.OpenIA,
-            Gemini: data.Gemini,
-            DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
-            TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
-            discord: data.discord,
-          });
-          if (data.discord) {
-            setDiscrodEnabled(data.discord);
-          }
-          if (data.Discord_Server_Name) {
-            setDiscordServerName(data.Discord_Server_Name);
-          }
-        }
-      })
-      .catch((err) => console.error("Error fetching preferences:", err));
-  }, [user]);
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   if (!token) return;
+  //   fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+  //     method: "GET",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data: PreferencesData) => {
+  //       if (data) {
+  //         setPreference({
+  //           OpenIA: data.OpenIA,
+  //           Gemini: data.Gemini,
+  //           DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
+  //           TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+  //           discord: data.discord,
+  //         });
+  //         if (data.discord) {
+  //           setDiscrodEnabled(data.discord);
+  //         }
+  //         if (data.Discord_Server_Name) {
+  //           setDiscordServerName(data.Discord_Server_Name);
+  //         }
+  //       }
+  //     })
+  //     .catch((err) => console.error("Error fetching preferences:", err));
+  // }, [user]);
 
   // Typewriter effect for submitted text if AI mode is enabled
   useEffect(() => {
@@ -620,7 +633,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
               >
                 <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
                 <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                  @{discordServerName || "BullPost User"}
+                  @{preference?.Discord_Server_Name || "BullPost User"}
                 </Typography>
                 <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                   <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />

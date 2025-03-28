@@ -49,6 +49,7 @@ import {
 } from "@/store/slices/postsSlice";
 import ConnectModal from "./ConnectModal";
 import EmojiPicker from "emoji-picker-react";
+import { loadPreferences } from "@/store/slices/accountsSlice";
 
 // Spinning animation
 const spin = keyframes`
@@ -112,11 +113,18 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     const [timeZone, setTimeZone] = useState<string>("");
     const [buttonText, setButtonText] = useState<string>("Post Now");
     const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
-    const [preference, setPreference] = useState<UserPreference>({});
+    // const [preference, setPreference] = useState<UserPreference>({});
     const [telegramEnabled, setTelegramEnabled] = useState(false);
     const [TELEGRAM_GroupName, setTELEGRAM_GroupName] = useState("");
 
-    TELEGRAM_GroupName
+    const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
+    useEffect(() => {
+        if (preference?.telegram) {
+            setTelegramEnabled(preference.telegram);
+        }
+        dispatch(loadPreferences()); // Dispatch loadPreferences on mount to fetch the preferences
+    }, [preference, dispatch]);
+
     // Refs for typewriter effect and text formatting
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
     const indexRef = useRef(0);
@@ -131,37 +139,37 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     useEffect(() => {
         setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((res) => res.json())
-            .then((data: PreferencesData) => {
-                if (data) {
-                    setPreference({
-                        OpenIA: data.OpenIA,
-                        Gemini: data.Gemini,
-                        DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
-                        TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
-                        TELEGRAM_GroupName: data.TELEGRAM_GroupName,
-                        telegram: data.telegram,
-                    });
-                    if (data.telegram) {
-                        setTelegramEnabled(data.telegram);
-                    }
-                    if (data.TELEGRAM_GroupName) {
-                        setTELEGRAM_GroupName(data.TELEGRAM_GroupName);
-                    }
-                }
-            })
-            .catch((err) => console.error("Error fetching preferences:", err));
-    }, [user]);
+    // useEffect(() => {
+    //     const token = localStorage.getItem("token");
+    //     if (!token) return;
+    //     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
+    //         method: "GET",
+    //         headers: {
+    //             "Content-Type": "application/json",
+    //             Authorization: `Bearer ${token}`,
+    //         },
+    //     })
+    //         .then((res) => res.json())
+    //         .then((data: PreferencesData) => {
+    //             if (data) {
+    //                 setPreference({
+    //                     OpenIA: data.OpenIA,
+    //                     Gemini: data.Gemini,
+    //                     DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL,
+    //                     TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID,
+    //                     TELEGRAM_GroupName: data.TELEGRAM_GroupName,
+    //                     telegram: data.telegram,
+    //                 });
+    //                 if (data.telegram) {
+    //                     setTelegramEnabled(data.telegram);
+    //                 }
+    //                 if (data.TELEGRAM_GroupName) {
+    //                     setTELEGRAM_GroupName(data.TELEGRAM_GroupName);
+    //                 }
+    //             }
+    //         })
+    //         .catch((err) => console.error("Error fetching preferences:", err));
+    // }, [user]);
     // Fetch user preferences from API (using the same API GET as in your TwitterBlock)
     // useEffect(() => {
     //     if (!user) return;
@@ -594,7 +602,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     .then((data: UserPreference) => {
                         if (data) {
                             console.log(data, "data");
-                            setPreference(data);
+                            // setPreference(data);
                             setTelegramEnabled(Boolean(data.TELEGRAM_CHAT_ID && data.TELEGRAM_CHAT_ID.trim().length > 0));
                             setTELEGRAM_GroupName(data.TELEGRAM_GroupName || "");
                             // Enable Telegram switch if TELEGRAM_CHAT_ID exists and is non-empty

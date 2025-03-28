@@ -11,7 +11,9 @@ import {
     Button,
 } from "@mui/material";
 import { toast } from "react-toastify";
-import CloseIcon from "@mui/icons-material/Close";
+import { AppDispatch, RootState } from "@/store/store"; // Import RootState and AppDispatch
+import { useDispatch, useSelector } from "react-redux";
+import { loadPreferences, clearPreferences } from "@/store/slices/accountsSlice";
 
 interface ConnectModalProps {
     open: boolean;
@@ -19,56 +21,43 @@ interface ConnectModalProps {
     platform: string;
 }
 
-interface PreferencesData {
-    Discord_Server_Name?: string;
-    DISCORD_WEBHOOK_URL?: string;
-    TELEGRAM_CHAT_ID?: string;
-    TELEGRAM_GroupName?: string;
-    // Include other keys if needed
-}
-
 const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) => {
-    // For Discord
+    const dispatch = useDispatch<AppDispatch>();
+    const { preferences } = useSelector((state: RootState) => state.accounts);
+
+    // Local state for inputs
     const [discordServer, setDiscordServer] = useState("");
     const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
-    // For Telegram
     const [telegramChatId, setTelegramChatId] = useState("");
     const [telegramGroupName, setTelegramGroupName] = useState("");
 
-    // Fetch user preferences from API on mount (or when the platform changes)
+    // This flag ensures we only initialize the form values once when the modal opens.
+    const [initialized, setInitialized] = useState(false);
+
+    // Load preferences when the modal opens.
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((res) => res.json())
-            .then((data: PreferencesData) => {
-                if (data) {
-                    console.log(data, "fetched preferences");
-                    if (platform === "discord") {
-                        if (data.Discord_Server_Name) {
-                            setDiscordServer(data.Discord_Server_Name);
-                        }
-                        if (data.DISCORD_WEBHOOK_URL) {
-                            setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL);
-                        }
-                    } else if (platform === "telegram") {
-                        if (data.TELEGRAM_CHAT_ID) {
-                            setTelegramChatId(data.TELEGRAM_CHAT_ID);
-                        }
-                        if (data.TELEGRAM_GroupName) {
-                            setTelegramGroupName(data.TELEGRAM_GroupName);
-                        }
-                    }
-                }
-            })
-            .catch((err) => console.error("Error fetching preferences:", err));
-    }, [platform]); // re-run if platform changes
+        if (open) {
+            dispatch(loadPreferences());
+        }
+        return () => {
+            dispatch(clearPreferences());
+            setInitialized(false); // Reset initialization when modal closes.
+        };
+    }, [open, dispatch]);
+
+    // Initialize form values only once using the Redux preferences.
+    useEffect(() => {
+        if (open && !initialized && preferences) {
+            if (platform === "discord") {
+                setDiscordServer(preferences.Discord_Server_Name || "");
+                setDiscordWebhookUrl(preferences.DISCORD_WEBHOOK_URL || "");
+            } else if (platform === "telegram") {
+                setTelegramChatId(preferences.TELEGRAM_CHAT_ID || "");
+                setTelegramGroupName(preferences.TELEGRAM_GroupName || "");
+            }
+            setInitialized(true);
+        }
+    }, [preferences, platform, open, initialized]);
 
     const handleSave = async () => {
         // Validate inputs based on platform

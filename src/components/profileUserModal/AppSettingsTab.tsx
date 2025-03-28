@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -9,114 +9,26 @@ import {
   MenuItem
 } from '@mui/material';
 import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { loadPreferences } from "@/store/slices/accountsSlice";
 
 const AppSettingsTab: React.FC = () => {
-  // Retrieve and set the initial provider preference
-  const storedPreference = localStorage.getItem("userPreference");
-  const initialProvider =
-    storedPreference && JSON.parse(storedPreference).OpenIA ? "OpenAI" : "Gemini";
+  const dispatch = useDispatch<AppDispatch>();
+  const preferences = useSelector((state: RootState) => state.accounts.preferences);
 
+  // Determine initial provider from Redux preferences (defaults to "Gemini")
+  const initialProvider = preferences?.OpenIA ? "OpenAI" : "Gemini";
+  const [provider, setProvider] = useState(initialProvider);
 
-
-  // Fetch saved preferences from the backend on mount
-  useEffect(() => {
-    const storedPreference = localStorage.getItem("userPreference");
-    if (storedPreference) return; // Already set, so do not fetch again
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      }
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
-          // Save only the Discord and Telegram data if available,
-          // otherwise leave them as empty strings.
-          const backendPref = {
-            OpenIA: data.OpenIA,
-            Gemini: !data.OpenIA,
-            DISCORD_WEBHOOK_URL: data.DISCORD_WEBHOOK_URL || "",
-            TELEGRAM_CHAT_ID: data.TELEGRAM_CHAT_ID || ""
-          };
-          localStorage.setItem("userPreference", JSON.stringify(backendPref));
-        }
-      })
-      .catch((err) => console.error("Error fetching preferences:", err));
-  }, []);
-
+  // Local state for API keys
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
-  useEffect(() => {
-    const storedPref = localStorage.getItem("userPreference");
-    if (storedPref) {
-      const pref = JSON.parse(storedPref);
-      setDiscordWebhookUrl(pref.DISCORD_WEBHOOK_URL || "");
-      setTelegramChatId(pref.TELEGRAM_CHAT_ID || "");
-    }
-  }, []);
 
-  const handleSave = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  // New flag to initialize inputs only once.
+  const [initialized, setInitialized] = useState(false);
 
-    // Retrieve existing preferences from "userPreference"
-    const storedPref = localStorage.getItem("userPreference");
-    const pref = storedPref ? JSON.parse(storedPref) : {};
-
-    // Update the preference object with Discord and Telegram data directly
-    const updatedPref = {
-      ...pref,
-      DISCORD_WEBHOOK_URL: discordWebhookUrl ? discordWebhookUrl : pref.DISCORD_WEBHOOK_URL,
-      TELEGRAM_CHAT_ID: telegramChatId ? telegramChatId : pref.TELEGRAM_CHAT_ID,
-    };
-
-    // Save updated preferences back to "userPreference"
-    localStorage.setItem("userPreference", JSON.stringify(updatedPref));
-    console.log("Local preferences saved:", updatedPref);
-
-    // Build request body with non-empty keys only
-    let requestBody: any = {};
-    if (discordWebhookUrl.trim() !== "") {
-      requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
-    }
-    if (telegramChatId.trim() !== "") {
-      requestBody.TELEGRAM_CHAT_ID = telegramChatId;
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
-      if (!response.ok) {
-        console.error("Failed to save preferences to backend");
-        toast.error("❌ Failed to save preferences!", { position: "top-right" });
-        return;
-      }
-      const data = await response.json();
-      console.log("Preferences saved to backend:", data);
-      toast.success("Preferences saved successfully!", { position: "top-right" });
-      // onClose();
-    } catch (error) {
-      console.error("Error saving preferences:", error);
-      toast.error("❌ Error saving preferences!", { position: "top-right" });
-    }
-  };
-
-  // Common styles for input elements
+  // Input style shared among API key inputs
   const inputStyles = {
     width: '90%',
     height: '40px',
@@ -127,8 +39,90 @@ const AppSettingsTab: React.FC = () => {
     '& input': { color: '#fff' }
   };
 
+  // Load preferences from the backend via Redux when the component mounts.
+  useEffect(() => {
+    dispatch(loadPreferences());
+  }, [dispatch]);
+
+  // Update local states when Redux preferences change, but only once.
+  useEffect(() => {
+    if (preferences && !initialized) {
+      setProvider(preferences.OpenIA ? "OpenAI" : "Gemini");
+      setDiscordWebhookUrl(preferences.DISCORD_WEBHOOK_URL || "");
+      setTelegramChatId(preferences.TELEGRAM_CHAT_ID || "");
+      setInitialized(true);
+    }
+  }, [preferences, initialized]);
+
+  const handleSave = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Build provider preference based on selection.
+    const providerPreference = {
+      OpenIA: provider === "OpenAI",
+      Gemini: provider === "Gemini"
+    };
+
+    // Build the request body including only non-empty keys.
+    const requestBody: any = {
+      ...providerPreference
+    };
+    if (discordWebhookUrl.trim() !== "") requestBody.DISCORD_WEBHOOK_URL = discordWebhookUrl;
+    if (telegramChatId.trim() !== "") requestBody.TELEGRAM_CHAT_ID = telegramChatId;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/updatePreferences`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(requestBody)
+        }
+      );
+      if (!response.ok) {
+        console.error("Failed to save preferences to backend");
+        toast.error("❌ Failed to save preferences!", { position: "top-right" });
+        return;
+      }
+      const data = await response.json();
+      console.log("Preferences saved to backend:", data);
+      toast.success("Preferences saved successfully!", { position: "top-right" });
+      // Reload preferences from Redux.
+      dispatch(loadPreferences());
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+      toast.error("❌ Error saving preferences!", { position: "top-right" });
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* Preferred Provider Dropdown */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+          Preferred Provider
+        </Typography>
+        <Select
+          value={provider}
+          onChange={(e) => setProvider(e.target.value)}
+          size="small"
+          sx={{
+            backgroundColor: '#171717',
+            color: '#fff',
+            border: '1px solid #ccc',
+            borderRadius: '5px',
+            '& .MuiSelect-select': { padding: '10px' }
+          }}
+        >
+          <MenuItem value="Gemini">Gemini</MenuItem>
+          <MenuItem value="OpenAI">OpenAI</MenuItem>
+        </Select>
+      </Box>
+
       {/* Discord Webhook URL Section */}
       <Box>
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>

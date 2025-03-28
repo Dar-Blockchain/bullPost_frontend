@@ -15,11 +15,12 @@ import TwitterBlock from "@/components/socialMediaBlocks/TwitterBlock";
 import TelegramBlock from "@/components/socialMediaBlocks/TelegramBlock";
 import BackgroundImage from "./components/BackgroundImage";
 import { fetchPostsByStatus, setSelectedAnnouncement } from "@/store/slices/postsSlice";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import Toolbar from "./components/Toolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/router";
+import { loadPreferences } from "@/store/slices/accountsSlice";
 interface UserPreference {
   OpenIA?: boolean;
   Gemini?: boolean;
@@ -45,14 +46,15 @@ export default function BullPostPage() {
   const handleClose = () => setOpen(false);
   const [text, setText] = useState(
     "No announcement yet...");
+  // Load preferences via Redux on mount
+  const preferences = useSelector((state: RootState) => state.accounts.preferences);
 
+  useEffect(() => {
+    dispatch(loadPreferences());
+  }, [dispatch]);
   // Preference settings and keys state (declared once)
-  const storedPreference =
-    typeof window !== "undefined" ? localStorage.getItem("userPreference") : null;
-  const initialProviderPref = storedPreference
-    ? JSON.parse(storedPreference).OpenIA
-      ? "OpenAI"
-      : "Gemini"
+  const initialProviderPref = preferences
+    ? (preferences.OpenIA ? "OpenAI" : "Gemini")
     : "Gemini";
   const [preferredProvider, setPreferredProvider] = useState(initialProviderPref);
   const [openIaKey, setOpenIaKey] = useState("");
@@ -65,78 +67,36 @@ export default function BullPostPage() {
 
   const [telegramChatId, setTelegramChatId] = useState("");
   const [twitterConnect, setTwitterConnect] = useState("");
-  const [Twitter, setTwitter] = useState("");
-  const [Discord, setDiscord] = useState("");
-  const [Telegram, setTelegram] = useState("");
 
-  // Save provider preference to localStorage on change
-  useEffect(() => {
-    const preference = {
-      OpenIA: preferredProvider === "OpenAI",
-      Gemini: preferredProvider === "Gemini",
-      DISCORD_WEBHOOK_URL: discordWebhookUrl,
-      TELEGRAM_CHAT_ID: telegramChatId,
-      twitterConnect: twitterConnect,
-      Twitter: Twitter,
-      Discord: Discord,
-      Telegram: Telegram,
-      discordServerName: discordServerName,
-      telegramGroupName: telegramGroupName,
-      twitterName: TwitterName,
-      // TwitterRefreshName: TwitterRefreshName
-    };
-    localStorage.setItem("userPreference", JSON.stringify(preference));
-  }, [preferredProvider,
-    discordWebhookUrl,
-    telegramChatId,
-    twitterConnect, // Added so that changes to twitterConnect update localStorage
-    Twitter,
-    Discord,
-    Telegram,
-    discordServerName,
-    telegramGroupName, TwitterName]);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}preferences/getPreferences`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
-          console.log(data, "data");
-          setPreferredProvider(data.OpenIA ? "OpenAI" : "Gemini");
-          setOpenIaKey(data.OpenIaKey || "");
-          setGeminiKey(data.GeminiKey || "");
-          setDiscordWebhookUrl(data.DISCORD_WEBHOOK_URL || "");
-          setTelegramChatId(data.TELEGRAM_CHAT_ID || "");
-          setTwitterConnect(data.refresh_token || "");
-          setTwitter(data.twitter || "")
-          setDiscord(data.discord || "")
-          setTelegram(data.telegram || "")
-          setDiscordServerName(data.Discord_Server_Name || "")
-          setTwitterName(data.twitter_Name || "")
-          setTelegramGroupName(data.TELEGRAM_GroupName || "")
-        }
-      })
-      .catch((err) => console.error("Error fetching preferences:", err));
-  }, [user]); // re-run when 'user' changes (i.e. when logged in)
+    if (preferences && !initialized) {
+      setPreferredProvider(preferences.OpenIA ? "OpenAI" : "Gemini");
+      setOpenIaKey(preferences.OpenIaKey || "");
+      setGeminiKey(preferences.GeminiKey || "");
+      setDiscordWebhookUrl(preferences.DISCORD_WEBHOOK_URL || "");
+      setTelegramChatId(preferences.TELEGRAM_CHAT_ID || "");
+      setTwitterConnect(preferences.refresh_token || "");
 
+      setDiscordServerName(preferences.Discord_Server_Name || "");
+      setTwitterName(preferences.twitter_Name || "");
+      setTelegramGroupName(preferences.TELEGRAM_GroupName || "");
+      setInitialized(true);
+    }
+  }, [preferences, initialized]);
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
-    // User must have either an OpenIA key or a Gemini key, and both Discord and Telegram keys
-    return !(
-      ((openIaKey && openIaKey.trim() !== "") || (geminiKey && geminiKey.trim() !== "")) &&
-      (discordWebhookUrl && discordWebhookUrl.trim() !== "") &&
-      (telegramChatId && telegramChatId.trim() !== "")
+    const incomplete = !(
+      ((preferences.OpenIaKey && preferences.OpenIaKey.trim() !== "") || (preferences.GeminiKey && preferences.GeminiKey.trim() !== "")) &&
+      (preferences.DISCORD_WEBHOOK_URL && preferences.DISCORD_WEBHOOK_URL.trim() !== "") &&
+      (preferences.TELEGRAM_CHAT_ID && preferences.TELEGRAM_CHAT_ID.trim() !== "")
     );
-  }, [openIaKey, geminiKey, discordWebhookUrl, telegramChatId]);
-
+    console.log("Profile incomplete:", incomplete, {
+      preferences
+    });
+    return incomplete;
+  }, [preferences]);
   const handleSubmit = async () => {
     if (!text.trim()) {
       toast.warn("⚠️ Please enter text before submitting!", { position: "top-right" });
@@ -145,17 +105,14 @@ export default function BullPostPage() {
     setAi(true);
     setIsLoading(true);
     const token = localStorage.getItem("token");
-    console.log(token, "here my token");
 
-    const userStr = localStorage.getItem("userPreference");
-    const userSettings = userStr ? JSON.parse(userStr) : {};
 
     let apiUrl = "";
-    if (userSettings?.OpenIA === true) {
+    if (preferences?.OpenIA === true) {
       apiUrl = token
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationOpenIA/generate`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
-    } else if (userSettings?.Gemini === true) {
+    } else if (preferences?.Gemini === true) {
       apiUrl = token
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generatePlatformPost`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}generationGemini/generateForVisitor`;
@@ -234,13 +191,7 @@ export default function BullPostPage() {
   const router = useRouter();
   const [preference, setPreference] = useState<UserPreference>({});
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedPreference = localStorage.getItem("userPreference");
-      const parsedPreference = storedPreference ? JSON.parse(storedPreference) : {};
-      setPreference(parsedPreference);
-    }
-  }, [preference]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const access_token = params.get("access_token");
@@ -382,11 +333,8 @@ export default function BullPostPage() {
                 onEmojiSelect={handleEmojiSelect}
                 submittedText={submittedText}
                 setSubmittedText={setSubmittedText}
-                discordText={discordText}
                 setDiscordText={setDiscordText}
-                twitterText={twitterText}
                 setTwitterText={setTwitterText}
-                telegramText={telegramText}
                 setTelegramText={setTelegramText}
                 _id={_id}
                 setId={setId}
@@ -433,11 +381,8 @@ export default function BullPostPage() {
                     onSubmit={handleSubmit}
                     onEmojiSelect={handleEmojiSelect}
                     setSubmittedText={setSubmittedText}
-                    discordText={discordText}
                     setDiscordText={setDiscordText}
-                    twitterText={twitterText}
                     setTwitterText={setTwitterText}
-                    telegramText={telegramText}
                     setTelegramText={setTelegramText}
                     _id={_id}
                     setId={setId}
