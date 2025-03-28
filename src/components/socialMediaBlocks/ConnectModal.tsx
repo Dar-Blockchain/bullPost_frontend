@@ -113,7 +113,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
             const data = await response.json();
             console.log("Preferences saved to backend:", data);
             toast.success("Preferences saved successfully!", { position: "top-right" });
-
+            dispatch(loadPreferences());
             onClose();
         } catch (error) {
             console.error("Error saving preferences:", error);
