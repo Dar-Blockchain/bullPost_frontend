@@ -118,13 +118,17 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
     const [TELEGRAM_GroupName, setTELEGRAM_GroupName] = useState("");
 
     const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
+
+    useEffect(() => {
+        dispatch(loadPreferences());
+    }, [dispatch]);
+
+    // Effect to update the local state (discordEnabled) when preferences change.
     useEffect(() => {
         if (preference?.telegram) {
             setTelegramEnabled(preference.telegram);
         }
-        dispatch(loadPreferences()); // Dispatch loadPreferences on mount to fetch the preferences
-    }, [preference, dispatch]);
-
+    }, [preference]);
     // Refs for typewriter effect and text formatting
     const textFieldRef = useRef<HTMLTextAreaElement | null>(null);
     const indexRef = useRef(0);

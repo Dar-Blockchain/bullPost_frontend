@@ -139,11 +139,15 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   //   }
   // }, [preference]);
   useEffect(() => {
-    if (preference?.discord) {
+    dispatch(loadPreferences());
+  }, [dispatch]);
+
+  // Effect to update the local state (discordEnabled) when preferences change.
+  useEffect(() => {
+    if (preference?.discord !== undefined) {
       setDiscrodEnabled(preference.discord);
     }
-    dispatch(loadPreferences()); // Dispatch loadPreferences on mount to fetch the preferences
-  }, [preference, dispatch]);
+  }, [preference]);
 
   const [discordServerName, setDiscordServerName] = useState("");
   const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);

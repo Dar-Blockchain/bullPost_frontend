@@ -137,13 +137,17 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const [twitterName, setTwitterName] = useState<string>("");
 
     const preference = useSelector((state: RootState) => state.accounts.preferences); // Get preferences from Redux store
+
+    useEffect(() => {
+        dispatch(loadPreferences());
+    }, [dispatch]);
+
+    // Effect to update the local state (discordEnabled) when preferences change.
     useEffect(() => {
         if (preference?.twitter) {
             setTwitterEnabled(preference.twitter);
         }
-        dispatch(loadPreferences()); // Dispatch loadPreferences on mount to fetch the preferences
-    }, [preference, dispatch]);
-
+    }, [preference]);
     // Fetch user preferences from API using the provided snippet.
     // This effect will run whenever the user changes (e.g., when logged in)
     // useEffect(() => {
