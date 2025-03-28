@@ -71,7 +71,6 @@ export default function BullPostPage() {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (preferences && !initialized) {
       setPreferredProvider(preferences.OpenIA ? "OpenAI" : "Gemini");
       setOpenIaKey(preferences.OpenIaKey || "");
       setGeminiKey(preferences.GeminiKey || "");
@@ -83,8 +82,8 @@ export default function BullPostPage() {
       setTwitterName(preferences.twitter_Name || "");
       setTelegramGroupName(preferences.TELEGRAM_GroupName || "");
       setInitialized(true);
-    }
-  }, [preferences, initialized]);
+    
+  }, [preferences]);
   // Compute whether the user's profile is incomplete
   const profileIncomplete = useMemo(() => {
     const incomplete = !(
