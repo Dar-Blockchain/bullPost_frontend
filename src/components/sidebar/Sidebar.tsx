@@ -26,6 +26,7 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logoutUser } from "@/store/slices/authSlice";
 import ProfileModal from "../profileUserModal/ProfilModal";
+import { toast } from "react-toastify";
 
 interface SidebarProps {
   handleOpen: () => void;
@@ -133,7 +134,51 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       setCurrentPage((prev) => prev + 1);
     }
   };
-
+  const onManualGenerate = async () => {
+    console.log("hi")
+    // setAi(false);
+    // console.log("Input lost focus. Current announcement:", submittedText);
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}posts/addPost`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            prompt: "New Draft",
+            twitter: "New Draft",
+            telegram: "New Draft",
+            discord: "New Draft",
+          }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        // setSubmittedText(data.prompt);
+        // setDiscordText(data.discord);
+        // setTwitterText(data.twitter);
+        // setTelegramText(data.telegram);
+        // setId(data._id);
+        dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+        dispatch(setSelectedAnnouncement([data]));
+        setSelectedPostId(data._id); // 👈 Select the newly created post
+        toast.success("New draft generated successfully!", { position: "top-right" });
+      } else {
+        console.error("Failed to add post", data.error);
+        toast.error(`Failed to add post: ${data.error || "Unknown error"}`, {
+          position: "top-right",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding post:", error);
+      toast.error("Error adding post!", { position: "top-right" });
+    }
+  };
   const sidebarContent = (
     <Box
       sx={{
@@ -177,170 +222,183 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             textTransform: "none",
             mt: "-20px",
             mb: 3,
+            zIndex: 200,
+
             "&:hover": { backgroundColor: "#FFA500" },
           }}
-          onClick={() => {
-            setSelectedPostId(null);
-            dispatch(clearSelectedAnnouncement());
-          }}
+          onClick={onManualGenerate
+            // () => {
+            // setSelectedPostId(null);
+            // dispatch(clearSelectedAnnouncement());
+            // }
+          }
         >
           New post
         </Button>
-      )}
+      )
+      }
 
       {/* Tabs */}
-      {isLoggedIn && (
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="fullWidth"
-          sx={{
-            "& .MuiTabs-indicator": { backgroundColor: "#FFB300" },
-            "& .MuiTab-root": {
-              color: "#aaa",
-              fontWeight: 500,
-              textTransform: "none",
-              fontSize: "12px",
-              "&.Mui-selected": { color: "#FFB300", fontWeight: 600 },
-            },
-          }}
-        >
-          <Tab label="Drafts" value="drafts" />
-          <Tab label="Scheduled" value="scheduled" />
-          <Tab label="Posted" value="posted" />
-        </Tabs>
-      )}
+      {
+        isLoggedIn && (
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            sx={{
+              "& .MuiTabs-indicator": { backgroundColor: "#FFB300" },
+              "& .MuiTab-root": {
+                color: "#aaa",
+                fontWeight: 500,
+                textTransform: "none",
+                fontSize: "12px",
+                "&.Mui-selected": { color: "#FFB300", fontWeight: 600 },
+              },
+            }}
+          >
+            <Tab label="Drafts" value="drafts" />
+            <Tab label="Scheduled" value="scheduled" />
+            <Tab label="Posted" value="posted" />
+          </Tabs>
+        )
+      }
 
       {/* Posts */}
-      {isLoggedIn && (
-        <Box
-          sx={{
-            width: "100%",
-            maxHeight: "400px",
-            overflowY: "auto",
-            "&::-webkit-scrollbar": { width: "0px" },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "#FFB300",
-              borderRadius: "3px",
-            },
-          }}
-        >
-          {postsLoading ? (
-            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>Loading...</Typography>
-          ) : posts.length > 0 ? (
-            posts.map((item: Post, index: number) => (
-              <Box
-                key={index}
-                sx={{
-                  borderBottom: "1px solid #222",
-                  pb: 2,
-                  mt: 2,
-                  "&:hover": { cursor: "pointer" },
-                }}
-                onClick={() => {
-                  setSelectedPostId(item._id);
-                  dispatch(setSelectedAnnouncement([item]));
-                }}
-              >
-
-
-                <Typography
+      {
+        isLoggedIn && (
+          <Box
+            sx={{
+              width: "100%",
+              maxHeight: "400px",
+              overflowY: "auto",
+              "&::-webkit-scrollbar": { width: "0px" },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#FFB300",
+                borderRadius: "3px",
+              },
+            }}
+          >
+            {postsLoading ? (
+              <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>Loading...</Typography>
+            ) : posts.length > 0 ? (
+              posts.map((item: Post, index: number) => (
+                <Box
+                  key={index}
                   sx={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    fontSize: "14px",
-                    color: "#C0C0C0",
-                    mb: 0.5,
-                    fontWeight: selectedPostId === item._id ? 700 : 400, // 👈 Make selected bold
-
+                    borderBottom: "1px solid #222",
+                    pb: 2,
+                    mt: 2,
+                    "&:hover": { cursor: "pointer" },
+                  }}
+                  onClick={() => {
+                    setSelectedPostId(item._id);
+                    dispatch(setSelectedAnnouncement([item]));
                   }}
                 >
-                  {item.prompt}
-                </Typography>
-                <Typography sx={{ fontSize: "12px", color: "#A6A6A6" }}>
-                  Last edited {dayjs(item.createdAt).format("MMM DD, YYYY")}
-                </Typography>
-              </Box>
-            ))
-          ) : (
-            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>
-              No posts available.
-            </Typography>
-          )}
 
-          {currentPage < totalPages && (
-            <Button
-              onClick={handleLoadMore}
-              variant="outlined"
-              sx={{
-                marginTop: "20px",
-                width: "100%",
-                borderRadius: "10px",
-                fontSize: "14px",
-                color: "#FFB300",
-                borderColor: "#FFB300",
-                "&:hover": { backgroundColor: "#FFA500", color: "#111" },
-              }}
-            >
-              Load More
-            </Button>
-          )}
-        </Box>
-      )}
+
+                  <Typography
+                    sx={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      fontSize: "14px",
+                      color: "#C0C0C0",
+                      mb: 0.5,
+                      fontWeight: selectedPostId === item._id ? 700 : 400, // 👈 Make selected bold
+
+                    }}
+                  >
+                    {item.prompt}
+                  </Typography>
+                  <Typography sx={{ fontSize: "12px", color: "#A6A6A6" }}>
+                    Last edited {dayjs(item.createdAt).format("MMM DD, YYYY")}
+                  </Typography>
+                </Box>
+              ))
+            ) : (
+              <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>
+                No posts available.
+              </Typography>
+            )}
+
+            {currentPage < totalPages && (
+              <Button
+                onClick={handleLoadMore}
+                variant="outlined"
+                sx={{
+                  marginTop: "20px",
+                  width: "100%",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  color: "#FFB300",
+                  borderColor: "#FFB300",
+                  "&:hover": { backgroundColor: "#FFA500", color: "#111" },
+                }}
+              >
+                Load More
+              </Button>
+            )}
+          </Box>
+        )
+      }
 
       {/* Login */}
-      {!isLoggedIn && (
-        <Button
-          variant="contained"
-          onClick={handleOpen}
-          sx={{
-            mt: "auto",
-            backgroundColor: "#FFB300",
-            color: "#111",
-            width: "100%",
-            borderRadius: "10px",
-            fontWeight: 600,
-            fontSize: "14px",
-            "&:hover": { backgroundColor: "#FFA500" },
-          }}
-        >
-          Login
-        </Button>
-      )}
+      {
+        !isLoggedIn && (
+          <Button
+            variant="contained"
+            onClick={handleOpen}
+            sx={{
+              mt: "auto",
+              backgroundColor: "#FFB300",
+              color: "#111",
+              width: "100%",
+              borderRadius: "10px",
+              fontWeight: 600,
+              fontSize: "14px",
+              "&:hover": { backgroundColor: "#FFA500" },
+            }}
+          >
+            Login
+          </Button>
+        )
+      }
 
       {/* User Info */}
-      {isLoggedIn && (
-        <Box
-          sx={{
-            marginTop: "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            p: 2,
-            borderTop: "1px solid #222",
-            width: "100%",
-          }}
-        >
-          <Avatar
-            src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
-            sx={{ width: 40, height: 40 }}
-            onClick={handleOpenProfile}
-          />
-          <Box onClick={handleOpenProfile} sx={{ cursor: "pointer", flexGrow: 1 }}>
-            <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user?.userName}</Typography>
-            <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
+      {
+        isLoggedIn && (
+          <Box
+            sx={{
+              marginTop: "auto",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              p: 2,
+              borderTop: "1px solid #222",
+              width: "100%",
+            }}
+          >
+            <Avatar
+              src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${user?.user_image}`}
+              sx={{ width: 40, height: 40 }}
+              onClick={handleOpenProfile}
+            />
+            <Box onClick={handleOpenProfile} sx={{ cursor: "pointer", flexGrow: 1 }}>
+              <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user?.userName}</Typography>
+              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
+            </Box>
+            <IconButton onClick={handleLogout}>
+              <LogoutIcon sx={{ color: "#fff" }} />
+            </IconButton>
           </Box>
-          <IconButton onClick={handleLogout}>
-            <LogoutIcon sx={{ color: "#fff" }} />
-          </IconButton>
-        </Box>
-      )}
+        )
+      }
 
       <ProfileModal open={openProfile} onClose={handleCloseProfile} user={user} />
-    </Box>
+    </Box >
   );
 
   return (
