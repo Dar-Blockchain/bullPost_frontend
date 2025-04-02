@@ -8,7 +8,6 @@ import {
   Tab,
   Drawer,
   IconButton,
-  Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -54,17 +53,19 @@ interface Post {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
-  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [openProfile, setOpenProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "posted">("drafts");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
+  const postsEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
-  const [openProfile, setOpenProfile] = useState(false);
-  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "posted">("drafts");
-  const [currentPage, setCurrentPage] = useState<number>(1); // Start at page 1
-  const [loading, setLoading] = useState<boolean>(false);
-  const postsEndRef = useRef<HTMLDivElement>(null);
-
   const dispatch = useDispatch<AppDispatch>();
+
   const { posts, totalPages, loading: postsLoading } = useSelector((state: any) => state.posts);
 
   useEffect(() => {
@@ -86,18 +87,14 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
   };
 
   const handleLogout = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No token found');
-      return;
-    }
+    const token = localStorage.getItem("token");
+    if (!token) return;
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/logout`, {
         method: "POST",
         credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
-
           "Content-Type": "application/json",
         },
       });
@@ -112,11 +109,9 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
     }
   };
 
-  // Load posts using a limit of 10 per page
   const loadPosts = async () => {
     if (loading || postsLoading || currentPage > totalPages) return;
     setLoading(true);
-    // Change limit from 6 to 10 here:
     dispatch(fetchPostsByStatus({ status: activeTab, page: currentPage, limit: 10 }));
     setLoading(false);
   };
@@ -129,16 +124,16 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: "drafts" | "scheduled" | "posted") => {
     setActiveTab(newValue);
-    setCurrentPage(1); // Reset to first page on tab change
+    setCurrentPage(1);
+    setSelectedPostId(null);
   };
 
   const handleLoadMore = () => {
     if (currentPage < totalPages) {
-      setCurrentPage((prevPage) => prevPage + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
-  // Sidebar content: posts list and controls
   const sidebarContent = (
     <Box
       sx={{
@@ -156,15 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          mb: 3,
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mb: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, width: "100%", mb: 3 }}>
           <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 50, height: 50, mr: 1 }} />
           <Typography variant="h6" sx={{ color: "#ff9c00", fontWeight: 600, fontSize: "16px" }}>
@@ -176,12 +163,11 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </IconButton>
       </Box>
 
-      {/* New Post Button */}
+      {/* New Post */}
       {isLoggedIn && (
         <Button
           variant="contained"
           sx={{
-            zIndex: 1000,
             width: "100%",
             backgroundColor: "#FFB300",
             color: "#111",
@@ -194,7 +180,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             "&:hover": { backgroundColor: "#FFA500" },
           }}
           onClick={() => {
-            console.log("New post clicked");
+            setSelectedPostId(null);
             dispatch(clearSelectedAnnouncement());
           }}
         >
@@ -202,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Button>
       )}
 
-      {/* Tabs Section */}
+      {/* Tabs */}
       {isLoggedIn && (
         <Tabs
           value={activeTab}
@@ -225,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Tabs>
       )}
 
-      {/* Posts Section */}
+      {/* Posts */}
       {isLoggedIn && (
         <Box
           sx={{
@@ -240,9 +226,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
           }}
         >
           {postsLoading ? (
-            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>
-              Loading...
-            </Typography>
+            <Typography sx={{ fontSize: "14px", color: "#aaa", mt: 2, textAlign: "center" }}>Loading...</Typography>
           ) : posts.length > 0 ? (
             posts.map((item: Post, index: number) => (
               <Box
@@ -254,9 +238,12 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
                   "&:hover": { cursor: "pointer" },
                 }}
                 onClick={() => {
+                  setSelectedPostId(item._id);
                   dispatch(setSelectedAnnouncement([item]));
                 }}
               >
+
+
                 <Typography
                   sx={{
                     display: "-webkit-box",
@@ -267,6 +254,8 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
                     fontSize: "14px",
                     color: "#C0C0C0",
                     mb: 0.5,
+                    fontWeight: selectedPostId === item._id ? 700 : 400, // 👈 Make selected bold
+
                   }}
                 >
                   {item.prompt}
@@ -282,7 +271,6 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             </Typography>
           )}
 
-          {/* Load More Button */}
           {currentPage < totalPages && (
             <Button
               onClick={handleLoadMore}
@@ -303,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Box>
       )}
 
-      {/* Login Button (if not logged in) */}
+      {/* Login */}
       {!isLoggedIn && (
         <Button
           variant="contained"
@@ -323,7 +311,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
         </Button>
       )}
 
-      {/* User Info Block at the bottom */}
+      {/* User Info */}
       {isLoggedIn && (
         <Box
           sx={{
@@ -341,20 +329,9 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             sx={{ width: 40, height: 40 }}
             onClick={handleOpenProfile}
           />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              flexGrow: 1,
-              cursor: "pointer", // Changes the cursor to a pointer when hovering
-            }}
-            onClick={handleOpenProfile}
-          >
-            <Box>
-              <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user?.userName}</Typography>
-              <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
-            </Box>
+          <Box onClick={handleOpenProfile} sx={{ cursor: "pointer", flexGrow: 1 }}>
+            <Typography sx={{ color: "#fff", fontWeight: 600 }}>{user?.userName}</Typography>
+            <Typography sx={{ color: "#aaa", fontSize: "12px" }}>Pro subscription</Typography>
           </Box>
           <IconButton onClick={handleLogout}>
             <LogoutIcon sx={{ color: "#fff" }} />
@@ -368,7 +345,6 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
 
   return (
     <>
-      {/* Mobile Top Bar */}
       {isMobile && !mobileOpen && (
         <Box
           sx={{
@@ -385,9 +361,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
             zIndex: 4,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 40, height: 40 }} />
-          </Box>
+          <Box component="img" src="/BP_Logo.png" alt="BullPost Logo" sx={{ width: 40, height: 40 }} />
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton
               sx={{
@@ -396,29 +370,23 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
                 borderRadius: "8px",
                 "&:hover": { backgroundColor: "#FFA500" },
               }}
-              onClick={
-                // handleOpen
-                () => {
-                  dispatch(clearSelectedAnnouncement());
-                }
-              }
+              onClick={() => {
+                setSelectedPostId(null);
+                dispatch(clearSelectedAnnouncement());
+              }}
             >
               <AddIcon />
             </IconButton>
-            {isLoggedIn && <Avatar
-              // onClick={handleOpenProfile}
-              src="/profile.jpg" sx={{ width: 32, height: 32 }} />}
+            {isLoggedIn && <Avatar src="/profile.jpg" sx={{ width: 32, height: 32 }} />}
             <IconButton onClick={handleDrawerToggle}>
               <MenuIcon sx={{ color: "#fff" }} />
             </IconButton>
           </Box>
-        </Box >
+        </Box>
       )}
 
-      {/* Desktop Sidebar */}
       {!isMobile && <Box sx={{ width: 272 }}>{sidebarContent}</Box>}
 
-      {/* Mobile Sidebar (Drawer) */}
       <Drawer
         anchor="left"
         open={mobileOpen}
