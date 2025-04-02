@@ -474,7 +474,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
             if (!response.ok) throw new Error("Failed to fetch the redirect URL");
             const data = await response.json();
             if (data) {
-                window.location.href = data;
+                // window.location.href = data;
             } else {
                 console.error("Invalid URL received");
             }
