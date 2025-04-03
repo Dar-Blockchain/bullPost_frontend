@@ -706,9 +706,9 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                             >
                                 <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
                                 <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                    @{preference.twitter_Name
-                                        ? preference.twitter_Name
-                                        : "BullPost User"}
+
+                                    @{(preference?.twitter_Name ? preference.twitter_Name : "BullPost User").slice(0, 10)}
+
                                 </Typography>
                                 <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                                     <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />

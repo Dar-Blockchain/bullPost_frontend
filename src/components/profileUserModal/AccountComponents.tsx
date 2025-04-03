@@ -34,10 +34,10 @@ export const AccountItem: React.FC<AccountItemProps> = ({ avatar, name, url, onR
 
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       {avatar && <Avatar src={avatar} alt={name} sx={{ width: 32, height: 32 }} />}
-      <Typography sx={{ fontSize: '0.95rem' }}>{name}</Typography>
+      <Typography sx={{ fontSize: '0.95rem' }}>{name.slice(0, 10)}</Typography>
       {url && (
         <Typography sx={{ fontSize: '0.95rem' }}>
-          {shortenString(url)}
+          {shortenString(url.slice(0, 20))}
         </Typography>
       )}
     </Box>

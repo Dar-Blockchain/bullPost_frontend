@@ -695,9 +695,9 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                         >
                             <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
                             <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
-                                @{preference.TELEGRAM_GroupName
-                                    ? preference.TELEGRAM_GroupName
-                                    : "BullPost User"}
+
+                                @{(preference?.TELEGRAM_GroupName ? preference.TELEGRAM_GroupName : "BullPost User").slice(0, 10)}
+
                             </Typography>
                             <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>
                                 <ArrowDropDownCircleOutlined sx={{ color: "#8F8F8F", fontSize: 18 }} />
