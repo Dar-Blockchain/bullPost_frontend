@@ -131,7 +131,10 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
         backgroundColor: "transparent",
         "& input": { color: "#fff" },
     };
-
+    const handleButtonClick = () => {
+        onClose(); // Call the onClose function
+        dispatch(loadPreferences()); // Dispatch the loadPreferences action
+    };
     return (
         <Dialog
             open={open}
@@ -241,7 +244,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ open, onClose, platform }) 
                         Save Data
                     </Button>
                     <Button
-                        onClick={onClose}
+                        onClick={handleButtonClick}
                         sx={{
                             backgroundColor: "grey",
                             ml: "10px",
