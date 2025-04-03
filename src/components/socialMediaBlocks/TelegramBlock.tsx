@@ -657,7 +657,14 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }, 0);
         handleCloseEmojiPicker();
     };
-
+    function shortenString(str: string, front = 6, back = 6) {
+        // If the string is already short enough, return as-is
+        if (str.length <= front + back) return str;
+        // Otherwise, return front...back
+        const firstPart = str.slice(0, front);
+        const lastPart = str.slice(-back);
+        return `${firstPart}...${lastPart}`;
+    }
     return (
         <Box
             sx={{
@@ -696,7 +703,7 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                             <Avatar src="/mnt/data/image.png" alt="Julio" sx={{ width: 26, height: 26 }} />
                             <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
 
-                                @{(preference?.TELEGRAM_GroupName ? preference.TELEGRAM_GroupName : "BullPost User").slice(0, 10)}
+                                @{(preference?.TELEGRAM_GroupName ? shortenString(preference.TELEGRAM_GroupName) : "BullPost User").slice(0, 10)}
 
                             </Typography>
                             <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>

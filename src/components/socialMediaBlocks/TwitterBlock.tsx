@@ -668,6 +668,14 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         }, 0);
         handleCloseEmojiPicker();
     };
+    function shortenString(str: string, front = 6, back = 6) {
+        // If the string is already short enough, return as-is
+        if (str.length <= front + back) return str;
+        // Otherwise, return front...back
+        const firstPart = str.slice(0, front);
+        const lastPart = str.slice(-back);
+        return `${firstPart}...${lastPart}`;
+    }
     return (
         <>
             <Box
@@ -707,7 +715,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 <Avatar src="/mnt/data/image.png" alt="User" sx={{ width: 26, height: 26 }} />
                                 <Typography sx={{ color: "#8F8F8F", fontSize: "14px", fontWeight: 500 }}>
 
-                                    @{(preference?.twitter_Name ? preference.twitter_Name : "BullPost User").slice(0, 10)}
+                                    @{(preference?.twitter_Name ? shortenString(preference.twitter_Name) : "BullPost User").slice(0, 10)}
 
                                 </Typography>
                                 <IconButton onClick={handleArrowClick} sx={{ p: 0 }}>

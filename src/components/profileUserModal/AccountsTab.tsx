@@ -352,6 +352,7 @@ const AccountsTab: React.FC = () => {
       toast.error("❌ Error removing Twitter account", { position: "top-right" });
     }
   };
+  
   return (
     <Box sx={{
       display: 'grid', gridTemplateColumns: gridColumns, gap: 4,
