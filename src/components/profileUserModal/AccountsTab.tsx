@@ -6,6 +6,9 @@ import DiscordIcon from '@mui/icons-material/Cloud';
 import TelegramIcon from '@mui/icons-material/Send';
 import { toast } from "react-toastify";
 import { AccountItem, AddAccountItem } from './AccountComponents';
+import { loadPreferences } from '@/store/slices/accountsSlice';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
 
 interface DiscordAccount {
   groupName: string;
@@ -90,6 +93,7 @@ const AccountsTab: React.FC = () => {
       console.error('Error fetching Discord accounts:', error);
     }
   };
+  const dispatch = useDispatch<AppDispatch>();
 
   // Fetch Telegram accounts
   // const loadTelegramAccounts = async () => {
@@ -165,6 +169,8 @@ const AccountsTab: React.FC = () => {
       setDiscordWebhook('');
       setShowDiscordInputs(false);
       loadDiscordAccounts()
+      dispatch(loadPreferences());
+
     } catch (error) {
       console.error("Error adding Discord account:", error);
       toast.error("❌ Error adding Discord account", { position: "top-right" });
@@ -200,6 +206,8 @@ const AccountsTab: React.FC = () => {
       const data = await response.json();
       console.log("Removed Discord account:", data);
       setDiscordAccounts((prev) => prev.filter((_, i) => i !== index));
+      dispatch(loadPreferences());
+
       toast.success("Discord account removed", { position: "top-right" });
     } catch (error) {
       console.error("Error removing Discord account:", error);
@@ -247,6 +255,8 @@ const AccountsTab: React.FC = () => {
       setTelegramChatId('');
       setShowTelegramInputs(false);
       loadDiscordAccounts()
+      dispatch(loadPreferences());
+
 
     } catch (error) {
       console.error("Error adding Telegram account:", error);
@@ -283,6 +293,8 @@ const AccountsTab: React.FC = () => {
       const data = await response.json();
       console.log("Removed Telegram account:", data);
       setTelegramAccounts((prev) => prev.filter((_, i) => i !== index));
+      dispatch(loadPreferences());
+
       toast.success("Telegram account removed", { position: "top-right" });
     } catch (error) {
       console.error("Error removing Telegram account:", error);
@@ -352,7 +364,7 @@ const AccountsTab: React.FC = () => {
       toast.error("❌ Error removing Twitter account", { position: "top-right" });
     }
   };
-  
+
   return (
     <Box sx={{
       display: 'grid', gridTemplateColumns: gridColumns, gap: 4,
