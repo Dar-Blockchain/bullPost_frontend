@@ -255,7 +255,7 @@ const AccountsTab: React.FC = () => {
       setTelegramChatId('');
       setShowTelegramInputs(false);
       loadDiscordAccounts()
-      dispatch(loadPreferences());
+      // dispatch(loadPreferences());
 
 
     } catch (error) {
