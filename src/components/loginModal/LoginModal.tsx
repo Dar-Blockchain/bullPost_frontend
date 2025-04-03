@@ -164,6 +164,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
             icon: <AppleIcon />,
             color: "#fff",
             provider: "apple",
+            disabled: true, // Apple provider disabled
+
         },
 
         {
@@ -171,6 +173,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
             icon: <AccountBalanceWalletIcon />,
             color: "white",
             provider: "wallet", // You may handle wallet connection differently
+            disabled: true, // Apple provider disabled
+
         },
     ];
     // Subscription Plans
@@ -327,12 +331,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, handleClose }) => {
                                     key={index}
                                     variant="outlined"
                                     onClick={() => {
+                                        if (item.disabled) return; // Prevent action if disabled
                                         if (item.provider === "wallet") {
                                             console.log("Connect wallet clicked");
                                         } else {
                                             signIn(item.provider);
                                         }
                                     }}
+                                    disabled={item.disabled} // Apply the disabled state
                                     sx={{
                                         display: "flex",
                                         justifyContent: "flex-start",
