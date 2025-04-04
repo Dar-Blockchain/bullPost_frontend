@@ -31,6 +31,8 @@ import {
     FormatUnderlined as FormatUnderlinedIcon,
     StrikethroughS as StrikethroughSIcon,
     Code as CodeIcon,
+    Close as CloseIcon,
+
 } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import { keyframes } from "@mui/system";
@@ -665,6 +667,24 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         const lastPart = str.slice(-back);
         return `${firstPart}...${lastPart}`;
     }
+    const handleRemoveAnnouncementImage = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        try {
+            setIsLoading(true);
+            const formData = new FormData();
+            // Setting image_discord to an empty string to remove it
+            formData.append("image_telegram", "");
+            const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
+            dispatch(setSelectedAnnouncement([updatedPost]));
+            toast.success("Image removed successfully!", { position: "top-right" });
+        } catch (error) {
+            console.error("Error removing image:", error);
+            toast.error("❌ Failed to remove image!", { position: "top-right" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
     return (
         <Box
             sx={{
@@ -880,11 +900,30 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                 ) : (
                     <>
                         {announcement && announcement.image_telegram && (
-                            <img
-                                src={announcement.image_telegram}
-                                alt="Preview"
-                                style={{ maxWidth: "100%", marginBottom: "10px" }}
-                            />
+                            <Box position="relative" display="inline-block" mb={2}>
+                                <img
+                                    src={announcement.image_telegram}
+                                    alt="Preview"
+                                    style={{ display: "block", maxWidth: "100%" }}
+                                />
+                                <IconButton
+                                    onClick={handleRemoveAnnouncementImage}
+                                    size="small"
+                                    sx={{
+                                        position: "absolute",
+                                        top: 4,
+                                        right: 4,
+                                        backgroundColor: "rgba(0,0,0,0.6)",
+                                        padding: "2px",
+                                        color: "#fff",
+                                        "&:hover": { backgroundColor: "rgba(0,0,0,0.8)" },
+                                        minWidth: "auto",
+                                    }}
+                                >
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
+
                         )}
                         <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                             <ReactMarkdown>

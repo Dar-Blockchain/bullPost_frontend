@@ -43,6 +43,8 @@ import {
   FormatUnderlined as FormatUnderlinedIcon,
   StrikethroughS as StrikethroughSIcon,
   Code as CodeIcon,
+  Close as CloseIcon,
+
 } from "@mui/icons-material";
 import dayjs from "dayjs";
 import ReactMarkdown from "react-markdown";
@@ -534,6 +536,9 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
+  const handleRemoveSelectedImage = () => {
+    setSelectedImage(null);
+  };
 
   // Fetch Discord accounts from the API
   useEffect(() => {
@@ -602,6 +607,24 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
     const lastPart = str.slice(-back);
     return `${firstPart}...${lastPart}`;
   }
+  const handleRemoveAnnouncementImage = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      // Setting image_discord to an empty string to remove it
+      formData.append("image_discord", "");
+      const updatedPost = await dispatch(updatePost({ id: postId, body: formData })).unwrap();
+      dispatch(setSelectedAnnouncement([updatedPost]));
+      toast.success("Image removed successfully!", { position: "top-right" });
+    } catch (error) {
+      console.error("Error removing image:", error);
+      toast.error("❌ Failed to remove image!", { position: "top-right" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <>
       <Box
@@ -782,6 +805,20 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
                       borderRadius: "4px",
                     }}
                   />
+                  {/* <IconButton
+                    onClick={handleRemoveSelectedImage}
+                    size="small"
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      backgroundColor: "rgba(0,0,0,0.5)",
+                      color: "#fff",
+                      "&:hover": { backgroundColor: "rgba(0,0,0,0.7)" },
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton> */}
                 </Box>
               )}
               {/* Text Formatting Popover */}
@@ -835,11 +872,30 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
           ) : (
             <>
               {announcement?.image_discord && (
-                <img
-                  src={announcement.image_discord}
-                  alt="Preview"
-                  style={{ maxWidth: "100%", marginBottom: "10px" }}
-                />
+                <Box position="relative" display="inline-block" mb={2}>
+                  <img
+                    src={announcement.image_discord}
+                    alt="Preview"
+                    style={{ display: "block", maxWidth: "100%" }}
+                  />
+                  <IconButton
+                    onClick={handleRemoveAnnouncementImage}
+                    size="small"
+                    sx={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      padding: "2px",
+                      color: "#fff",
+                      "&:hover": { backgroundColor: "rgba(0,0,0,0.8)" },
+                      minWidth: "auto",
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+
               )}
               <Box sx={{ fontSize: "14px", color: "#8F8F8F", whiteSpace: "pre-line" }}>
                 <ReactMarkdown>

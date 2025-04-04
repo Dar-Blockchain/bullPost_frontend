@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css"; // Ensure global styles are imported
 import { useAuth } from "@/hooks/useAuth";
 import { SessionProvider } from "next-auth/react"; // ✅ Import SessionProvider
+import Head from "next/head";
 
 const darkTheme = createTheme({
   palette: {
@@ -39,6 +40,10 @@ function MyAppComponent({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider theme={darkTheme}>
+      <Head>
+        <title>BullPost</title>
+        <link rel="icon" href="/BP_Logo.png" />
+      </Head>
       <CssBaseline />
       <ToastContainer position="top-right" autoClose={3000} />
 
