@@ -69,7 +69,8 @@ export default function BullPostPage() {
   const [twitterConnect, setTwitterConnect] = useState("");
 
   const [initialized, setInitialized] = useState(false);
-
+  const selectedAnnouncement = useSelector((state: RootState) => state.posts.selectedAnnouncement);
+  const postId = selectedAnnouncement.length > 0 ? selectedAnnouncement[0]._id : "";
   useEffect(() => {
     if (preferences && !initialized) {
       setPreferredProvider(preferences.OpenIA ? "OpenAI" : "Gemini");
@@ -123,13 +124,21 @@ export default function BullPostPage() {
     }
 
     try {
+      const bodyPayload = {
+        prompt: text,
+        platforms: ["twitter", "discord", "telegram"],
+        // if we're using OpenIA *and* have an existing id, include it
+        ...(postId ? { postId: postId } : {}),
+      };
+      console.log(_id, bodyPayload, "here a data")
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ prompt: text, platforms: ["twitter", "discord", "telegram"] }),
+        // body: JSON.stringify({ prompt: text, platforms: ["twitter", "discord", "telegram"] }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await response.json();

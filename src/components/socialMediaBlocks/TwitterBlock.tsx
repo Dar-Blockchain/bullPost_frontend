@@ -49,7 +49,30 @@ import {
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import EmojiPicker from "emoji-picker-react";
 import { loadPreferences } from "@/store/slices/accountsSlice";
+import { useRouter } from "next/router";
+// at the top of postsSlice.ts
 
+export interface Post {
+    _id: string;
+    title: string;
+    prompt: string;
+    status: string;
+    discord?: string;               // still optional
+    telegram?: string;              // ← make this optional
+    createdAt: string;
+    updatedAt: string;
+    scheduledAtDiscord?: string;
+    publishedAtDiscord?: string;
+    scheduledAtTelegram?: string;
+    publishedAtTelegram?: string;
+    publishedAtTwitter?: string;
+    scheduledAtTwitter?: string;
+    twitter?: string;
+    image_discord?: string;
+    image_twitter?: string;
+    image_telegram?: string;
+    // …etc…
+}
 interface TwitterAccount {
     _id: string;
     twitter_Name: string;
@@ -420,7 +443,27 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     const handleTimeChange = (newTime: Dayjs | null) => {
         setSelectedTime(newTime);
     };
-
+    useEffect(() => {
+        if (announcement?.publishedAtTwitter) {
+            // if already published, show that
+            const dt = dayjs(announcement.publishedAtTwitter);
+            setSelectedDate(dt);
+            setSelectedTime(dt);
+            // updateButtonText(dt, dt);
+        } else if (announcement?.scheduledAtTwitter) {
+            // if scheduled, seed the picker
+            const dt = dayjs(announcement.scheduledAtTwitter);
+            setSelectedDate(dt);
+            setSelectedTime(dt);
+            // updateButtonText(dt, dt);
+        } else {
+            // brand‑new / no schedule → clear everything
+            setSelectedDate(null);
+            setSelectedTime(null);
+            // updateButtonText(null, null);
+        }
+    }, [announcement?._id, announcement?.publishedAtTwitter, announcement?.scheduledAtTwitter]);
+    const router = useRouter();
     const handleSchedulePost = async () => {
         if (!selectedDate || !selectedTime) return handlePostNow();
         const combinedDateTime = selectedDate
@@ -448,12 +491,39 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     body: JSON.stringify(requestBody),
                 }
             );
-            if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
-                toast.success("Post scheduled successfully!");
-            } else {
+            if (!response.ok) {
                 toast.error("Failed to schedule post.");
+                return;
             }
+            const data = await response.json();
+
+            const fullPost = {
+                _id: data._id,
+                title: data.title,
+                prompt: data.prompt,
+                status: data.status,
+                discord: data.discord ?? "",
+                telegram: data.telegram ?? "",   // ← never undefined
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                scheduledAtDiscord: data.scheduledAtDiscord ?? "",
+                publishedAtDiscord: data.publishedAtDiscord ?? "",
+                scheduledAtTelegram: data.scheduledAtTelegram ?? "",
+                publishedAtTelegram: data.publishedAtTelegram ?? "",
+                publishedAtTwitter: data.publishedAtTwitter ?? "",
+                scheduledAtTwitter: data.scheduledAtTwitter ?? "",
+                twitter: data.twitter ?? "",
+                image_discord: data.image_discord ?? "",
+                image_twitter: data.image_twitter ?? "",
+                image_telegram: data.image_telegram ?? "",
+                // …and so on for any other required fields…
+            };
+     
+            dispatch(setSelectedAnnouncement([fullPost]));
+
+            dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+
+            toast.success("Post scheduled successfully!");
         } catch (error) {
             console.error("Error scheduling post:", error);
             alert("Error scheduling post.");

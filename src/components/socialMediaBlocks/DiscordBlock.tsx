@@ -53,6 +53,30 @@ import ConnectModal from "./ConnectModal";
 // Import your EmojiPicker component (for example from "emoji-picker-react")
 import EmojiPicker from "emoji-picker-react";
 import { loadPreferences } from "@/store/slices/accountsSlice";
+import { useRouter } from "next/router";
+// at the top of postsSlice.ts
+
+export interface Post {
+  _id: string;
+  title: string;
+  prompt: string;
+  status: string;
+  discord?: string;               // still optional
+  telegram?: string;              // ← make this optional
+  createdAt: string;
+  updatedAt: string;
+  scheduledAtDiscord?: string;
+  publishedAtDiscord?: string;
+  scheduledAtTelegram?: string;
+  publishedAtTelegram?: string;
+  publishedAtTwitter?: string;
+  scheduledAtTwitter?: string;
+  twitter?: string;
+  image_discord?: string;
+  image_twitter?: string;
+  image_telegram?: string;
+  // …etc…
+}
 
 interface DiscordAccount {
   _id: string;
@@ -278,17 +302,44 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
       setIsPosting(false);
     }
   };
+  useEffect(() => {
+    if (announcement?.publishedAtDiscord) {
+      // if already published, show that
+      const dt = dayjs(announcement.publishedAtDiscord);
+      setSelectedDate(dt);
+      setSelectedTime(dt);
+      updateButtonText(dt, dt);
+    } else if (announcement?.scheduledAtDiscord) {
+      // if scheduled, seed the picker
+      const dt = dayjs(announcement.scheduledAtDiscord);
+      setSelectedDate(dt);
+      setSelectedTime(dt);
+      updateButtonText(dt, dt);
+    } else {
+      // brand‑new / no schedule → clear everything
+      setSelectedDate(null);
+      setSelectedTime(null);
+      updateButtonText(null, null);
+    }
+  }, [announcement?._id, announcement?.publishedAtDiscord, announcement?.scheduledAtDiscord]);
+  const router = useRouter();
 
   const handleSchedulePost = async () => {
     if (!selectedDate || !selectedTime) return handlePostNow();
+
     const combinedDateTime = selectedDate
       .set("hour", selectedTime.hour())
       .set("minute", selectedTime.minute())
       .set("second", 0);
+
     const token = localStorage.getItem("token");
-    const requestBody = { dateTime: combinedDateTime.toISOString(), timeZone };
+    const requestBody = {
+      dateTime: combinedDateTime.toISOString(),
+      timeZone,
+    };
 
     try {
+      setIsPosting(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}postDiscord/schedulePost/${postId}`,
         {
@@ -300,17 +351,52 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
           body: JSON.stringify(requestBody),
         }
       );
-      if (response.ok) {
-        dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
-        toast.success("Post scheduled successfully!");
-      } else {
+
+      if (!response.ok) {
         toast.error("Failed to schedule post.");
+        return;
       }
+      const data = await response.json();
+
+      const fullPost = {
+        _id: data._id,
+        title: data.title,
+        prompt: data.prompt,
+        status: data.status,
+        discord: data.discord ?? "",
+        telegram: data.telegram ?? "",   // ← never undefined
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        scheduledAtDiscord: data.scheduledAtDiscord ?? "",
+        publishedAtDiscord: data.publishedAtDiscord ?? "",
+        scheduledAtTelegram: data.scheduledAtTelegram ?? "",
+        publishedAtTelegram: data.publishedAtTelegram ?? "",
+        publishedAtTwitter: data.publishedAtTwitter ?? "",
+        scheduledAtTwitter: data.scheduledAtTwitter ?? "",
+        twitter: data.twitter ?? "",
+        image_discord: data.image_discord ?? "",
+        image_twitter: data.image_twitter ?? "",
+        image_telegram: data.image_telegram ?? "",
+        // …and so on for any other required fields…
+      };
+      // parse the updated post from the response
+      // 1) re‑fetch your drafts list so the sidebar/list is up‑to‑date
+      // await dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+
+      // 2) dispatch the *full* Post object you got back
+      dispatch(setSelectedAnnouncement([fullPost]));
+
+      dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+
+      toast.success("Post scheduled successfully!");
     } catch (error) {
       console.error("Error scheduling post:", error);
-      alert("Error scheduling post.");
+      toast.error("Error scheduling post.");
+    } finally {
+      setIsPosting(false);
     }
   };
+
 
   // Handle image file selection and update post accordingly
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {

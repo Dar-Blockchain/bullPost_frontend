@@ -52,7 +52,30 @@ import {
 import ConnectModal from "./ConnectModal";
 import EmojiPicker from "emoji-picker-react";
 import { loadPreferences } from "@/store/slices/accountsSlice";
+import { useRouter } from "next/router";
+// at the top of postsSlice.ts
 
+export interface Post {
+    _id: string;
+    title: string;
+    prompt: string;
+    status: string;
+    discord?: string;               // still optional
+    telegram?: string;              // ← make this optional
+    createdAt: string;
+    updatedAt: string;
+    scheduledAtDiscord?: string;
+    publishedAtDiscord?: string;
+    scheduledAtTelegram?: string;
+    publishedAtTelegram?: string;
+    publishedAtTwitter?: string;
+    scheduledAtTwitter?: string;
+    twitter?: string;
+    image_discord?: string;
+    image_twitter?: string;
+    image_telegram?: string;
+    // …etc…
+}
 // Spinning animation
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -332,6 +355,27 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         setSelectedTime(newTime);
         updateButtonText(selectedDate, newTime);
     };
+    useEffect(() => {
+        if (announcement?.publishedAtTelegram) {
+            // if already published, show that
+            const dt = dayjs(announcement.publishedAtTelegram);
+            setSelectedDate(dt);
+            setSelectedTime(dt);
+            updateButtonText(dt, dt);
+        } else if (announcement?.scheduledAtTelegram) {
+            // if scheduled, seed the picker
+            const dt = dayjs(announcement.scheduledAtTelegram);
+            setSelectedDate(dt);
+            setSelectedTime(dt);
+            updateButtonText(dt, dt);
+        } else {
+            // brand‑new / no schedule → clear everything
+            setSelectedDate(null);
+            setSelectedTime(null);
+            updateButtonText(null, null);
+        }
+    }, [announcement?._id, announcement?.publishedAtTelegram, announcement?.scheduledAtTelegram]);
+    const router = useRouter();
 
     // Schedule post handler
     const handleSchedulePost = async () => {
@@ -358,12 +402,43 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                     body: JSON.stringify(requestBody),
                 }
             );
-            if (response.ok) {
-                dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
-                toast.success("Post scheduled successfully!");
-            } else {
+            if (!response.ok) {
                 toast.error("Failed to schedule post.");
+                return;
             }
+            const data = await response.json();
+
+            const fullPost = {
+                _id: data._id,
+                title: data.title,
+                prompt: data.prompt,
+                status: data.status,
+                discord: data.discord ?? "",
+                telegram: data.telegram ?? "",   // ← never undefined
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                scheduledAtDiscord: data.scheduledAtDiscord ?? "",
+                publishedAtDiscord: data.publishedAtDiscord ?? "",
+                scheduledAtTelegram: data.scheduledAtTelegram ?? "",
+                publishedAtTelegram: data.publishedAtTelegram ?? "",
+                publishedAtTwitter: data.publishedAtTwitter ?? "",
+                scheduledAtTwitter: data.scheduledAtTwitter ?? "",
+                twitter: data.twitter ?? "",
+                image_discord: data.image_discord ?? "",
+                image_twitter: data.image_twitter ?? "",
+                image_telegram: data.image_telegram ?? "",
+                // …and so on for any other required fields…
+            };
+            // parse the updated post from the response
+            // 1) re‑fetch your drafts list so the sidebar/list is up‑to‑date
+            // await dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+
+            // 2) dispatch the *full* Post object you got back
+            dispatch(setSelectedAnnouncement([fullPost]));
+
+            dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
+
+            toast.success("Post scheduled successfully!");
         } catch (error) {
             console.error("Error scheduling post:", error);
             alert("Error scheduling post.");
