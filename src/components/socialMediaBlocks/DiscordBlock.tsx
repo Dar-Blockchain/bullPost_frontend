@@ -1019,7 +1019,7 @@ const DiscordBlock: React.FC<DiscordBlockProps> = ({ submittedText, onSubmit, _i
 
         {/* Toolbar and Scheduling Section */}
         <Box sx={{ position: "sticky", bottom: 0, zIndex: 1 }}>
-          {user && (
+          {user && discrodEnabled && (
             <>
               <Box sx={{ display: "flex", alignItems: "center", flexDirection: "column", mt: 2, mb: 2, gap: 1 }}>
                 <Box
