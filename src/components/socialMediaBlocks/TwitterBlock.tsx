@@ -345,16 +345,15 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
         const selected = editableText.substring(selectionStart, selectionEnd);
 
         let wrappedText = selected;
-
-        switch (formatType) { 
+        switch (formatType) {
             case "bold":
-                wrappedText = `**${selected}**`; // for in-app markdown preview only
+                wrappedText = `**${selected}**`;
                 break;
             case "italic":
                 wrappedText = `*${selected}*`;
                 break;
             case "underline":
-                wrappedText = `__${selected}__`;
+                wrappedText = `<u>${selected}</u>`;
                 break;
             case "strike":
                 wrappedText = `~~${selected}~~`;
@@ -363,20 +362,45 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 wrappedText = `\`${selected}\``;
                 break;
             case "codeBlock":
-                wrappedText = `\`\`\`\n${selected}\n\`\`\``;
+                wrappedText = "```\n" + selected + "\n```";
                 break;
             case "spoiler":
                 wrappedText = `||${selected}||`;
                 break;
-            case "hashtag":
-                wrappedText = `#${selected.replace(/\s+/g, '')}`;
-                break;
-            case "caps":
-                wrappedText = selected.toUpperCase();
-                break;
             default:
                 break;
         }
+        // switch (formatType) { 
+        //     case "bold":
+        //         wrappedText = `**${selected}**`; // for in-app markdown preview only
+        //         break;
+        //     case "italic":
+        //         wrappedText = `*${selected}*`;
+        //         break;
+        //     case "underline":
+        //         wrappedText = `__${selected}__`;
+        //         break;
+        //     case "strike":
+        //         wrappedText = `~~${selected}~~`;
+        //         break;
+        //     case "inlineCode":
+        //         wrappedText = `\`${selected}\``;
+        //         break;
+        //     case "codeBlock":
+        //         wrappedText = `\`\`\`\n${selected}\n\`\`\``;
+        //         break;
+        //     case "spoiler":
+        //         wrappedText = `||${selected}||`;
+        //         break;
+        //     case "hashtag":
+        //         wrappedText = `#${selected.replace(/\s+/g, '')}`;
+        //         break;
+        //     case "caps":
+        //         wrappedText = selected.toUpperCase();
+        //         break;
+        //     default:
+        //         break;
+        // }
 
         const before = editableText.slice(0, selectionStart);
         const after = editableText.slice(selectionEnd);
@@ -396,7 +420,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     };
 
 
-   
+
     const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
     const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
     // Regenerate post handler using Gemini or OpenAI
@@ -813,7 +837,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                     position: "relative",
                 }}
             >
-                {/* Top Bar: Twitter Icon and User Profile */}
+                {/* Top Bar: Twitter Icon anpd User Profile */}
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                     <img src="/X.png" alt="X" style={{ width: 30, height: 30, marginRight: "10px" }} />
                     {user && (
