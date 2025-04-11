@@ -173,9 +173,10 @@ const Sidebar: React.FC<SidebarProps> = ({ handleOpen, isLoggedIn }) => {
       );
       const data = await response.json();
       if (response.ok) {
-        dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
-        dispatch(setSelectedAnnouncement([data]));
-        setSelectedPostId(data._id);
+        dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 })).then(() => {
+          setSelectedPostId(data._id);
+        }); dispatch(setSelectedAnnouncement([data]));
+        // setSelectedPostId(data._id);
         toast.success("New draft generated successfully!", { position: "top-right" });
       } else {
         console.error("Failed to add post", data.error);
