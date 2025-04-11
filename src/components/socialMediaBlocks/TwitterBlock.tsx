@@ -317,59 +317,86 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
     }, [selectedImage]);
 
     // Formatting popover handlers
-    const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-        if (!textFieldRef.current) return;
-        const { selectionStart, selectionEnd } = textFieldRef.current;
-        setAnchorPosition(selectionStart !== selectionEnd ? { top: e.clientY, left: e.clientX } : null);
+    const [showTextToolbar, setShowTextToolbar] = useState(false);
+
+    const [selectionStart, setSelectionStart] = useState(0);
+    const [selectionEnd, setSelectionEnd] = useState(0);
+    const handleMouseUp = () => {
+        const textarea = textFieldRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        setSelectionStart(start);
+        setSelectionEnd(end);
+        setShowTextToolbar(start !== end);
     };
 
-    const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (!textFieldRef.current) return;
-        const { selectionStart, selectionEnd } = textFieldRef.current;
-        setAnchorPosition(selectionStart !== selectionEnd ? { top: 100, left: 100 } : null);
-    };
+    const handleKeyUp = () => handleMouseUp(); // reuse same logic
 
-    // Format selected text based on chosen style
     const handleFormat = (formatType: string) => {
-        if (!textFieldRef.current) return;
-        const start = textFieldRef.current.selectionStart;
-        const end = textFieldRef.current.selectionEnd;
-        if (start === end) return;
-        const selected = editableText.substring(start, end);
-        let transformed = selected;
-        switch (formatType) {
+        if (
+            selectionStart === null ||
+            selectionEnd === null ||
+            selectionStart === selectionEnd
+        ) return;
+
+        const selected = editableText.substring(selectionStart, selectionEnd);
+
+        let wrappedText = selected;
+
+        switch (formatType) { 
             case "bold":
-                transformed = `**${selected}**`;
+                wrappedText = `**${selected}**`; // for in-app markdown preview only
                 break;
             case "italic":
-                transformed = `*${selected}*`;
+                wrappedText = `*${selected}*`;
                 break;
             case "underline":
-                transformed = `<u>${selected}</u>`;
+                wrappedText = `__${selected}__`;
                 break;
             case "strike":
-                transformed = `~~${selected}~~`;
+                wrappedText = `~~${selected}~~`;
                 break;
             case "inlineCode":
-                transformed = `\`${selected}\``;
+                wrappedText = `\`${selected}\``;
                 break;
             case "codeBlock":
-                transformed = "```\n" + selected + "\n```";
+                wrappedText = `\`\`\`\n${selected}\n\`\`\``;
                 break;
             case "spoiler":
-                transformed = `||${selected}||`;
+                wrappedText = `||${selected}||`;
+                break;
+            case "hashtag":
+                wrappedText = `#${selected.replace(/\s+/g, '')}`;
+                break;
+            case "caps":
+                wrappedText = selected.toUpperCase();
                 break;
             default:
                 break;
         }
-        const newText = editableText.slice(0, start) + transformed + editableText.slice(end);
+
+        const before = editableText.slice(0, selectionStart);
+        const after = editableText.slice(selectionEnd);
+        const newText = before + wrappedText + after;
+
         setEditableText(newText);
-        setAnchorPosition(null);
-        setTimeout(() => textFieldRef.current?.focus(), 0);
+        setShowTextToolbar(false);
+
+        setTimeout(() => {
+            const cursorPosition = before.length + wrappedText.length;
+            if (textFieldRef.current) {
+                textFieldRef.current.focus();
+                textFieldRef.current.selectionStart = cursorPosition;
+                textFieldRef.current.selectionEnd = cursorPosition;
+            }
+        }, 0);
     };
 
-    // Regenerate post using Gemini or OpenAI
-    const [isRegenerating, setIsRegenerating] = useState(false);
+
+   
     const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
     const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
     // Regenerate post handler using Gemini or OpenAI
@@ -518,7 +545,7 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                 image_telegram: data.image_telegram ?? "",
                 // …and so on for any other required fields…
             };
-     
+
             dispatch(setSelectedAnnouncement([fullPost]));
 
             dispatch(fetchPostsByStatus({ status: "drafts", page: 1, limit: 10 }));
@@ -942,11 +969,18 @@ const TwitterBlock: React.FC<TwitterBlockProps> = ({ submittedText, onSubmit, _i
                                 </Box>
                             )}
                             <Popover
-                                open={Boolean(anchorPosition)}
-                                anchorReference="anchorPosition"
-                                anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
-                                onClose={() => setAnchorPosition(null)}
+                                open={isEditing && showTextToolbar}
+                                anchorEl={textFieldRef.current}
+                                onClose={() => setShowTextToolbar(false)}
                                 anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                                transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                disableRestoreFocus
+                                PaperProps={{
+                                    sx: {
+                                        mt: "-8px", // adjust distance above the TextField
+                                        ml: "4px",
+                                    },
+                                }}
                             >
                                 <Box sx={{ display: "flex", gap: 1, p: 1 }}>
                                     <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>

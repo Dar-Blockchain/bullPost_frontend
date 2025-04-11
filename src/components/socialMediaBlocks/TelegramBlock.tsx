@@ -445,54 +445,82 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
         }
     };
 
-    // Text formatting popover handlers
-    const handleMouseUp = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-        if (!textFieldRef.current) return;
-        const { selectionStart, selectionEnd } = textFieldRef.current;
-        setAnchorPosition(selectionStart !== selectionEnd ? { top: e.clientY, left: e.clientX } : null);
+    const [showTextToolbar, setShowTextToolbar] = useState(false);
+
+    const [selectionStart, setSelectionStart] = useState(0);
+    const [selectionEnd, setSelectionEnd] = useState(0);
+    const handleMouseUp = () => {
+        const textarea = textFieldRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        setSelectionStart(start);
+        setSelectionEnd(end);
+        setShowTextToolbar(start !== end);
     };
 
-    const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (!textFieldRef.current) return;
-        const { selectionStart, selectionEnd } = textFieldRef.current;
-        setAnchorPosition(selectionStart !== selectionEnd ? { top: 100, left: 100 } : null);
+    const handleKeyUp = () => handleMouseUp(); // reuse same logic
+    const escapeTelegramMarkdownV2 = (text: string): string => {
+        return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, (match) => `\\${match}`);
     };
 
     const handleFormat = (formatType: string) => {
-        if (!textFieldRef.current) return;
-        const start = textFieldRef.current.selectionStart;
-        const end = textFieldRef.current.selectionEnd;
-        if (start === end) return;
-        const selected = editableText.substring(start, end);
-        let newText = editableText;
+        if (
+            selectionStart === null ||
+            selectionEnd === null ||
+            selectionStart === selectionEnd
+        ) return;
+
+        const selected = editableText.substring(selectionStart, selectionEnd);
+        let wrappedText = selected;
+
         switch (formatType) {
             case "bold":
-                newText = editableText.slice(0, start) + `**${selected}**` + editableText.slice(end);
+                wrappedText = `*${selected}*`;
                 break;
             case "italic":
-                newText = editableText.slice(0, start) + `*${selected}*` + editableText.slice(end);
+                wrappedText = `_${selected}_`;
                 break;
             case "underline":
-                newText = editableText.slice(0, start) + `__${selected}__` + editableText.slice(end);
+                wrappedText = `__${selected}__`; // Telegram doesn't support underline natively
                 break;
             case "strike":
-                newText = editableText.slice(0, start) + `~~${selected}~~` + editableText.slice(end);
+                wrappedText = `~${selected}~`;
                 break;
             case "inlineCode":
-                newText = editableText.slice(0, start) + `\`${selected}\`` + editableText.slice(end);
+                wrappedText = `\`${selected}\``;
                 break;
             case "codeBlock":
-                newText = editableText.slice(0, start) + "```\n" + selected + "\n```" + editableText.slice(end);
+                wrappedText = `\`\`\`\n${selected}\n\`\`\``;
                 break;
             case "spoiler":
-                newText = editableText.slice(0, start) + `||${selected}||` + editableText.slice(end);
+                wrappedText = `||${selected}||`;
+                break;
+            case "link":
+                wrappedText = `[${selected}](https://example.com)`; // you can customize this
                 break;
             default:
                 break;
         }
+
+        const before = editableText.slice(0, selectionStart);
+        const after = editableText.slice(selectionEnd);
+        const newText = before + wrappedText + after;
+
         setEditableText(newText);
-        setAnchorPosition(null);
-        setTimeout(() => textFieldRef.current?.focus(), 0);
+        setShowTextToolbar(false);
+
+        // Maintain cursor position after formatting
+        setTimeout(() => {
+            const cursorPosition = before.length + wrappedText.length;
+            if (textFieldRef.current) {
+                textFieldRef.current.focus();
+                textFieldRef.current.selectionStart = cursorPosition;
+                textFieldRef.current.selectionEnd = cursorPosition;
+            }
+        }, 0);
     };
     const [isRegeneratingAutoAwesome, setIsRegeneratingAutoAwesome] = useState(false);
     const [isRegeneratingReplay, setIsRegeneratingReplay] = useState(false);
@@ -935,11 +963,18 @@ const TelegramBlock: React.FC<TelegramBlockProps> = ({ submittedText, _id, ai })
                             </Box>
                         )}
                         <Popover
-                            open={Boolean(anchorPosition)}
-                            anchorReference="anchorPosition"
-                            anchorPosition={anchorPosition || { top: 0, left: 0 }}
-                            onClose={() => setAnchorPosition(null)}
+                            open={isEditing && showTextToolbar}
+                            anchorEl={textFieldRef.current}
+                            onClose={() => setShowTextToolbar(false)}
                             anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                            transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+                            disableRestoreFocus
+                            PaperProps={{
+                                sx: {
+                                    mt: "-8px", // adjust distance above the TextField
+                                    ml: "4px",
+                                },
+                            }}
                         >
                             <Box sx={{ display: "flex", gap: 1, p: 1 }}>
                                 <IconButton onClick={() => handleFormat("bold")} sx={{ color: "#8F8F8F" }}>
